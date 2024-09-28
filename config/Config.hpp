@@ -38,7 +38,21 @@ public:
 
 
 	int16_t words_indicies_mnemonic[12] = { 0 };
+	std::string static_btc_legacy_public_wallet_address = "";
 	std::string static_words_generate_mnemonic = "";
+	std::string static_words_position_00 = "";
+	std::string static_words_position_01 = "";
+	std::string static_words_position_02 = "";
+	std::string static_words_position_03 = "";
+	std::string static_words_position_04 = "";
+	std::string static_words_position_05 = "";
+	std::string static_words_position_06 = "";
+	std::string static_words_position_07 = "";
+	std::string static_words_position_08 = "";
+	std::string static_words_position_09 = "";
+	std::string static_words_position_10 = "";
+	std::string static_words_position_11 = "";
+
 	std::string chech_equal_bytes_in_adresses = "";
 	std::string save_generation_result_in_file = "";
 

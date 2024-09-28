@@ -50,12 +50,38 @@ int Generate_Mnemonic(void)
 	ConfigClass Config;
 	try {
 		parse_config(&Config, "config.cfg");
-		err = tools::stringToWordIndices(Config.static_words_generate_mnemonic + " ?", Config.words_indicies_mnemonic);
-		if (err != 0)
-		{
-			std::cerr << "Error stringToWordIndices()!" << std::endl;
-			return -1;
+		//err = tools::stringToWordIndices(Config.static_words_generate_mnemonic, Config.words_indicies_mnemonic);
+		//if (err != 0)
+		//{
+		//	std::cerr << "Error stringToWordIndices()!" << std::endl;
+		//	return -1;
+		//}
+
+		//fill remaining known (single word dictionaries) for testability purposes
+		
+		std::vector<std::string> posList[NUM_WORDS_MNEMONIC];
+		posList[0] = tools::SplitWords(Config.static_words_position_00);
+		posList[1] = tools::SplitWords(Config.static_words_position_01);
+		posList[2] = tools::SplitWords(Config.static_words_position_02);
+		posList[3] = tools::SplitWords(Config.static_words_position_03);
+		posList[4] = tools::SplitWords(Config.static_words_position_04);
+		posList[5] = tools::SplitWords(Config.static_words_position_05);
+		posList[6]  = tools::SplitWords(Config.static_words_position_06);
+		posList[7]  = tools::SplitWords(Config.static_words_position_07);
+		posList[8]  = tools::SplitWords(Config.static_words_position_08);
+		posList[9]  = tools::SplitWords(Config.static_words_position_09);
+		posList[10] = tools::SplitWords(Config.static_words_position_10);
+		posList[11] = tools::SplitWords(Config.static_words_position_11);
+		for (int i = 0; i < NUM_WORDS_MNEMONIC; i++) {
+			std::vector<std::string> thisPos = posList[i];
+			if (1 == thisPos.size()) {
+				std::string onlyWord = thisPos[0];
+				int16_t thisIdx;
+				tools::GetSingleWordIndex(onlyWord, &thisIdx);
+				Config.words_indicies_mnemonic[i] = thisIdx;
+			}
 		}
+
 		uint64_t number_of_generated_mnemonics = (Config.number_of_generated_mnemonics / (Config.cuda_block * Config.cuda_grid)) * (Config.cuda_block * Config.cuda_grid);
 		if ((Config.number_of_generated_mnemonics % (Config.cuda_block * Config.cuda_grid)) != 0) number_of_generated_mnemonics += Config.cuda_block * Config.cuda_grid;
 		Config.number_of_generated_mnemonics = number_of_generated_mnemonics;	

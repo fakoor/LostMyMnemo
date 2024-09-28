@@ -19,5 +19,7 @@ namespace tools {
 	void clearFiles(void);
 	void saveResult(char* mnemonic, uint8_t* hash160, size_t num_wallets, size_t num_all_childs, size_t num_childs, uint32_t path_generate[10]);
 	int checkResult(retStruct* ret);
+	bool GetSingleWordIndex(std::string singleWord, int16_t* wordIndex);
+	std::vector<std::string> SplitWords(std::string str);
 	int stringToWordIndices(std::string str, int16_t* gen_words_indices);
 }
