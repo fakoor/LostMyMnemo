@@ -18,6 +18,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "exe", "exe", "{D6475FA8-11D
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "image", "image", "{D3A03942-39A5-48E4-AB7F-24BB615FA60C}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{016612BB-2F42-4D26-A29E-C2953254FE99}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{1BFAB888-0A7F-43F3-AD28-506C7B34AC8E}"
+	ProjectSection(SolutionItems) = preProject
+		Docs\BIP39-Binary.pdf = Docs\BIP39-Binary.pdf
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
