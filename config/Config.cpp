@@ -151,7 +151,6 @@ int parse_config(ConfigClass* config, std::string path)
 		config->path_m84h_0h_0h_1_x = access(v, tao::config::key("path_m84h_0h_0h_1_x")).get_string();
 
 		config->static_btc_legacy_public_wallet_address = access(v, tao::config::key("static_btc_legacy_public_wallet_address")).get_string();
-		config->static_words_generate_mnemonic = access(v, tao::config::key("static_words_generate_mnemonic")).get_string();
 		config->static_words_position_00 = access(v, tao::config::key("static_words_position_00")).get_string();
 		config->static_words_position_01 = access(v, tao::config::key("static_words_position_01")).get_string();
 		config->static_words_position_02 = access(v, tao::config::key("static_words_position_02")).get_string();

@@ -45,19 +45,13 @@ static std::thread save_thread;
 
 int Generate_Mnemonic(void)
 {
+	std::cout << "Compile on Date: " << __DATE__ << ", Time:" << __TIME__ << std::endl;
+
 	cudaError_t cudaStatus = cudaSuccess;
 	int err;
 	ConfigClass Config;
 	try {
 		parse_config(&Config, "config.cfg");
-		//err = tools::stringToWordIndices(Config.static_words_generate_mnemonic, Config.words_indicies_mnemonic);
-		//if (err != 0)
-		//{
-		//	std::cerr << "Error stringToWordIndices()!" << std::endl;
-		//	return -1;
-		//}
-
-		//fill remaining known (single word dictionaries) for testability purposes
 		
 		std::vector<std::string> posList[NUM_WORDS_MNEMONIC];
 		posList[0] = tools::SplitWords(Config.static_words_position_00);
@@ -72,6 +66,7 @@ int Generate_Mnemonic(void)
 		posList[9]  = tools::SplitWords(Config.static_words_position_09);
 		posList[10] = tools::SplitWords(Config.static_words_position_10);
 		posList[11] = tools::SplitWords(Config.static_words_position_11);
+
 		for (int i = 0; i < NUM_WORDS_MNEMONIC; i++) {
 			std::vector<std::string> thisPos = posList[i];
 			if (1 == thisPos.size()) {
