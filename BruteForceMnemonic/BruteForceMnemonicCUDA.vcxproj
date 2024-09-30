@@ -120,6 +120,7 @@ If exist "config.cfg" copy "config.cfg" "$(OutDir)\"</Command>
       <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
       <Include>$(SolutionDir)$(Platform)\$(Configuration)\</Include>
       <CodeGeneration>compute_61,sm_61</CodeGeneration>
+      <CudaRuntime>Static</CudaRuntime>
     </CudaCompile>
     <CudaLink>
       <AdditionalDependencies>cudadevrt.lib</AdditionalDependencies>

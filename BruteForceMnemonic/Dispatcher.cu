@@ -60,15 +60,16 @@ int Generate_Mnemonic(void)
 			std::vector<std::string> thisPos = tools::SplitWords(Config.dynamic_words[i]);
 			//std::vector<std::string> thisPos = posList[i];
 			if (1 == thisPos.size()) {
-				int prev = i - 1;
 				
-				if (prev == nLastKnownPos) 
-					nLastKnownPos = i;
 
 				std::string onlyWord = thisPos[0];
 				int16_t thisIdx;
 				tools::GetSingleWordIndex(onlyWord, &thisIdx);
 				Config.words_indicies_mnemonic[i] = thisIdx;
+
+				int prev = i - 1;
+				if (prev == nLastKnownPos && thisIdx >= 0)
+					nLastKnownPos = i;
 			}
 		}
 
@@ -88,6 +89,9 @@ int Generate_Mnemonic(void)
 
 
 	devicesInfo();
+
+
+
 	uint32_t num_device = 0;
 #ifndef TEST_MODE
 	std::cout << "\n\nEnter number of device: ";
@@ -133,6 +137,7 @@ int Generate_Mnemonic(void)
 		goto Error;
 	}
 	}
+#if DONT
 	if ((Config.generate_path[6] != 0) || (Config.generate_path[7] != 0))
 	{
 		std::cout << "READ TABLES SEGWIT(BIP49)..." << std::endl;
@@ -158,6 +163,7 @@ int Generate_Mnemonic(void)
 		goto Error;
 	}
 
+#endif //DONT
 	if (Data->malloc(Config.cuda_grid, Config.cuda_block, Config.num_paths, Config.num_child_addresses, Config.save_generation_result_in_file == "yes" ? true : false) != 0) {
 		std::cerr << "Error Data->malloc()!" << std::endl;
 		goto Error;

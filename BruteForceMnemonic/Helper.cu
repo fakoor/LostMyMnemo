@@ -112,10 +112,10 @@ void devicesInfo(void)
 			(float)deviceProp.totalGlobalMem / 1048576.0f, (unsigned long long) deviceProp.totalGlobalMem);
 		printf("%s", msg);
 
-		//printf("  (%2d) Multiprocessors, (%3d) CUDA Cores/MP:     %d CUDA Cores\n",
-		//	deviceProp.multiProcessorCount,
-		//	_ConvertSMVer2Cores(deviceProp.major, deviceProp.minor),
-		//	_ConvertSMVer2Cores(deviceProp.major, deviceProp.minor) * deviceProp.multiProcessorCount);
+		printf("  (%2d) Multiprocessors, (%3d) CUDA Cores/MP:     %d CUDA Cores\n",
+			deviceProp.multiProcessorCount,
+			_ConvertSMVer2Cores(deviceProp.major, deviceProp.minor),
+			_ConvertSMVer2Cores(deviceProp.major, deviceProp.minor) * deviceProp.multiProcessorCount);
 		printf("  GPU Max Clock rate:                            %.0f MHz (%0.2f GHz)\n", (float)deviceProp.clockRate * 1e-3f, deviceProp.clockRate * 1e-6f);
 
 		//
