@@ -39,6 +39,7 @@ public:
 
 	int16_t words_indicies_mnemonic[12] = { 0 };
 	std::string static_btc_legacy_public_wallet_address = "";
+	std::string dynamic_words[12] = { "" };
 	std::string static_words_position_00 = "";
 	std::string static_words_position_01 = "";
 	std::string static_words_position_02 = "";

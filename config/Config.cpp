@@ -151,18 +151,32 @@ int parse_config(ConfigClass* config, std::string path)
 		config->path_m84h_0h_0h_1_x = access(v, tao::config::key("path_m84h_0h_0h_1_x")).get_string();
 
 		config->static_btc_legacy_public_wallet_address = access(v, tao::config::key("static_btc_legacy_public_wallet_address")).get_string();
-		config->static_words_position_00 = access(v, tao::config::key("static_words_position_00")).get_string();
-		config->static_words_position_01 = access(v, tao::config::key("static_words_position_01")).get_string();
-		config->static_words_position_02 = access(v, tao::config::key("static_words_position_02")).get_string();
-		config->static_words_position_03 = access(v, tao::config::key("static_words_position_03")).get_string();
-		config->static_words_position_04 = access(v, tao::config::key("static_words_position_04")).get_string();
-		config->static_words_position_05 = access(v, tao::config::key("static_words_position_05")).get_string();
-		config->static_words_position_06 = access(v, tao::config::key("static_words_position_06")).get_string();
-		config->static_words_position_07 = access(v, tao::config::key("static_words_position_07")).get_string();
-		config->static_words_position_08 = access(v, tao::config::key("static_words_position_08")).get_string();
-		config->static_words_position_09 = access(v, tao::config::key("static_words_position_09")).get_string();
-		config->static_words_position_10 = access(v, tao::config::key("static_words_position_10")).get_string();
-		config->static_words_position_11 = access(v, tao::config::key("static_words_position_11")).get_string();
+		//config->static_words_position_00 = access(v, tao::config::key("static_words_position_00")).get_string();
+		//config->static_words_position_01 = access(v, tao::config::key("static_words_position_01")).get_string();
+		//config->static_words_position_02 = access(v, tao::config::key("static_words_position_02")).get_string();
+		//config->static_words_position_03 = access(v, tao::config::key("static_words_position_03")).get_string();
+		//config->static_words_position_04 = access(v, tao::config::key("static_words_position_04")).get_string();
+		//config->static_words_position_05 = access(v, tao::config::key("static_words_position_05")).get_string();
+		//config->static_words_position_06 = access(v, tao::config::key("static_words_position_06")).get_string();
+		//config->static_words_position_07 = access(v, tao::config::key("static_words_position_07")).get_string();
+		//config->static_words_position_08 = access(v, tao::config::key("static_words_position_08")).get_string();
+		//config->static_words_position_09 = access(v, tao::config::key("static_words_position_09")).get_string();
+		//config->static_words_position_10 = access(v, tao::config::key("static_words_position_10")).get_string();
+		//config->static_words_position_11 = access(v, tao::config::key("static_words_position_11")).get_string();
+
+		config->dynamic_words[0] = access(v, tao::config::key("static_words_position_00")).get_string();
+		config->dynamic_words[1] = access(v, tao::config::key("static_words_position_01")).get_string();
+		config->dynamic_words[2] = access(v, tao::config::key("static_words_position_02")).get_string();
+		config->dynamic_words[3] = access(v, tao::config::key("static_words_position_03")).get_string();
+		config->dynamic_words[4] = access(v, tao::config::key("static_words_position_04")).get_string();
+		config->dynamic_words[5] = access(v, tao::config::key("static_words_position_05")).get_string();
+		config->dynamic_words[6] = access(v, tao::config::key("static_words_position_06")).get_string();
+		config->dynamic_words[7] = access(v, tao::config::key("static_words_position_07")).get_string();
+		config->dynamic_words[8] = access(v, tao::config::key("static_words_position_08")).get_string();
+		config->dynamic_words[9] = access(v, tao::config::key("static_words_position_09")).get_string();
+		config->dynamic_words[10]= access(v, tao::config::key("static_words_position_10")).get_string();
+		config->dynamic_words[11]= access(v, tao::config::key("static_words_position_11")).get_string();
+
 
 		config->chech_equal_bytes_in_adresses = access(v, tao::config::key("chech_equal_bytes_in_adresses")).get_string();
 		config->save_generation_result_in_file = access(v, tao::config::key("save_generation_result_in_file")).get_string();

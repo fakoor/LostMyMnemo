@@ -45,7 +45,7 @@ static std::thread save_thread;
 
 int Generate_Mnemonic(void)
 {
-	std::cout << "Compile on Date: " << __DATE__ << ", Time:" << __TIME__ << std::endl;
+	std::cout << "Compile on Dates:: " << __DATE__ << ", Time:" << __TIME__ << std::endl;
 
 	cudaError_t cudaStatus = cudaSuccess;
 	int err;
@@ -53,29 +53,29 @@ int Generate_Mnemonic(void)
 	try {
 		parse_config(&Config, "config.cfg");
 		
-		std::vector<std::string> posList[NUM_WORDS_MNEMONIC];
-		posList[0] = tools::SplitWords(Config.static_words_position_00);
-		posList[1] = tools::SplitWords(Config.static_words_position_01);
-		posList[2] = tools::SplitWords(Config.static_words_position_02);
-		posList[3] = tools::SplitWords(Config.static_words_position_03);
-		posList[4] = tools::SplitWords(Config.static_words_position_04);
-		posList[5] = tools::SplitWords(Config.static_words_position_05);
-		posList[6]  = tools::SplitWords(Config.static_words_position_06);
-		posList[7]  = tools::SplitWords(Config.static_words_position_07);
-		posList[8]  = tools::SplitWords(Config.static_words_position_08);
-		posList[9]  = tools::SplitWords(Config.static_words_position_09);
-		posList[10] = tools::SplitWords(Config.static_words_position_10);
-		posList[11] = tools::SplitWords(Config.static_words_position_11);
+		int nLastKnownPos = -1;
+		std::vector<int> validIndexListPerPos[NUM_WORDS_MNEMONIC];
 
 		for (int i = 0; i < NUM_WORDS_MNEMONIC; i++) {
-			std::vector<std::string> thisPos = posList[i];
+			std::vector<std::string> thisPos = tools::SplitWords(Config.dynamic_words[i]);
+			//std::vector<std::string> thisPos = posList[i];
 			if (1 == thisPos.size()) {
+				int prev = i - 1;
+				
+				if (prev == nLastKnownPos) 
+					nLastKnownPos = i;
+
 				std::string onlyWord = thisPos[0];
 				int16_t thisIdx;
 				tools::GetSingleWordIndex(onlyWord, &thisIdx);
 				Config.words_indicies_mnemonic[i] = thisIdx;
 			}
 		}
+
+		if (nLastKnownPos >= 0)
+			std::cout << "Words up to position " << nLastKnownPos << " are known" << std::endl;
+		else
+			std::cout << "All words are dynamic" << std::endl;
 
 		uint64_t number_of_generated_mnemonics = (Config.number_of_generated_mnemonics / (Config.cuda_block * Config.cuda_grid)) * (Config.cuda_block * Config.cuda_grid);
 		if ((Config.number_of_generated_mnemonics % (Config.cuda_block * Config.cuda_grid)) != 0) number_of_generated_mnemonics += Config.cuda_block * Config.cuda_grid;
