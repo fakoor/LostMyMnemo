@@ -3085,13 +3085,16 @@ __constant__ int16_t dev_static_words_indices[12];
 __constant__ int16_t dev_AdaptiveBaseDigitCarryTrigger[MAX_ADAPTIVE_BASE_POSITIONS];
 __constant__ int16_t dev_AdaptiveBaseDigitSet[MAX_ADAPTIVE_BASE_POSITIONS][MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION];
 __device__ int16_t dev_AdaptiveBaseCurrentCounter[MAX_ADAPTIVE_BASE_POSITIONS];
+__constant__ uint64_t dev_EntropyAbsolutePrefix64;
+__constant__ uint64_t dev_EntropyBatchNext24; //Per-Batch Const
+__device__ uint64_t dev_EntropyBatchLast44withChksum;
 
 
 __device__ void IncrementEntropy(uint64_t curEntropyLow64,uint64_t howMuch) {
 	//AdaptiveBase approach
-	int16_t bipVal[6];
-	int16_t digitIdx[6];
-	for (int i = 6; i > 0; i--) {
+	int16_t bipVal[MAX_ADAPTIVE_BASE_POSITIONS];
+	int16_t digitIdx[MAX_ADAPTIVE_BASE_POSITIONS];
+	for (int i = MAX_ADAPTIVE_BASE_POSITIONS; i > 0; i--) {
 
 	}
 }
