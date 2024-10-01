@@ -3067,6 +3067,34 @@ __constant__ uint32_t dev_num_paths[1];
 __constant__ uint32_t dev_num_childs[1];
 __constant__ int16_t dev_static_words_indices[12];
 
+/*
+* We onsider Mnemonics a Base - 2048 twelve-digit unsigned integer, 
+* if we have some information about any of digits, so that we can 
+* ommit 1 to 2047 digits (words) from a specific position, then that
+* digit is adaptively based to Base-2047 down to Base-2 aka binary.
+* The only mathematic operation we need for the purpose is increment,
+* When we reach the carry for a VariableBase digit, uppon an increment,
+* we will rewind that digit and increment the more significant digit
+* DUE to less memory usage in constant-memory, we limit such mechanism
+* to the 6 least significant mnemonic words in a 262 guessed space
+* Hence the dictionary for positions 6 to 12 outght not to include
+* more than 262 words. The other structure provides reverse lookup for a value of a digit
+*/
+#define MAX_ADAPTIVE_BASE_POSITIONS 6
+#define MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION 262
+__constant__ int16_t dev_AdaptiveBaseDigitCarryTrigger[MAX_ADAPTIVE_BASE_POSITIONS];
+__constant__ int16_t dev_AdaptiveBaseDigitSet[MAX_ADAPTIVE_BASE_POSITIONS][MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION];
+__device__ int16_t dev_AdaptiveBaseCurrentCounter[MAX_ADAPTIVE_BASE_POSITIONS];
+
+
+__device__ void IncrementEntropy(uint64_t curEntropyLow64,uint64_t howMuch) {
+	//AdaptiveBase approach
+	int16_t bipVal[6];
+	int16_t digitIdx[6];
+	for (int i = 6; i > 0; i--) {
+
+	}
+}
 __device__
 void entropy_to_mnemonic(const uint64_t* gl_entropy, uint8_t* mnemonic_phrase) {
 	int16_t indices[12] = {-1, -1, -1 , -1 , -1 , -1 , -1 , -1 , -1 , -1 , -1 , -1 };
@@ -3163,6 +3191,7 @@ void entropy_to_mnemonic(const uint64_t* gl_entropy, uint8_t* mnemonic_phrase) {
 	bytes[0] = (entropy[0] >> 56) & 0xFF;
 	sha256((uint32_t*)bytes, 16, (uint32_t*)entropy_hash);
 	uint8_t checksum = (entropy_hash[0] >> 4) & ((1 << 4) - 1);
+
 	indices[11] |= checksum;
 
 	int mnemonic_index = 0;

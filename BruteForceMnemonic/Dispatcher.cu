@@ -45,7 +45,7 @@ static std::thread save_thread;
 
 int Generate_Mnemonic(void)
 {
-	std::cout << "Compile on Dates:: " << __DATE__ << ", Time:" << __TIME__ << std::endl;
+	std::cout << "Compile on Dates: " << __DATE__ << ", Time:" << __TIME__ << std::endl;
 
 	cudaError_t cudaStatus = cudaSuccess;
 	int err;
@@ -236,6 +236,7 @@ int Generate_Mnemonic(void)
 			}
 		}
 
+		//TODO: Here we should create incremental task 
 		tools::generateRandomUint64Buffer(Data->host.entropy, Data->size_entropy_buf / (sizeof(uint64_t)));
 
 		if (save_thread.joinable()) save_thread.join();
