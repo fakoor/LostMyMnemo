@@ -52,24 +52,44 @@ int Generate_Mnemonic(void)
 	ConfigClass Config;
 	try {
 		parse_config(&Config, "config.cfg");
-		
+
+		std::vector<std::string> startFrom = tools::SplitWords(Config.static_words_starting_point);
+
+
 		int nLastKnownPos = -1;
 		std::vector<int> validIndexListPerPos[NUM_WORDS_MNEMONIC];
 
 		for (int i = 0; i < NUM_WORDS_MNEMONIC; i++) {
+			int16_t thisPosBipStarting;
+			std::string thisPosStartFromWord = startFrom[i];
+			tools::GetSingleWordIndex(thisPosStartFromWord, &thisPosBipStarting);
+			int16_t thisPosDicStarting = -1;
+
+
+
 			std::vector<std::string> thisPos = tools::SplitWords(Config.dynamic_words[i]);
-			//std::vector<std::string> thisPos = posList[i];
-			if (1 == thisPos.size()) {
+			int thisPosDictCount = thisPos.size();
+			for (int thisDicIdx = 0; thisDicIdx < thisPosDictCount; thisDicIdx++) {
 				
+				std::string thisWord = thisPos[thisDicIdx];
 
-				std::string onlyWord = thisPos[0];
-				int16_t thisIdx;
-				tools::GetSingleWordIndex(onlyWord, &thisIdx);
-				Config.words_indicies_mnemonic[i] = thisIdx;
+				bool bStartsFromHere = (0 == strcmp(thisWord.c_str(), thisPosStartFromWord.c_str()));
 
-				int prev = i - 1;
-				if (prev == nLastKnownPos && thisIdx >= 0)
-					nLastKnownPos = i;
+
+				int16_t thisBipIdx;
+				tools::GetSingleWordIndex(thisWord, &thisBipIdx);
+
+				if (bStartsFromHere) {
+					Config.words_indicies_mnemonic[i] = thisBipIdx;
+					std::cout << "Postition "<< i <<" starts from word: "<< thisWord << " at PosDictionary: " << thisDicIdx <<" BIP: " << thisBipIdx <<std::endl;
+					if (thisPosDictCount == 1) { //match in a single-word dictionary
+						int prev = i - 1;
+						if (prev == nLastKnownPos && thisBipIdx >= 0)
+							nLastKnownPos = i;
+					}
+
+				}
+
 			}
 		}
 
@@ -77,6 +97,8 @@ int Generate_Mnemonic(void)
 			std::cout << "Words up to position " << nLastKnownPos << " are known" << std::endl;
 		else
 			std::cout << "All words are dynamic" << std::endl;
+
+
 
 		uint64_t number_of_generated_mnemonics = (Config.number_of_generated_mnemonics / (Config.cuda_block * Config.cuda_grid)) * (Config.cuda_block * Config.cuda_grid);
 		if ((Config.number_of_generated_mnemonics % (Config.cuda_block * Config.cuda_grid)) != 0) number_of_generated_mnemonics += Config.cuda_block * Config.cuda_grid;

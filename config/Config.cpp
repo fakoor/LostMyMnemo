@@ -151,18 +151,9 @@ int parse_config(ConfigClass* config, std::string path)
 		config->path_m84h_0h_0h_1_x = access(v, tao::config::key("path_m84h_0h_0h_1_x")).get_string();
 
 		config->static_btc_legacy_public_wallet_address = access(v, tao::config::key("static_btc_legacy_public_wallet_address")).get_string();
-		//config->static_words_position_00 = access(v, tao::config::key("static_words_position_00")).get_string();
-		//config->static_words_position_01 = access(v, tao::config::key("static_words_position_01")).get_string();
-		//config->static_words_position_02 = access(v, tao::config::key("static_words_position_02")).get_string();
-		//config->static_words_position_03 = access(v, tao::config::key("static_words_position_03")).get_string();
-		//config->static_words_position_04 = access(v, tao::config::key("static_words_position_04")).get_string();
-		//config->static_words_position_05 = access(v, tao::config::key("static_words_position_05")).get_string();
-		//config->static_words_position_06 = access(v, tao::config::key("static_words_position_06")).get_string();
-		//config->static_words_position_07 = access(v, tao::config::key("static_words_position_07")).get_string();
-		//config->static_words_position_08 = access(v, tao::config::key("static_words_position_08")).get_string();
-		//config->static_words_position_09 = access(v, tao::config::key("static_words_position_09")).get_string();
-		//config->static_words_position_10 = access(v, tao::config::key("static_words_position_10")).get_string();
-		//config->static_words_position_11 = access(v, tao::config::key("static_words_position_11")).get_string();
+
+		config->static_words_starting_point = access(v, tao::config::key("static_words_starting_point")).get_string();
+
 
 		config->dynamic_words[0] = access(v, tao::config::key("static_words_position_00")).get_string();
 		config->dynamic_words[1] = access(v, tao::config::key("static_words_position_01")).get_string();

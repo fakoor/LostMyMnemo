@@ -3087,25 +3087,22 @@ __constant__ int16_t dev_AdaptiveBaseDigitCarryTrigger[MAX_ADAPTIVE_BASE_POSITIO
 __constant__ int16_t dev_AdaptiveBaseDigitSet[MAX_ADAPTIVE_BASE_POSITIONS][MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION];
 __constant__ int16_t dev_AdaptiveBaseCurrentBatchInitialDigits[MAX_ADAPTIVE_BASE_POSITIONS];
 
-__device__ int16_t dev_largestBatchDigits[MAX_ADAPTIVE_BASE_POSITIONS];
-__device__ uint64_t dev_largestBatchIncrement;
+__device__ uint64_t dev_largestBatchIncrementProcessed;
+__device__ int16_t dev_largestBatchDigitsAchieved[MAX_ADAPTIVE_BASE_POSITIONS];
 
 __constant__ uint64_t dev_EntropyAbsolutePrefix64;
 __constant__ uint64_t dev_EntropyBatchNext24; //Per-Batch Const
 
 __device__ uint64_t dev_CompletedBatches = 0;
 
-__host__ /* __and__ */ __device__ void IncrementInBatchDigits(int16_t* fromBaseDigits, uint64_t howMuch, int16_t* outThreadDigits) {
-	int nYetToAdd = howMuch;
-	int nCarryValue = 0;
+__host__ /* __and__ */ __device__ void IncrementAdaptiveDigits(int16_t* inDigits, uint64_t howMuch, int16_t* outDigits) {
+	uint64_t nYetToAdd = howMuch;
+	uint64_t nCarryValue = 0;
 
 	for (int i = MAX_ADAPTIVE_BASE_POSITIONS-1; i >= 0; i--) {
 		if (nYetToAdd == 0 && nCarryValue == 0) {
-			outThreadDigits[i] = fromBaseDigits[i];
+			outDigits[i] = inDigits[i];
 			continue;
-		}
-		else if (i < 1) {
-			//We have carried out of our space, NOP
 		}
 
 		int16_t beforeIncDigit = dev_AdaptiveBaseCurrentBatchInitialDigits[i];
@@ -3115,9 +3112,12 @@ __host__ /* __and__ */ __device__ void IncrementInBatchDigits(int16_t* fromBaseD
 		int nThisNewDigit = nThisIdeal % nCarryAt;
 
 
-		dev_AdaptiveBaseCurrentBatchInitialDigits[i] = nThisNewDigit;
+		outDigits[i] = nThisNewDigit;
 		nCarryValue = nThisIdeal / nCarryAt;
-
+		nYetToAdd = 0; //all active in carry if any
+	}
+	 if (nYetToAdd !=0 || nCarryValue !=0) {
+		//ASSERT: We have carried out of our space, NOP anyway
 	}
 }
 __device__
