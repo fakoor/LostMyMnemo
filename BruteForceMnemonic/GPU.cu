@@ -3082,19 +3082,41 @@ __constant__ int16_t dev_static_words_indices[12];
 */
 #define MAX_ADAPTIVE_BASE_POSITIONS 6
 #define MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION 262
+
 __constant__ int16_t dev_AdaptiveBaseDigitCarryTrigger[MAX_ADAPTIVE_BASE_POSITIONS];
 __constant__ int16_t dev_AdaptiveBaseDigitSet[MAX_ADAPTIVE_BASE_POSITIONS][MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION];
-__device__ int16_t dev_AdaptiveBaseCurrentCounter[MAX_ADAPTIVE_BASE_POSITIONS];
+__constant__ int16_t dev_AdaptiveBaseCurrentBatchInitialDigits[MAX_ADAPTIVE_BASE_POSITIONS];
+
+__device__ int16_t dev_largestBatchDigits[MAX_ADAPTIVE_BASE_POSITIONS];
+__device__ uint64_t dev_largestBatchIncrement;
+
 __constant__ uint64_t dev_EntropyAbsolutePrefix64;
 __constant__ uint64_t dev_EntropyBatchNext24; //Per-Batch Const
-__device__ uint64_t dev_EntropyBatchLast44withChksum;
+
+__device__ uint64_t dev_CompletedBatches = 0;
+
+__host__ /* __and__ */ __device__ void IncrementInBatchDigits(int16_t* fromBaseDigits, uint64_t howMuch, int16_t* outThreadDigits) {
+	int nYetToAdd = howMuch;
+	int nCarryValue = 0;
+
+	for (int i = MAX_ADAPTIVE_BASE_POSITIONS-1; i >= 0; i--) {
+		if (nYetToAdd == 0 && nCarryValue == 0) {
+			outThreadDigits[i] = fromBaseDigits[i];
+			continue;
+		}
+		else if (i < 1) {
+			//We have carried out of our space, NOP
+		}
+
+		int16_t beforeIncDigit = dev_AdaptiveBaseCurrentBatchInitialDigits[i];
+		int nCarryAt = dev_AdaptiveBaseDigitCarryTrigger[i];
+
+		int nThisIdeal = nYetToAdd + beforeIncDigit + nCarryValue;
+		int nThisNewDigit = nThisIdeal % nCarryAt;
 
 
-__device__ void IncrementEntropy(uint64_t curEntropyLow64,uint64_t howMuch) {
-	//AdaptiveBase approach
-	int16_t bipVal[MAX_ADAPTIVE_BASE_POSITIONS];
-	int16_t digitIdx[MAX_ADAPTIVE_BASE_POSITIONS];
-	for (int i = MAX_ADAPTIVE_BASE_POSITIONS; i > 0; i--) {
+		dev_AdaptiveBaseCurrentBatchInitialDigits[i] = nThisNewDigit;
+		nCarryValue = nThisIdeal / nCarryAt;
 
 	}
 }
