@@ -3080,8 +3080,7 @@ __constant__ int16_t dev_static_words_indices[12];
 * Hence the dictionary for positions 6 to 12 outght not to include
 * more than 262 words. The other structure provides reverse lookup for a value of a digit
 */
-#define MAX_ADAPTIVE_BASE_POSITIONS 6
-#define MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION 262
+
 
 __constant__ int16_t dev_AdaptiveBaseDigitCarryTrigger[MAX_ADAPTIVE_BASE_POSITIONS];
 __constant__ int16_t dev_AdaptiveBaseDigitSet[MAX_ADAPTIVE_BASE_POSITIONS][MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION];

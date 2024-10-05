@@ -73,23 +73,45 @@ int Generate_Mnemonic(void)
 				
 				std::string thisWord = thisPos[thisDicIdx];
 
-				bool bStartsFromHere = (0 == strcmp(thisWord.c_str(), thisPosStartFromWord.c_str()));
 
-
+				//Fill the digit space for each adaptive base position (last 6 in our case)
 				int16_t thisBipIdx;
 				tools::GetSingleWordIndex(thisWord, &thisBipIdx);
 
-				if (bStartsFromHere) {
-					Config.words_indicies_mnemonic[i] = thisBipIdx;
-					std::cout << "Postition "<< i <<" starts from word: "<< thisWord << " at PosDictionary: " << thisDicIdx <<" BIP: " << thisBipIdx <<std::endl;
-					if (thisPosDictCount == 1) { //match in a single-word dictionary
-						int prev = i - 1;
-						if (prev == nLastKnownPos && thisBipIdx >= 0)
-							nLastKnownPos = i;
-					}
-
+				int64_t last6Index = i - MAX_ADAPTIVE_BASE_POSITIONS;
+				if (last6Index >= 0) {
+					dev_AdaptiveBaseDigitSet[last6Index][thisDicIdx] = thisBipIdx;
 				}
 
+				//leave old algorithm working for now
+				Config.words_indicies_mnemonic[i] = thisBipIdx;
+
+				//Check if we are going to start from this word, make adjustments and print info messages
+				bool bStartsFromThisWord = (0 == strcmp(thisWord.c_str(), thisPosStartFromWord.c_str()));
+				if (!bStartsFromThisWord)
+					continue;
+
+				
+
+				std::ostringstream isAdaptiveStr;
+
+				isAdaptiveStr.str("");
+
+				if (last6Index >= 0) {
+					dev_AdaptiveBaseCurrentBatchInitialDigits[last6Index] = thisDicIdx;
+					isAdaptiveStr << "[Dynamic:" << thisPosDictCount << "]";
+				}
+				else if (thisPosDictCount == 1) {
+					isAdaptiveStr.str("[STATIC]");
+				}
+
+				std::cout << "Postition " << i << isAdaptiveStr.str() << " starts from word: " << thisWord << " at PosDictionary: " << thisDicIdx << " BIP: " << thisBipIdx << std::endl;
+
+				if (thisPosDictCount == 1) { //match in a single-word dictionary
+					int prev = i - 1;
+					if (prev == nLastKnownPos && thisBipIdx >= 0)
+						nLastKnownPos = i;
+				}			
 			}
 		}
 
