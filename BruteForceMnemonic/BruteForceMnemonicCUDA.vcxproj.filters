@@ -6,6 +6,7 @@
     <CudaCompile Include="Dispatcher.cu" />
     <CudaCompile Include="KernelStride.cu" />
     <CudaCompile Include="Helper.cu" />
+    <CudaCompile Include="AdaptiveBase.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GPU.h" />
@@ -13,6 +14,7 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="KernelStride.hpp" />
     <ClInclude Include="Helper.h" />
+    <ClInclude Include="AdaptiveBase.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="config.cfg" />

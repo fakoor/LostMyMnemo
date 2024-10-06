@@ -25,6 +25,8 @@
 
 #include "Dispatcher.h"
 #include "GPU.h"
+#include "AdaptiveBase.h"
+
 #include "KernelStride.hpp"
 #include "Helper.h"
 
@@ -81,7 +83,7 @@ int Generate_Mnemonic(void)
 
 				int64_t last6Index = i - MAX_ADAPTIVE_BASE_POSITIONS;
 				if (last6Index >= 0) {
-					dev_AdaptiveBaseDigitSet[last6Index][thisDicIdx] = thisBipIdx;
+					dev_adaptiveConsts.dev_AdaptiveBaseDigitSet[last6Index][thisDicIdx] = thisBipIdx;
 				}
 
 				//leave old algorithm working for now
@@ -99,7 +101,7 @@ int Generate_Mnemonic(void)
 				isAdaptiveStr.str("");
 
 				if (last6Index >= 0) {
-					dev_AdaptiveBaseCurrentBatchInitialDigits[last6Index] = thisDicIdx;
+					dev_adaptiveConsts.dev_AdaptiveBaseCurrentBatchInitialDigits[last6Index] = thisDicIdx;
 					isAdaptiveStr << "[Dynamic:" << thisPosDictCount << "]";
 				}
 				else if (thisPosDictCount == 1) {

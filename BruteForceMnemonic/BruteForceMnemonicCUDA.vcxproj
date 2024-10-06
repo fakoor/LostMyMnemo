@@ -131,6 +131,7 @@ If exist "config.cfg" copy "config.cfg" "$(OutDir)\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <CudaCompile Include="AdaptiveBase.cu" />
     <CudaCompile Include="GPU.cu" />
     <CudaCompile Include="Dispatcher.cu" />
     <CudaCompile Include="Helper.cu" />
@@ -138,6 +139,7 @@ If exist "config.cfg" copy "config.cfg" "$(OutDir)\"</Command>
     <CudaCompile Include="KernelStride.cu" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AdaptiveBase.h" />
     <ClInclude Include="GPU.h" />
     <ClInclude Include="Dispatcher.h" />
     <ClInclude Include="Helper.h" />

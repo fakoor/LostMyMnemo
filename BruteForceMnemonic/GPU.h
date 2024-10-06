@@ -15,29 +15,37 @@
 #include "device_launch_parameters.h"
 
 
-#define MAX_ADAPTIVE_BASE_POSITIONS 6
-#define MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION 262
+extern __constant__ uint8_t salt_swap[16];
+extern __constant__ uint8_t key_swap[16];
 
-extern __constant__ int16_t dev_AdaptiveBaseDigitCarryTrigger[MAX_ADAPTIVE_BASE_POSITIONS];
-extern __constant__ int16_t dev_AdaptiveBaseDigitSet[MAX_ADAPTIVE_BASE_POSITIONS][MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION];
-extern __constant__ int16_t dev_AdaptiveBaseCurrentBatchInitialDigits[MAX_ADAPTIVE_BASE_POSITIONS];
+typedef struct {
+	uint8_t key[32];
+	uint8_t chain_code[32];
+} extended_private_key_t;
 
-extern __device__ uint64_t dev_largestBatchIncrementProcessed;
-extern __device__ int16_t dev_largestBatchDigitsAchieved[MAX_ADAPTIVE_BASE_POSITIONS];
-
-extern __constant__ uint64_t dev_EntropyAbsolutePrefix64;
-extern __constant__ uint64_t dev_EntropyBatchNext24; //Per-Batch Const
-
-extern __device__ uint64_t dev_CompletedBatches0;
+typedef struct {
+	uint8_t key[64];
+	uint8_t chain_code[32];
+} extended_public_key_t;
 
 
+__device__
+void entropy_to_mnemonic(const uint64_t* gl_entropy, uint8_t* mnemonic_phrase);
 
-__global__ void gl_DictionaryAttack(
-	const uint64_t* __restrict__ entropy,
-	const tableStruct* __restrict__ tables_legacy,
-	const tableStruct* __restrict__ tables_segwit,
-	const tableStruct* __restrict__ tables_native_segwit,
-	retStruct* __restrict__ ret
+
+__device__
+ uint64_t SWAP512(uint64_t val);
+
+__device__
+ void sha512_swap(uint64_t* input, const uint32_t length, uint64_t* hash);
+
+__device__ void key_to_hash160(
+	const extended_private_key_t* master_private,
+	const tableStruct* tables_legacy,
+	const tableStruct* tables_segwit,
+	const tableStruct* tables_native_segwit,
+	const uint32_t* mnemonic,
+	retStruct* ret
 );
 
 
