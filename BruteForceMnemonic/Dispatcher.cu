@@ -43,6 +43,8 @@
 
 
 
+
+
 static std::thread save_thread;
 
 int Generate_Mnemonic(void)
@@ -61,16 +63,17 @@ int Generate_Mnemonic(void)
 		int nLastKnownPos = -1;
 		std::vector<int> validIndexListPerPos[NUM_WORDS_MNEMONIC];
 
-		for (int i = 0; i < NUM_WORDS_MNEMONIC; i++) {
+		for (int nemoIter = 0; nemoIter < NUM_WORDS_MNEMONIC; nemoIter++) {
 			int16_t thisPosBipStarting;
-			std::string thisPosStartFromWord = startFrom[i];
+			std::string thisPosStartFromWord = startFrom[nemoIter];
 			tools::GetSingleWordIndex(thisPosStartFromWord, &thisPosBipStarting);
 			int16_t thisPosDicStarting = -1;
 
 
 
-			std::vector<std::string> thisPos = tools::SplitWords(Config.dynamic_words[i]);
+			std::vector<std::string> thisPos = tools::SplitWords(Config.dynamic_words[nemoIter]);
 			int thisPosDictCount = thisPos.size();
+
 
 			for (int thisDicIdx = 0; thisDicIdx < thisPosDictCount; thisDicIdx++) {
 				
@@ -81,13 +84,14 @@ int Generate_Mnemonic(void)
 				int16_t thisBipIdx;
 				tools::GetSingleWordIndex(thisWord, &thisBipIdx);
 
-				int64_t last6Index = i - MAX_ADAPTIVE_BASE_POSITIONS;
-				if (last6Index >= 0) {
-					dev_adaptiveConsts.dev_AdaptiveBaseDigitSet[last6Index][thisDicIdx] = thisBipIdx;
+				int64_t adaptivePortionIdx = nemoIter - MAX_ADAPTIVE_BASE_POSITIONS;
+				if (adaptivePortionIdx >= 0) {
+					host_adaptiveConsts.dev_AdaptiveBaseDigitSet[adaptivePortionIdx][thisDicIdx] = thisBipIdx;
+					host_adaptiveConsts.dev_AdaptiveBaseDigitCarryTrigger[nemoIter] = thisPosDictCount;
 				}
 
 				//leave old algorithm working for now
-				Config.words_indicies_mnemonic[i] = thisBipIdx;
+				Config.words_indicies_mnemonic[nemoIter] = thisBipIdx;
 
 				//Check if we are going to start from this word, make adjustments and print info messages
 				bool bStartsFromThisWord = (0 == strcmp(thisWord.c_str(), thisPosStartFromWord.c_str()));
@@ -100,20 +104,20 @@ int Generate_Mnemonic(void)
 
 				isAdaptiveStr.str("");
 
-				if (last6Index >= 0) {
-					dev_adaptiveConsts.dev_AdaptiveBaseCurrentBatchInitialDigits[last6Index] = thisDicIdx;
+				if (adaptivePortionIdx >= 0) {
+					host_adaptiveConsts.dev_AdaptiveBaseCurrentBatchInitialDigits[adaptivePortionIdx] = thisDicIdx;
 					isAdaptiveStr << "[Dynamic:" << thisPosDictCount << "]";
 				}
 				else if (thisPosDictCount == 1) {
 					isAdaptiveStr.str("[STATIC]");
 				}
 
-				std::cout << "Postition " << i << isAdaptiveStr.str() << " starts from word: " << thisWord << " at PosDictionary: " << thisDicIdx << " BIP: " << thisBipIdx << std::endl;
+				std::cout << "Postition " << nemoIter << isAdaptiveStr.str() << " starts from word: " << thisWord << " at PosDictionary: " << thisDicIdx << " BIP: " << thisBipIdx << std::endl;
 
 				if (thisPosDictCount == 1) { //match in a single-word dictionary
-					int prev = i - 1;
+					int prev = nemoIter - 1;
 					if (prev == nLastKnownPos && thisBipIdx >= 0)
-						nLastKnownPos = i;
+						nLastKnownPos = nemoIter;
 				}			
 			}
 		}
@@ -276,12 +280,25 @@ int Generate_Mnemonic(void)
 		goto Error;
 	}
 
-	
-	//if (cudaMemcpyToSymbol(&dev_EntropyAbsolutePrefix64, &Config.num_paths, 8, 0, cudaMemcpyHostToDevice) != cudaSuccess)
-	//{
-	//	std::cerr << "cudaMemcpyToSymbol to dev_EntropyAbsolutePrefix64 failed!" << std::endl;
-	//	goto Error;
-	//}
+
+	int16_t curDigits[MAX_ADAPTIVE_BASE_POSITIONS];
+	uint64_t initEntropy[2];
+	uint8_t reqChecksum;
+
+	AdaptiveDigitsToEntropy(host_EntropyAbsolutePrefix64,&host_adaptiveConsts
+		, host_adaptiveConsts.dev_AdaptiveBaseCurrentBatchInitialDigits
+		, initEntropy, &reqChecksum);
+
+	host_EntropyAbsolutePrefix64[0] = initEntropy[0];
+	host_adaptiveConsts.dev_EntropyBatchNext24 = initEntropy[1] & 0xFFFFFF0000000000ULL;
+
+	size_t copySize = sizeof(uint64_t);
+	cudaError cudaResult = cudaMemcpyToSymbol(dev_EntropyAbsolutePrefix64, host_EntropyAbsolutePrefix64, 8, 0, cudaMemcpyHostToDevice);
+	if ( cudaResult != cudaSuccess)
+	{
+		std::cerr << "cudaMemcpyToSymbol copying "<< copySize <<" bytes to dev_EntropyAbsolutePrefix64 failed!: " << cudaResult << std::endl;
+		goto Error;
+	}
 
 
 	if (bCfgUseOldMethod == false){
