@@ -183,8 +183,8 @@ int Generate_Mnemonic(void)
 	}
 	}
 
-	bool bCfgSaveResultsIntoFile = Config.save_generation_result_in_file == "yes";
-	bool bCfgUseOldMethod = Config.use_old_random_method == "yes";
+	bool bCfgSaveResultsIntoFile = (Config.save_generation_result_in_file == "yes")?true:false;
+	bool bCfgUseOldMethod = (Config.use_old_random_method == "yes")?true:false;
 
 
 	if (bCfgUseOldMethod) {
@@ -228,7 +228,6 @@ int Generate_Mnemonic(void)
 
 	std::cout << "START GENERATE ADDRESSES!" << std::endl;
 	std::cout << "PATH: " << std::endl;
-	std::cout << "Using old method: " << bCfgUseOldMethod << std::endl;
 
 	if (bCfgUseOldMethod) {
 		if (Config.generate_path[0] != 0) std::cout << "m/0/0.." << (Config.num_child_addresses - 1) << std::endl;
@@ -276,11 +275,49 @@ int Generate_Mnemonic(void)
 	}
 
 
-	for (uint64_t step = 0; step < Config.number_of_generated_mnemonics / (Data->wallets_in_round_gpu); step++)
-	{
-		tools::start_time();
+	if (bCfgUseOldMethod == false){
+		std::cout << "Using NEW method (bCfgUseOldMethod=" << bCfgUseOldMethod<< ")." << std::endl;
 
-		if (bCfgUseOldMethod) {
+		for (uint64_t step = 0; step < Config.number_of_generated_mnemonics / (Data->wallets_in_round_gpu); step++)
+		{
+			tools::start_time();
+
+			if (Stride->startDictionaryAttack(Config.cuda_grid, Config.cuda_block) != 0) {
+				std::cerr << "Error START!!" << std::endl;
+				goto Error;
+			}
+
+			//TODO: Here we should create incremental task : /here
+			tools::generateRandomUint64Buffer(Data->host.entropy, Data->size_entropy_buf / (sizeof(uint64_t)));
+
+			if (save_thread.joinable()) save_thread.join();
+
+			if (Stride->endDictionaryAttack() != 0) {
+				std::cerr << "Error END!!" << std::endl;
+				goto Error;
+			}
+
+			if (bCfgSaveResultsIntoFile) {
+				save_thread = std::thread(&tools::saveResult, (char*)Data->host.mnemonic, (uint8_t*)Data->host.hash160, Data->wallets_in_round_gpu, Data->num_all_childs, Data->num_childs, Config.generate_path);
+				//tools::saveResult((char*)Data->host.mnemonic, (uint8_t*)Data->host.hash160, Data->wallets_in_round_gpu, Data->num_all_childs, Data->num_childs, Config.generate_path);
+			}
+
+			tools::checkResult(Data->host.ret);
+
+			float delay;
+			tools::stop_time_and_calc_sec(&delay);
+			std::cout << "\rGENERATE: " << tools::formatWithCommas((double)Data->wallets_in_round_gpu / delay) << " MNEMONICS/SEC AND "
+				<< tools::formatWithCommas((double)(Data->wallets_in_round_gpu * Data->num_all_childs) / delay) << " ADDRESSES/SEC"
+				<< " | SCAN: " << tools::formatPrefix((double)(Data->wallets_in_round_gpu * Data->num_all_childs * num_addresses_in_tables) / delay) << " ADDRESSES/SEC"
+				<< " | ROUND: " << step;
+
+		}//for (step)
+	}
+	else {
+		for (uint64_t step = 0; step < Config.number_of_generated_mnemonics / (Data->wallets_in_round_gpu); step++)
+		{
+			tools::start_time();
+
 			if (bCfgSaveResultsIntoFile) {
 				if (Stride->start_for_save(Config.cuda_grid, Config.cuda_block) != 0) {
 					std::cerr << "Error START!!" << std::endl;
@@ -294,20 +331,12 @@ int Generate_Mnemonic(void)
 					goto Error;
 				}
 			}
-		}
-		else {
-			if (Stride->startDictionaryAttack(Config.cuda_grid, Config.cuda_block) != 0) {
-				std::cerr << "Error START!!" << std::endl;
-				goto Error;
-			}
-		}
 
-		//TODO: Here we should create incremental task : /here
-		tools::generateRandomUint64Buffer(Data->host.entropy, Data->size_entropy_buf / (sizeof(uint64_t)));
+			//TODO: Here we should create incremental task : /here
+			tools::generateRandomUint64Buffer(Data->host.entropy, Data->size_entropy_buf / (sizeof(uint64_t)));
 
-		if (save_thread.joinable()) save_thread.join();
+			if (save_thread.joinable()) save_thread.join();
 
-		if (bCfgUseOldMethod) {
 			if (bCfgSaveResultsIntoFile) {
 				if (Stride->end_for_save() != 0) {
 					std::cerr << "Error END!!" << std::endl;
@@ -321,29 +350,25 @@ int Generate_Mnemonic(void)
 					goto Error;
 				}
 			}
-		}
-		else {
-			if (Stride->endDictionaryAttack() != 0) {
-				std::cerr << "Error END!!" << std::endl;
-				goto Error;
+			
+
+			if (bCfgSaveResultsIntoFile) {
+				save_thread = std::thread(&tools::saveResult, (char*)Data->host.mnemonic, (uint8_t*)Data->host.hash160, Data->wallets_in_round_gpu, Data->num_all_childs, Data->num_childs, Config.generate_path);
+				//tools::saveResult((char*)Data->host.mnemonic, (uint8_t*)Data->host.hash160, Data->wallets_in_round_gpu, Data->num_all_childs, Data->num_childs, Config.generate_path);
 			}
-		}
 
-		if (bCfgSaveResultsIntoFile) {
-			save_thread = std::thread(&tools::saveResult, (char*)Data->host.mnemonic, (uint8_t*)Data->host.hash160, Data->wallets_in_round_gpu, Data->num_all_childs, Data->num_childs, Config.generate_path);
-			//tools::saveResult((char*)Data->host.mnemonic, (uint8_t*)Data->host.hash160, Data->wallets_in_round_gpu, Data->num_all_childs, Data->num_childs, Config.generate_path);
-		}
+			tools::checkResult(Data->host.ret);
 
-		tools::checkResult(Data->host.ret);
+			float delay;
+			tools::stop_time_and_calc_sec(&delay);
+			std::cout << "\rGENERATE: " << tools::formatWithCommas((double)Data->wallets_in_round_gpu / delay) << " MNEMONICS/SEC AND "
+				<< tools::formatWithCommas((double)(Data->wallets_in_round_gpu * Data->num_all_childs) / delay) << " ADDRESSES/SEC"
+				<< " | SCAN: " << tools::formatPrefix((double)(Data->wallets_in_round_gpu * Data->num_all_childs * num_addresses_in_tables) / delay) << " ADDRESSES/SEC"
+				<< " | ROUND: " << step;
 
-		float delay;
-		tools::stop_time_and_calc_sec(&delay);
-		std::cout << "\rGENERATE: " << tools::formatWithCommas((double)Data->wallets_in_round_gpu / delay) << " MNEMONICS/SEC AND "
-			<< tools::formatWithCommas((double)(Data->wallets_in_round_gpu * Data->num_all_childs) / delay) << " ADDRESSES/SEC"
-			<< " | SCAN: " << tools::formatPrefix((double)(Data->wallets_in_round_gpu * Data->num_all_childs * num_addresses_in_tables) / delay) << " ADDRESSES/SEC"
-			<< " | ROUND: " << step;
+		}//for (step)
 
-	}//for (step)
+	}
 
 	std::cout << "\n\nEND!" << std::endl;
 	if (save_thread.joinable()) save_thread.join();
