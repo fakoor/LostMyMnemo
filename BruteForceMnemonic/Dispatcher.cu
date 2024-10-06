@@ -274,6 +274,13 @@ int Generate_Mnemonic(void)
 		goto Error;
 	}
 
+	
+	//if (cudaMemcpyToSymbol(&dev_EntropyAbsolutePrefix64, &Config.num_paths, 8, 0, cudaMemcpyHostToDevice) != cudaSuccess)
+	//{
+	//	std::cerr << "cudaMemcpyToSymbol to dev_EntropyAbsolutePrefix64 failed!" << std::endl;
+	//	goto Error;
+	//}
+
 
 	if (bCfgUseOldMethod == false){
 		std::cout << "Using NEW method (bCfgUseOldMethod=" << bCfgUseOldMethod<< ")." << std::endl;

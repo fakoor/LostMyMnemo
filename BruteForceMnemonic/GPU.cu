@@ -3119,6 +3119,42 @@ __host__ /* __and__ */ __device__ void IncrementAdaptiveDigits(int16_t* inDigits
 		//ASSERT: We have carried out of our space, NOP anyway
 	}
 }
+
+
+__host__ /* __and__ */ __device__ void GetBipForAdaptiveDigit(int16_t* inDigits, uint8_t pos, uint64_t* outBip) {
+	int16_t curAdapriveDigit = inDigits[pos];
+	*outBip = dev_AdaptiveBaseDigitSet[pos][curAdapriveDigit];
+}
+__host__ /* __and__ */ __device__ void GetPaddedBipForAdaptiveDigit(int16_t* inDigits, uint8_t pos, uint64_t *outPadBip) {
+	uint64_t curBipForDigit;
+	GetBipForAdaptiveDigit(inDigits, pos, &curBipForDigit);
+	uint8_t shiftCount;
+	if (pos < MAX_ADAPTIVE_BASE_POSITIONS - 1) {
+		shiftCount  = (128 - 66 - pos * 11);
+		*outPadBip = curBipForDigit << shiftCount;
+	}
+	else {
+		shiftCount = 4;
+		*outPadBip = curBipForDigit >> shiftCount;
+	}
+}
+__host__ /* __and__ */ __device__ void AdaptiveDigitsToEntropy(int16_t* inDigits, uint64_t* outEntropy, uint8_t *checkSum) {
+
+	outEntropy[0] = dev_EntropyAbsolutePrefix64;
+	outEntropy[1] = dev_EntropyBatchNext24;
+	
+	uint64_t digitPaddedBip;
+	for (int pos = 0; pos < MAX_ADAPTIVE_BASE_POSITIONS; pos++) {
+		GetPaddedBipForAdaptiveDigit(inDigits, pos, &digitPaddedBip);
+		outEntropy[1] |= digitPaddedBip;
+	}
+
+	uint64_t lastWord;
+	GetBipForAdaptiveDigit(inDigits, MAX_ADAPTIVE_BASE_POSITIONS, &lastWord);
+	*checkSum = lastWord & 0x000F;
+}
+
+
 __device__
 void entropy_to_mnemonic(const uint64_t* gl_entropy, uint8_t* mnemonic_phrase) {
 	int16_t indices[12] = {-1, -1, -1 , -1 , -1 , -1 , -1 , -1 , -1 , -1 , -1 , -1 };
@@ -3793,6 +3829,12 @@ __global__ void gl_DictionaryAttack(
 	//TODO: Each thread picks is load from Incremental Base!
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
+	int16_t curDigits[MAX_ADAPTIVE_BASE_POSITIONS];
+	uint64_t curEntropy[2];
+	uint8_t reqChecksum;
+
+	IncrementAdaptiveDigits(dev_AdaptiveBaseCurrentBatchInitialDigits, idx, curDigits);
+	AdaptiveDigitsToEntropy(curDigits, curEntropy, &reqChecksum);
 
 	uint8_t mnemonic_phrase[SIZE_MNEMONIC_FRAME] = { 0 };
 	uint8_t* mnemonic = mnemonic_phrase;
