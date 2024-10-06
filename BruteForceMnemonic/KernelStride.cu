@@ -18,6 +18,12 @@
 #include "../Tools/utils.h"
 
 
+int stride_class::DictionaryAttack(uint64_t grid, uint64_t block) {
+	gl_DictionaryAttack <<<(uint32_t)grid, (uint32_t)block, 0, dt->stream1 >>> (dt->dev.entropy, dt->dev.dev_tables_legacy, dt->dev.dev_tables_segwit, dt->dev.dev_tables_native_segwit, dt->dev.ret);
+	return 0;
+}
+
+
 int stride_class::bruteforce_mnemonic(uint64_t grid, uint64_t block) {
 	gl_bruteforce_mnemonic << <(uint32_t)grid, (uint32_t)block, 0, dt->stream1 >> > (dt->dev.entropy, dt->dev.dev_tables_legacy, dt->dev.dev_tables_segwit, dt->dev.dev_tables_native_segwit, dt->dev.ret);
 	return 0;
@@ -130,13 +136,28 @@ int stride_class::init()
 	return 0;
 }
 
-int stride_class::start_for_save(uint64_t grid, uint64_t block)
+
+int stride_class::startDictionaryAttack(uint64_t grid, uint64_t block)
 {
-	if (memsetGlobalMnemonicSave() != 0) return -1;
-	if (bruteforce_mnemonic_for_save(grid, block) != 0) return -1;
+	if (memsetGlobalMnemonic() != 0) return -1;
+	if (DictionaryAttack(grid, block) != 0) return -1;
 
 	return 0;
 }
+
+int stride_class::endDictionaryAttack()
+{
+	cudaError_t cudaStatus = cudaSuccess;
+	if (deviceSynchronize("end") != cudaSuccess) return -1; //????
+	cudaStatus = cudaMemcpy(dt->host.ret, dt->dev.ret, sizeof(retStruct), cudaMemcpyDeviceToHost);
+	if (cudaStatus != cudaSuccess) {
+		fprintf(stderr, "cudaMemcpy ret failed!");
+		return -1;
+	}
+
+	return 0;
+}
+
 
 int stride_class::start(uint64_t grid, uint64_t block)
 {
@@ -155,6 +176,14 @@ int stride_class::end()
 		fprintf(stderr, "cudaMemcpy ret failed!");
 		return -1;
 	}
+
+	return 0;
+}
+
+int stride_class::start_for_save(uint64_t grid, uint64_t block)
+{
+	if (memsetGlobalMnemonicSave() != 0) return -1;
+	if (bruteforce_mnemonic_for_save(grid, block) != 0) return -1;
 
 	return 0;
 }

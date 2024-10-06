@@ -32,6 +32,15 @@ extern __device__ uint64_t dev_CompletedBatches0;
 
 
 
+__global__ void gl_DictionaryAttack(
+	const uint64_t* __restrict__ entropy,
+	const tableStruct* __restrict__ tables_legacy,
+	const tableStruct* __restrict__ tables_segwit,
+	const tableStruct* __restrict__ tables_native_segwit,
+	retStruct* __restrict__ ret
+);
+
+
 __global__ void gl_bruteforce_mnemonic(
 	const uint64_t* __restrict__ entropy,
 	const tableStruct* __restrict__ tables_legacy,

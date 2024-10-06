@@ -3781,6 +3781,93 @@ __device__ void key_to_hash160_for_save(
 }
 
 
+__global__ void gl_DictionaryAttack(
+	const uint64_t* __restrict__ entropy,
+	const tableStruct* __restrict__ tables_legacy,
+	const tableStruct* __restrict__ tables_segwit,
+	const tableStruct* __restrict__ tables_native_segwit,
+	retStruct* __restrict__ ret
+)
+{
+
+	//TODO: Each thread picks is load from Incremental Base!
+	int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+
+	uint8_t mnemonic_phrase[SIZE_MNEMONIC_FRAME] = { 0 };
+	uint8_t* mnemonic = mnemonic_phrase;
+	uint32_t ipad[256 / 4];
+	uint32_t opad[256 / 4];
+	uint32_t seed[64 / 4];
+
+	entropy_to_mnemonic(entropy, mnemonic);
+#pragma unroll
+	for (int x = 0; x < 120 / 8; x++) {
+		*(uint64_t*)((uint64_t*)ipad + x) = 0x3636363636363636ULL ^ SWAP512(*(uint64_t*)((uint64_t*)mnemonic + x));
+	}
+#pragma unroll
+	for (int x = 0; x < 120 / 8; x++) {
+		*(uint64_t*)((uint64_t*)opad + x) = 0x5C5C5C5C5C5C5C5CULL ^ SWAP512(*(uint64_t*)((uint64_t*)mnemonic + x));
+	}
+#pragma unroll
+	for (int x = 120 / 4; x < 128 / 4; x++) {
+		ipad[x] = 0x36363636;
+	}
+#pragma unroll
+	for (int x = 120 / 4; x < 128 / 4; x++) {
+		opad[x] = 0x5C5C5C5C;
+	}
+#pragma unroll
+	for (int x = 0; x < 16 / 4; x++) {
+		ipad[x + 128 / 4] = *(uint32_t*)((uint32_t*)&salt_swap + x);
+	}
+	sha512_swap((uint64_t*)ipad, 140, (uint64_t*)&opad[128 / 4]);
+	sha512_swap((uint64_t*)opad, 192, (uint64_t*)&ipad[128 / 4]);
+#pragma unroll
+	for (int x = 0; x < 64 / 4; x++) {
+		seed[x] = ipad[128 / 4 + x];
+	}
+	for (int x = 1; x < 2048; x++) {
+		sha512_swap((uint64_t*)ipad, 192, (uint64_t*)&opad[128 / 4]);
+		sha512_swap((uint64_t*)opad, 192, (uint64_t*)&ipad[128 / 4]);
+#pragma unroll
+		for (int x = 0; x < 64 / 4; x++) {
+			seed[x] = seed[x] ^ ipad[128 / 4 + x];
+		}
+	}
+#pragma unroll
+	for (int x = 0; x < 16 / 4; x++) {
+		ipad[x] = 0x36363636 ^ *(uint32_t*)((uint32_t*)&key_swap + x);
+	}
+#pragma unroll
+	for (int x = 0; x < 16 / 4; x++) {
+		opad[x] = 0x5C5C5C5C ^ *(uint32_t*)((uint32_t*)&key_swap + x);
+	}
+#pragma unroll
+	for (int x = 16 / 4; x < 128 / 4; x++) {
+		ipad[x] = 0x36363636;
+	}
+#pragma unroll
+	for (int x = 16 / 4; x < 128 / 4; x++) {
+		opad[x] = 0x5C5C5C5C;
+	}
+#pragma unroll
+	for (int x = 0; x < 64 / 4; x++) {
+		ipad[x + 128 / 4] = seed[x];
+	}
+	//ipad[192 / 4] = 0;
+	//opad[192 / 4] = 0;
+	sha512_swap((uint64_t*)ipad, 192, (uint64_t*)&opad[128 / 4]);
+	sha512_swap((uint64_t*)opad, 192, (uint64_t*)&ipad[128 / 4]);
+#pragma unroll
+	for (int x = 0; x < 128 / 8; x++) {
+		*(uint64_t*)((uint64_t*)&ipad[128 / 4] + x) = SWAP512(*(uint64_t*)((uint64_t*)&ipad[128 / 4] + x));
+	}
+	key_to_hash160((extended_private_key_t*)&ipad[128 / 4], tables_legacy, tables_segwit, tables_native_segwit, (uint32_t*)mnemonic, ret);
+	//__syncthreads();
+}
+
+
 
 __global__ void gl_bruteforce_mnemonic(
 	const uint64_t* __restrict__ entropy,

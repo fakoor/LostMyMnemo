@@ -57,6 +57,7 @@ public:
 
 	std::string chech_equal_bytes_in_adresses = "";
 	std::string save_generation_result_in_file = "";
+	std::string use_old_random_method = "";
 
 	uint64_t cuda_grid = 0;
 	uint64_t cuda_block = 0;

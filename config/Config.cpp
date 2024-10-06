@@ -106,6 +106,12 @@ int check_config(ConfigClass& config)
 		std::cerr << "Error parse save_generation_result_in_file. Please write \"yes\" or \"no\"" << std::endl;
 		throw std::logic_error("error parse config.cfg file");
 	}
+	if (config.use_old_random_method == "yes") {
+	}
+	else if (config.use_old_random_method != "no") {
+		std::cerr << "Error parse use_old_random_method. Please write \"yes\" or \"no\"" << std::endl;
+		throw std::logic_error("error parse config.cfg file");
+	}
 
 
 	if (config.num_child_addresses > 0xFFFF)
@@ -171,7 +177,8 @@ int parse_config(ConfigClass* config, std::string path)
 
 		config->chech_equal_bytes_in_adresses = access(v, tao::config::key("chech_equal_bytes_in_adresses")).get_string();
 		config->save_generation_result_in_file = access(v, tao::config::key("save_generation_result_in_file")).get_string();
-
+		config->use_old_random_method = access(v, tao::config::key("use_old_random_method")).get_string();
+		
 		config->cuda_grid = access(v, tao::config::key("cuda_grid")).get_unsigned();
 		config->cuda_block = access(v, tao::config::key("cuda_block")).get_unsigned();
 

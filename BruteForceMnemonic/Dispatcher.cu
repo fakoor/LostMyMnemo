@@ -45,7 +45,7 @@ static std::thread save_thread;
 
 int Generate_Mnemonic(void)
 {
-	std::cout << "Compile on Dates: " << __DATE__ << ", Time:" << __TIME__ << std::endl;
+	std::cout << "Compile on Date: " << __DATE__ << ", Time:" << __TIME__ << std::endl;
 
 	cudaError_t cudaStatus = cudaSuccess;
 	int err;
@@ -69,12 +69,13 @@ int Generate_Mnemonic(void)
 
 			std::vector<std::string> thisPos = tools::SplitWords(Config.dynamic_words[i]);
 			int thisPosDictCount = thisPos.size();
+
 			for (int thisDicIdx = 0; thisDicIdx < thisPosDictCount; thisDicIdx++) {
 				
 				std::string thisWord = thisPos[thisDicIdx];
 
 
-				//Fill the digit space for each adaptive base position (last 6 in our case)
+				//Fill the digit-space for each adaptive base position (last 6 in our case)
 				int16_t thisBipIdx;
 				tools::GetSingleWordIndex(thisWord, &thisBipIdx);
 
@@ -125,11 +126,11 @@ int Generate_Mnemonic(void)
 		uint64_t number_of_generated_mnemonics = (Config.number_of_generated_mnemonics / (Config.cuda_block * Config.cuda_grid)) * (Config.cuda_block * Config.cuda_grid);
 		if ((Config.number_of_generated_mnemonics % (Config.cuda_block * Config.cuda_grid)) != 0) number_of_generated_mnemonics += Config.cuda_block * Config.cuda_grid;
 		Config.number_of_generated_mnemonics = number_of_generated_mnemonics;	
-	}
+	}//try
 	catch (...) {
 		for (;;)
 			std::this_thread::sleep_for(std::chrono::seconds(30));
-	}
+	}//catch
 
 
 	devicesInfo();
@@ -181,34 +182,39 @@ int Generate_Mnemonic(void)
 		goto Error;
 	}
 	}
-#if DONT
-	if ((Config.generate_path[6] != 0) || (Config.generate_path[7] != 0))
-	{
-		std::cout << "READ TABLES SEGWIT(BIP49)..." << std::endl;
-		err = tools::readAllTables(Data->host.tables_segwit, Config.folder_tables_segwit, "", &num_addresses_in_tables);
-		if (err == -1) {
-			std::cerr << "Error readAllTables segwit!" << std::endl;
+
+	bool bCfgSaveResultsIntoFile = Config.save_generation_result_in_file == "yes";
+	bool bCfgUseOldMethod = Config.use_old_random_method == "yes";
+
+
+	if (bCfgUseOldMethod) {
+		if ((Config.generate_path[6] != 0) || (Config.generate_path[7] != 0))
+		{
+			std::cout << "READ TABLES SEGWIT(BIP49)..." << std::endl;
+			err = tools::readAllTables(Data->host.tables_segwit, Config.folder_tables_segwit, "", &num_addresses_in_tables);
+			if (err == -1) {
+				std::cerr << "Error readAllTables segwit!" << std::endl;
+				goto Error;
+			}
+		}
+		if ((Config.generate_path[8] != 0) || (Config.generate_path[9] != 0))
+		{
+			std::cout << "READ TABLES NATIVE SEGWIT(BIP84)..." << std::endl;
+			err = tools::readAllTables(Data->host.tables_native_segwit, Config.folder_tables_native_segwit, "", &num_addresses_in_tables);
+			if (err == -1) {
+				std::cerr << "Error readAllTables native segwit!" << std::endl;
+				goto Error;
+			}
+		}
+		std::cout << std::endl << std::endl;
+
+		if (num_addresses_in_tables == 0) {
+			std::cerr << "ERROR READ TABLES!! NO ADDRESSES IN FILES!!" << std::endl;
 			goto Error;
 		}
 	}
-	if ((Config.generate_path[8] != 0) || (Config.generate_path[9] != 0))
-	{
-		std::cout << "READ TABLES NATIVE SEGWIT(BIP84)..." << std::endl;
-		err = tools::readAllTables(Data->host.tables_native_segwit, Config.folder_tables_native_segwit, "", &num_addresses_in_tables);
-		if (err == -1) {
-			std::cerr << "Error readAllTables native segwit!" << std::endl;
-			goto Error;
-		}
-	}
-	std::cout << std::endl << std::endl;
 
-	if (num_addresses_in_tables == 0) {
-		std::cerr << "ERROR READ TABLES!! NO ADDRESSES IN FILES!!" << std::endl;
-		goto Error;
-	}
-
-#endif //DONT
-	if (Data->malloc(Config.cuda_grid, Config.cuda_block, Config.num_paths, Config.num_child_addresses, Config.save_generation_result_in_file == "yes" ? true : false) != 0) {
+	if (Data->malloc(Config.cuda_grid, Config.cuda_block, Config.num_paths, Config.num_child_addresses, bCfgSaveResultsIntoFile) != 0) {
 		std::cerr << "Error Data->malloc()!" << std::endl;
 		goto Error;
 	}
@@ -222,16 +228,23 @@ int Generate_Mnemonic(void)
 
 	std::cout << "START GENERATE ADDRESSES!" << std::endl;
 	std::cout << "PATH: " << std::endl;
-	if (Config.generate_path[0] != 0) std::cout << "m/0/0.." << (Config.num_child_addresses - 1) << std::endl;
-	if (Config.generate_path[1] != 0) std::cout << "m/1/0.." << (Config.num_child_addresses - 1) << std::endl;
-	if (Config.generate_path[2] != 0) std::cout << "m/0/0/0.." << (Config.num_child_addresses - 1) << std::endl;
-	if (Config.generate_path[3] != 0) std::cout << "m/0/1/0.." << (Config.num_child_addresses - 1) << std::endl;
+	std::cout << "Using old method: " << bCfgUseOldMethod << std::endl;
+
+	if (bCfgUseOldMethod) {
+		if (Config.generate_path[0] != 0) std::cout << "m/0/0.." << (Config.num_child_addresses - 1) << std::endl;
+		if (Config.generate_path[1] != 0) std::cout << "m/1/0.." << (Config.num_child_addresses - 1) << std::endl;
+		if (Config.generate_path[2] != 0) std::cout << "m/0/0/0.." << (Config.num_child_addresses - 1) << std::endl;
+		if (Config.generate_path[3] != 0) std::cout << "m/0/1/0.." << (Config.num_child_addresses - 1) << std::endl;
+	}
 	if (Config.generate_path[4] != 0) std::cout << "m/44'/0'/0'/0/0.." << (Config.num_child_addresses - 1) << std::endl;
-	if (Config.generate_path[5] != 0) std::cout << "m/44'/0'/0'/1/0.." << (Config.num_child_addresses - 1) << std::endl;
-	if (Config.generate_path[6] != 0) std::cout << "m/49'/0'/0'/0/0.." << (Config.num_child_addresses - 1) << std::endl;
-	if (Config.generate_path[7] != 0) std::cout << "m/49'/0'/0'/1/0.." << (Config.num_child_addresses - 1) << std::endl;
-	if (Config.generate_path[8] != 0) std::cout << "m/84'/0'/0'/0/0.." << (Config.num_child_addresses - 1) << std::endl;
-	if (Config.generate_path[9] != 0) std::cout << "m/84'/0'/0'/1/0.." << (Config.num_child_addresses - 1) << std::endl;
+
+	if (bCfgUseOldMethod) {
+		if (Config.generate_path[5] != 0) std::cout << "m/44'/0'/0'/1/0.." << (Config.num_child_addresses - 1) << std::endl;
+		if (Config.generate_path[6] != 0) std::cout << "m/49'/0'/0'/0/0.." << (Config.num_child_addresses - 1) << std::endl;
+		if (Config.generate_path[7] != 0) std::cout << "m/49'/0'/0'/1/0.." << (Config.num_child_addresses - 1) << std::endl;
+		if (Config.generate_path[8] != 0) std::cout << "m/84'/0'/0'/0/0.." << (Config.num_child_addresses - 1) << std::endl;
+		if (Config.generate_path[9] != 0) std::cout << "m/84'/0'/0'/1/0.." << (Config.num_child_addresses - 1) << std::endl;
+	}
 	std::cout << "\nGENERATE " << tools::formatWithCommas(Config.number_of_generated_mnemonics) << " MNEMONICS. " << tools::formatWithCommas(Config.number_of_generated_mnemonics * Data->num_all_childs) << " ADDRESSES. MNEMONICS IN ROUNDS " << tools::formatWithCommas(Data->wallets_in_round_gpu) << ". WAIT...\n\n";
 
 	//TODO: Here we should create incremental task: /or here
@@ -267,15 +280,23 @@ int Generate_Mnemonic(void)
 	{
 		tools::start_time();
 
-		if (Config.save_generation_result_in_file == "yes") {
-			if (Stride->start_for_save(Config.cuda_grid, Config.cuda_block) != 0) {
-				std::cerr << "Error START!!" << std::endl;
-				goto Error;
+		if (bCfgUseOldMethod) {
+			if (bCfgSaveResultsIntoFile) {
+				if (Stride->start_for_save(Config.cuda_grid, Config.cuda_block) != 0) {
+					std::cerr << "Error START!!" << std::endl;
+					goto Error;
+				}
+			}
+			else
+			{
+				if (Stride->start(Config.cuda_grid, Config.cuda_block) != 0) {
+					std::cerr << "Error START!!" << std::endl;
+					goto Error;
+				}
 			}
 		}
-		else
-		{
-			if (Stride->start(Config.cuda_grid, Config.cuda_block) != 0) {
+		else {
+			if (Stride->startDictionaryAttack(Config.cuda_grid, Config.cuda_block) != 0) {
 				std::cerr << "Error START!!" << std::endl;
 				goto Error;
 			}
@@ -286,21 +307,29 @@ int Generate_Mnemonic(void)
 
 		if (save_thread.joinable()) save_thread.join();
 
-		if (Config.save_generation_result_in_file == "yes") {
-			if (Stride->end_for_save() != 0) {
-				std::cerr << "Error END!!" << std::endl;
-				goto Error;
+		if (bCfgUseOldMethod) {
+			if (bCfgSaveResultsIntoFile) {
+				if (Stride->end_for_save() != 0) {
+					std::cerr << "Error END!!" << std::endl;
+					goto Error;
+				}
+			}
+			else
+			{
+				if (Stride->end() != 0) {
+					std::cerr << "Error END!!" << std::endl;
+					goto Error;
+				}
 			}
 		}
-		else
-		{
-			if (Stride->end() != 0) {
+		else {
+			if (Stride->endDictionaryAttack() != 0) {
 				std::cerr << "Error END!!" << std::endl;
 				goto Error;
 			}
 		}
 
-		if (Config.save_generation_result_in_file == "yes") {
+		if (bCfgSaveResultsIntoFile) {
 			save_thread = std::thread(&tools::saveResult, (char*)Data->host.mnemonic, (uint8_t*)Data->host.hash160, Data->wallets_in_round_gpu, Data->num_all_childs, Data->num_childs, Config.generate_path);
 			//tools::saveResult((char*)Data->host.mnemonic, (uint8_t*)Data->host.hash160, Data->wallets_in_round_gpu, Data->num_all_childs, Data->num_childs, Config.generate_path);
 		}
@@ -314,7 +343,8 @@ int Generate_Mnemonic(void)
 			<< " | SCAN: " << tools::formatPrefix((double)(Data->wallets_in_round_gpu * Data->num_all_childs * num_addresses_in_tables) / delay) << " ADDRESSES/SEC"
 			<< " | ROUND: " << step;
 
-	}
+	}//for (step)
+
 	std::cout << "\n\nEND!" << std::endl;
 	if (save_thread.joinable()) save_thread.join();
 	// cudaDeviceReset must be called before exiting in order for profiling and
