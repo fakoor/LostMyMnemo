@@ -292,13 +292,26 @@ int Generate_Mnemonic(void)
 	host_EntropyAbsolutePrefix64[0] = initEntropy[0];
 	host_adaptiveConsts.dev_EntropyBatchNext24 = initEntropy[1] & 0xFFFFFF0000000000ULL;
 
-	size_t copySize = sizeof(uint64_t);
-	cudaError cudaResult = cudaMemcpyToSymbol(dev_EntropyAbsolutePrefix64, host_EntropyAbsolutePrefix64, 8, 0, cudaMemcpyHostToDevice);
+
+	size_t copySize;
+	cudaError cudaResult;
+	copySize = 8;
+	cudaResult = cudaMemcpyToSymbol(dev_EntropyAbsolutePrefix64, host_EntropyAbsolutePrefix64, copySize, 0, cudaMemcpyHostToDevice);
 	if ( cudaResult != cudaSuccess)
 	{
 		std::cerr << "cudaMemcpyToSymbol copying "<< copySize <<" bytes to dev_EntropyAbsolutePrefix64 failed!: " << cudaResult << std::endl;
 		goto Error;
 	}
+
+	//copySize = sizeof(AdaptiveStructConstType);
+	//void* ptr1 = &dev_adaptiveConsts;
+	//void* ptr2 = &host_adaptiveConsts;
+	//cudaResult = cudaMemcpyToSymbol(ptr2, ptr1, 8, 0, cudaMemcpyHostToDevice);
+	//if (cudaResult != cudaSuccess)
+	//{
+	//	std::cerr << "cudaMemcpyToSymbol copying " << copySize << " bytes to dev_adaptiveConsts failed!: " << cudaResult << std::endl;
+	//	goto Error;
+	//}
 
 
 	if (bCfgUseOldMethod == false){
