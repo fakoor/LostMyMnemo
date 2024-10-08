@@ -49,7 +49,7 @@ static std::thread save_thread;
 
 int Generate_Mnemonic(void)
 {
-	std::cout << "Compile on Date: " << __DATE__ << ", Time:" << __TIME__ << std::endl;
+	std::cout << "Compile on Date** : " << __DATE__ << ", Time:" << __TIME__ << std::endl;
 
 	cudaError_t cudaStatus = cudaSuccess;
 	int err;
@@ -86,8 +86,8 @@ int Generate_Mnemonic(void)
 
 				int64_t adaptivePortionIdx = nemoIter - MAX_ADAPTIVE_BASE_POSITIONS;
 				if (adaptivePortionIdx >= 0) {
-					host_adaptiveConsts.dev_AdaptiveBaseDigitSet[adaptivePortionIdx][thisDicIdx] = thisBipIdx;
-					host_adaptiveConsts.dev_AdaptiveBaseDigitCarryTrigger[nemoIter] = thisPosDictCount;
+					host_AdaptiveBaseDigitSet[adaptivePortionIdx][thisDicIdx] = thisBipIdx;
+					host_AdaptiveBaseDigitCarryTrigger[nemoIter] = thisPosDictCount;
 				}
 
 				//leave old algorithm working for now
@@ -105,7 +105,7 @@ int Generate_Mnemonic(void)
 				isAdaptiveStr.str("");
 
 				if (adaptivePortionIdx >= 0) {
-					host_adaptiveConsts.dev_AdaptiveBaseCurrentBatchInitialDigits[adaptivePortionIdx] = thisDicIdx;
+					host_AdaptiveBaseCurrentBatchInitialDigits[adaptivePortionIdx] = thisDicIdx;
 					isAdaptiveStr << "[Dynamic:" << thisPosDictCount << "]";
 				}
 				else if (thisPosDictCount == 1) {
@@ -285,12 +285,18 @@ int Generate_Mnemonic(void)
 	uint64_t initEntropy[2];
 	uint8_t reqChecksum;
 
-	AdaptiveDigitsToEntropy(host_EntropyAbsolutePrefix64,&host_adaptiveConsts
-		, host_adaptiveConsts.dev_AdaptiveBaseCurrentBatchInitialDigits
-		, initEntropy, &reqChecksum);
+
+	AdaptiveDigitsToEntropy(
+		  host_AdaptiveBaseCurrentBatchInitialDigits
+		, host_AdaptiveBaseDigitCarryTrigger
+		, host_AdaptiveBaseDigitSet
+		, host_EntropyAbsolutePrefix64, host_EntropyBatchNext24
+		, host_AdaptiveBaseCurrentBatchInitialDigits
+		, initEntropy, 
+		  &reqChecksum);
 
 	host_EntropyAbsolutePrefix64[0] = initEntropy[0];
-	host_adaptiveConsts.dev_EntropyBatchNext24 = initEntropy[1] & 0xFFFFFF0000000000ULL;
+	host_EntropyBatchNext24[0] = initEntropy[1] & 0xFFFFFF0000000000ULL;
 
 
 	size_t copySize;
@@ -302,16 +308,6 @@ int Generate_Mnemonic(void)
 		std::cerr << "cudaMemcpyToSymbol copying "<< copySize <<" bytes to dev_EntropyAbsolutePrefix64 failed!: " << cudaResult << std::endl;
 		goto Error;
 	}
-
-	//copySize = sizeof(AdaptiveStructConstType);
-	//void* ptr1 = &dev_adaptiveConsts;
-	//void* ptr2 = &host_adaptiveConsts;
-	//cudaResult = cudaMemcpyToSymbol(ptr2, ptr1, 8, 0, cudaMemcpyHostToDevice);
-	//if (cudaResult != cudaSuccess)
-	//{
-	//	std::cerr << "cudaMemcpyToSymbol copying " << copySize << " bytes to dev_adaptiveConsts failed!: " << cudaResult << std::endl;
-	//	goto Error;
-	//}
 
 
 	if (bCfgUseOldMethod == false){

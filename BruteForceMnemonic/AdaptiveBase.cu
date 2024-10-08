@@ -25,19 +25,33 @@
 
 
 __device__ AdaptiveStructVarType dev_adaptiveVars;
-__constant__ AdaptiveStructConstType dev_adaptiveConsts;
+//__constant__ AdaptiveStructConstType dev_adaptiveConsts;
 
 
 AdaptiveStructVarType host_adaptiveVars;
-AdaptiveStructConstType host_adaptiveConsts;
+//AdaptiveStructConstType host_adaptiveConsts;
 
 
 __constant__ uint64_t dev_EntropyAbsolutePrefix64[1];
 uint64_t host_EntropyAbsolutePrefix64[1];
 
+__constant__ int16_t dev_AdaptiveBaseDigitCarryTrigger[MAX_ADAPTIVE_BASE_POSITIONS];
+ int16_t host_AdaptiveBaseDigitCarryTrigger[MAX_ADAPTIVE_BASE_POSITIONS];
+
+__constant__ int16_t dev_AdaptiveBaseDigitSet[MAX_ADAPTIVE_BASE_POSITIONS][MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION];
+ int16_t host_AdaptiveBaseDigitSet[MAX_ADAPTIVE_BASE_POSITIONS][MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION];
 
 
-__host__ /* __and__ */ __device__ void IncrementAdaptiveDigits(AdaptiveStructConstType* dev_adaptiveConsts, int16_t* inDigits, uint64_t howMuch, int16_t* outDigits) {
+__constant__ int16_t dev_AdaptiveBaseCurrentBatchInitialDigits[MAX_ADAPTIVE_BASE_POSITIONS];
+ int16_t host_AdaptiveBaseCurrentBatchInitialDigits[MAX_ADAPTIVE_BASE_POSITIONS];
+
+
+__constant__ uint64_t dev_EntropyBatchNext24[1]; //Per-Batch Const
+ uint64_t host_EntropyBatchNext24[1]; //Per-Batch Const
+
+
+
+__host__ /* __and__ */ __device__ void IncrementAdaptiveDigits(int16_t * local_AdaptiveBaseCurrentBatchInitialDigits, int16_t * local_AdaptiveBaseDigitCarryTrigger, int16_t* inDigits, uint64_t howMuch, int16_t* outDigits) {
 	uint64_t nYetToAdd = howMuch;
 	uint64_t nCarryValue = 0;
 
@@ -47,8 +61,8 @@ __host__ /* __and__ */ __device__ void IncrementAdaptiveDigits(AdaptiveStructCon
 			continue;
 		}
 
-		int16_t beforeIncDigit = dev_adaptiveConsts->dev_AdaptiveBaseCurrentBatchInitialDigits[i];
-		int nCarryAt = dev_adaptiveConsts->dev_AdaptiveBaseDigitCarryTrigger[i];
+		int16_t beforeIncDigit = local_AdaptiveBaseCurrentBatchInitialDigits[i];
+		int nCarryAt = local_AdaptiveBaseDigitCarryTrigger[i];
 
 		int nThisIdeal = nYetToAdd + beforeIncDigit + nCarryValue;
 		int nThisNewDigit = nThisIdeal % nCarryAt;
@@ -64,13 +78,24 @@ __host__ /* __and__ */ __device__ void IncrementAdaptiveDigits(AdaptiveStructCon
 }
 
 
-__host__ /* __and__ */ __device__ void GetBipForAdaptiveDigit(AdaptiveStructConstType* dev_adaptiveConsts, int16_t* inDigits, uint8_t pos, uint64_t* outBip) {
+__host__ /* __and__ */ __device__ void GetBipForAdaptiveDigit(
+	  int16_t* local_AdaptiveBaseCurrentBatchInitialDigits
+	, int16_t* local_AdaptiveBaseDigitCarryTrigger
+	, int16_t local_AdaptiveBaseDigitSet[MAX_ADAPTIVE_BASE_POSITIONS][MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION]
+	, int16_t* inDigits, uint8_t pos, uint64_t* outBip) {
 	int16_t curAdapriveDigit = inDigits[pos];
-	*outBip = dev_adaptiveConsts->dev_AdaptiveBaseDigitSet[pos][curAdapriveDigit];
+	*outBip = local_AdaptiveBaseDigitSet[pos][curAdapriveDigit];
 }
-__host__ /* __and__ */ __device__ void GetPaddedBipForAdaptiveDigit(AdaptiveStructConstType* dev_adaptiveConsts, int16_t* inDigits, uint8_t pos, uint64_t* outPadBip) {
+__host__ /* __and__ */ __device__ void GetPaddedBipForAdaptiveDigit(
+	int16_t* local_AdaptiveBaseCurrentBatchInitialDigits
+	, int16_t* local_AdaptiveBaseDigitCarryTrigger
+	, int16_t local_AdaptiveBaseDigitSet[MAX_ADAPTIVE_BASE_POSITIONS][MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION], int16_t* inDigits, uint8_t pos, uint64_t* outPadBip) {
 	uint64_t curBipForDigit;
-	GetBipForAdaptiveDigit(dev_adaptiveConsts, inDigits, pos, &curBipForDigit);
+
+	GetBipForAdaptiveDigit(local_AdaptiveBaseCurrentBatchInitialDigits
+		, local_AdaptiveBaseDigitCarryTrigger
+		, local_AdaptiveBaseDigitSet, inDigits, pos, &curBipForDigit);
+
 	uint8_t shiftCount;
 	if (pos < MAX_ADAPTIVE_BASE_POSITIONS - 1) {
 		shiftCount = (128 - 66 - pos * 11);
@@ -81,19 +106,29 @@ __host__ /* __and__ */ __device__ void GetPaddedBipForAdaptiveDigit(AdaptiveStru
 		*outPadBip = curBipForDigit >> shiftCount;
 	}
 }
-__host__ /* __and__ */ __device__ void AdaptiveDigitsToEntropy(uint64_t * local_EntropyAbsolutePrefix64, AdaptiveStructConstType* dev_adaptiveConsts, int16_t* inDigits, uint64_t* outEntropy, uint8_t* checkSum) {
+__host__ /* __and__ */ __device__ void AdaptiveDigitsToEntropy(
+	int16_t* local_AdaptiveBaseCurrentBatchInitialDigits
+	, int16_t local_AdaptiveBaseDigitCarryTrigger[MAX_ADAPTIVE_BASE_POSITIONS]
+	, int16_t local_AdaptiveBaseDigitSet[MAX_ADAPTIVE_BASE_POSITIONS][MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION],
+	uint64_t * local_EntropyAbsolutePrefix64,
+	uint64_t * local_EntropyBatchNext24, 
+	 int16_t* inDigits, uint64_t* outEntropy, uint8_t* checkSum) {
 
 	outEntropy[0] = local_EntropyAbsolutePrefix64[0];
-	outEntropy[1] = dev_adaptiveConsts->dev_EntropyBatchNext24;
+	outEntropy[1] = local_EntropyBatchNext24[0];
 
 	uint64_t digitPaddedBip;
 	for (int pos = 0; pos < MAX_ADAPTIVE_BASE_POSITIONS; pos++) {
-		GetPaddedBipForAdaptiveDigit(dev_adaptiveConsts, inDigits, pos, &digitPaddedBip);
+		GetPaddedBipForAdaptiveDigit(local_AdaptiveBaseCurrentBatchInitialDigits
+			, local_AdaptiveBaseDigitCarryTrigger
+			,local_AdaptiveBaseDigitSet, inDigits, pos, &digitPaddedBip);
 		outEntropy[1] |= digitPaddedBip;
 	}
 
 	uint64_t lastWord;
-	GetBipForAdaptiveDigit(dev_adaptiveConsts, inDigits, MAX_ADAPTIVE_BASE_POSITIONS, &lastWord);
+	GetBipForAdaptiveDigit(local_AdaptiveBaseCurrentBatchInitialDigits
+		, local_AdaptiveBaseDigitCarryTrigger
+		, local_AdaptiveBaseDigitSet, inDigits, MAX_ADAPTIVE_BASE_POSITIONS, &lastWord);
 	*checkSum = lastWord & 0x000F;
 }
 
@@ -114,8 +149,19 @@ __global__ void gl_DictionaryAttack(
 	uint64_t curEntropy[2];
 	uint8_t reqChecksum;
 
-	IncrementAdaptiveDigits(&dev_adaptiveConsts, dev_adaptiveConsts.dev_AdaptiveBaseCurrentBatchInitialDigits, idx, curDigits);
-	AdaptiveDigitsToEntropy(dev_EntropyAbsolutePrefix64, &dev_adaptiveConsts, curDigits, curEntropy, &reqChecksum);
+
+	IncrementAdaptiveDigits(dev_AdaptiveBaseCurrentBatchInitialDigits
+		,dev_AdaptiveBaseDigitCarryTrigger
+		, dev_AdaptiveBaseCurrentBatchInitialDigits
+		,idx, curDigits);
+
+	AdaptiveDigitsToEntropy(dev_AdaptiveBaseCurrentBatchInitialDigits
+		, dev_AdaptiveBaseDigitCarryTrigger
+		,  dev_AdaptiveBaseDigitSet
+		,dev_EntropyAbsolutePrefix64
+		,dev_EntropyBatchNext24 
+		, curDigits, curEntropy, &reqChecksum);
+
 
 	uint8_t mnemonic_phrase[SIZE_MNEMONIC_FRAME] = { 0 };
 	uint8_t* mnemonic = mnemonic_phrase;
