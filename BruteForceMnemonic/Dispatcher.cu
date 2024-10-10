@@ -680,9 +680,14 @@ void AdaptiveUpdateMnemonicLow64(uint64_t* low64
 )
 
 {
-	*low64 = 0;
+	uint64_t tmpHigh = *low64;
+	
+	*low64 = tmpHigh >> 62;
+	*low64 = *low64 << 2;
+
 	for (int i = 0; i < MAX_ADAPTIVE_BASE_POSITIONS-1; i++) {
 		*low64 = *low64 << 11;
+		*low64 & 0xFFFFFFFFFFFFF7F;
 		*low64 |= (uint64_t)(digitSet[i][curDigits[i]]);
 	}
 	*low64 = *low64 << 7;
