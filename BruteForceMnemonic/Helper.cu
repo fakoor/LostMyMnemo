@@ -78,7 +78,7 @@ inline int _ConvertSMVer2Cores(int major, int minor)
 // end of GPU Architecture definitions
 
 
-void devicesInfo(void)
+int devicesInfo(void)
 {
 	int deviceCount = 0;
 	cudaGetDeviceCount(&deviceCount);
@@ -196,6 +196,7 @@ void devicesInfo(void)
 		//printf("  Compute Mode:\n");
 		//printf("     < %s >\n", sComputeMode[deviceProp.computeMode]);
 	}
+	return deviceCount;
 }
 
 

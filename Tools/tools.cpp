@@ -304,7 +304,11 @@ namespace tools {
 			else {
 #pragma omp critical 
 				{
-					std::cout << "!!! WORNING !!! COUNT LINES IS 0, FILE " << file_path << std::endl;
+					static int skip = 0;
+					if (skip == 0) {
+						std::cout << "!!! WARNING !!! COUNT LINES IS 0, FILE " << file_path << std::endl;
+						skip++;
+					}
 				}
 			}
 

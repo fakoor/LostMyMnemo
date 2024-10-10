@@ -547,7 +547,7 @@ static void sha512_swap_3(uint64_t* input, const uint32_t length, uint64_t* hash
 
 
 __device__
-static void sha256(const uint32_t* pass, int pass_len, uint32_t* hash) {
+ void sha256(const uint32_t* pass, int pass_len, uint32_t* hash) {
 	int plen = pass_len / 4;
 	if (mod(pass_len, 4)) plen++;
 	uint32_t* p = hash;

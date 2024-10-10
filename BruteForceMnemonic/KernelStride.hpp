@@ -30,7 +30,7 @@ private:
 
 public:
 	
-	int DictionaryAttack(uint64_t grid, uint64_t block);
+	int DictionaryAttack(uint64_t grid, uint64_t block, uint64_t* nProcessedFromBatch, uint64_t* nProcessedMoreThanBatch);
 
 	int bruteforce_mnemonic(uint64_t grid, uint64_t block);
 	int memsetGlobalMnemonic();
@@ -39,7 +39,7 @@ public:
 	int start(uint64_t grid, uint64_t block);
 	int end();
 
-	int startDictionaryAttack(uint64_t grid, uint64_t block);
+	int startDictionaryAttack(uint64_t grid, uint64_t block, uint64_t* nProcessedFromBatch, uint64_t* nProcessedMoreThanBatch);
 	int endDictionaryAttack();
 
 	int bruteforce_mnemonic_for_save(uint64_t grid, uint64_t block);

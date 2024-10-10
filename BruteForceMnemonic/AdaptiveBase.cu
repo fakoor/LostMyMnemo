@@ -2,11 +2,13 @@
 
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
+#include <device_functions.h>
+
 #include "AdaptiveBase.h"
 #include <GPU.h>
 #include <cuda.h>
-
-
+//#include <cooperative_groups.h>
+//#include <sm_60_atomic_functions.h>
 /*
 * We onsider Mnemonics a Base - 2048 twelve-digit unsigned integer,
 * if we have some information about any of digits, so that we can
@@ -23,13 +25,158 @@
 
 
 
+__device__ int dev_checkResult(retStruct* ret) {
 
-__device__ AdaptiveStructVarType dev_adaptiveVars;
-//__constant__ AdaptiveStructConstType dev_adaptiveConsts;
+	if (ret->f[0].count_found >= MAX_FOUND_ADDRESSES)
+	{
+		ret->f[0].count_found = MAX_FOUND_ADDRESSES;
+	}
+	if (ret->f[1].count_found >= MAX_FOUND_ADDRESSES)
+	{
+		ret->f[1].count_found = MAX_FOUND_ADDRESSES;
+	}
+	if (ret->f[2].count_found >= MAX_FOUND_ADDRESSES)
+	{
+		ret->f[2].count_found = MAX_FOUND_ADDRESSES;
+	}
+	if (ret->f[0].count_found_bytes >= MAX_FOUND_ADDRESSES)
+	{
+		ret->f[0].count_found_bytes = MAX_FOUND_ADDRESSES;
+	}
+	if (ret->f[1].count_found_bytes >= MAX_FOUND_ADDRESSES)
+	{
+		ret->f[1].count_found_bytes = MAX_FOUND_ADDRESSES;
+	}
+	if (ret->f[2].count_found_bytes >= MAX_FOUND_ADDRESSES)
+	{
+		ret->f[2].count_found_bytes = MAX_FOUND_ADDRESSES;
 
+	}
 
-AdaptiveStructVarType host_adaptiveVars;
-//AdaptiveStructConstType host_adaptiveConsts;
+	if (ret->f[0].count_found != 0)
+	{
+		for (uint32_t i = 0; i < ret->f[0].count_found; i++)
+		{
+			//foundInfoStruct* info = &ret->f[0].found_info[i];
+			//std::string mnemonic_str = (const char*)info->mnemonic;
+			//std::string addr;
+			//std::string path = getPath(info->path, info->child);
+			//tools::encodeAddressBase58((const uint8_t*)info->hash160, addr);
+			//tools::addFoundMnemonicInFile(path, mnemonic_str, addr);
+			//std::cout << "!!!FOUND!!!\n!!!FOUND!!!\n!!!FOUND!!!\n!!!FOUND!!!\n";
+			//std::cout << "!!!FOUND ADDRESS (" << path << "): " << mnemonic_str << ", " << addr << std::endl;
+			//std::cout << "!!!FOUND!!!\n!!!FOUND!!!\n!!!FOUND!!!\n!!!FOUND!!!\n";
+			return 1;
+		}
+	}
+	if (ret->f[1].count_found != 0)
+	{
+		for (uint32_t i = 0; i < ret->f[1].count_found; i++)
+		{
+			//foundInfoStruct* info = &ret->f[1].found_info[i];
+			//std::string mnemonic_str = (const char*)info->mnemonic;
+			//std::string addr;
+			//std::string path = getPath(info->path, info->child);
+			//tools::encodeAddressBIP49((const uint8_t*)info->hash160, addr);
+			//tools::addFoundMnemonicInFile(path, mnemonic_str, addr);
+			//std::cout << "!!!FOUND!!!\n!!!FOUND!!!\n!!!FOUND!!!\n!!!FOUND!!!\n";
+			//std::cout << "!!!FOUND ADDRESS (" << path << "): " << mnemonic_str << ", " << addr << std::endl;
+			//std::cout << "!!!FOUND!!!\n!!!FOUND!!!\n!!!FOUND!!!\n!!!FOUND!!!\n
+			return 1;
+		}
+	}
+	if (ret->f[2].count_found != 0)
+	{
+		for (uint32_t i = 0; i < ret->f[2].count_found; i++)
+		{
+			//foundInfoStruct* info = &ret->f[2].found_info[i];
+			//std::string mnemonic_str = (const char*)info->mnemonic;
+			//std::string addr;
+			//std::string path = getPath(info->path, info->child);
+			//tools::encodeAddressBase32((const uint8_t*)info->hash160, addr);
+			//tools::addFoundMnemonicInFile(path, mnemonic_str, addr);
+			//std::cout << "!!!FOUND!!!\n!!!FOUND!!!\n!!!FOUND!!!\n!!!FOUND!!!\n";
+			//std::cout << "!!!FOUND ADDRESS (" << path << "): " << mnemonic_str << ", " << addr << std::endl;
+			//std::cout << "!!!FOUND!!!\n!!!FOUND!!!\n!!!FOUND!!!\n!!!FOUND!!!\n";
+			return 1;
+		}
+	}
+
+	//if (ret->f[0].count_found_bytes != 0)
+	//{
+	//	for (uint32_t i = 0; i < ret->f[0].count_found_bytes; i++)
+	//	{
+	//		foundBytesInfoStruct* info = &ret->f[0].found_bytes_info[i];
+	//		int num_bytes = 0;
+	//		for (int i = 0; i < 20; i++)
+	//		{
+	//			if (*(uint8_t*)((uint8_t*)info->hash160 + i) != *(uint8_t*)((uint8_t*)info->hash160_from_table + i)) break;
+	//			num_bytes++;
+	//		}
+
+	//		std::string mnemonic_str = (const char*)info->mnemonic;
+	//		std::string hash160 = tools::bytesToHexString((const uint8_t*)info->hash160, 20);
+	//		std::string hash160_in_table = tools::bytesToHexString((const uint8_t*)info->hash160_from_table, 20);
+	//		std::string addr;
+	//		std::string addr_in_table;
+	//		std::string path = getPath(info->path, info->child);
+	//		tools::encodeAddressBase58((const uint8_t*)info->hash160, addr);
+	//		tools::encodeAddressBase58((const uint8_t*)info->hash160_from_table, addr_in_table);
+	//		std::cout << "\n!!!FOUND IN ADDRESS(HASH160) (" << path << ") EQUAL " << num_bytes << " BYTES: " << mnemonic_str << "," << addr << "," << addr_in_table << "," << hash160 << "," << hash160_in_table << " \n";
+	//		tools::addInFileTest(num_bytes, path, mnemonic_str, hash160, hash160_in_table, addr, addr_in_table);
+	//	}
+	//}
+	//if (ret->f[1].count_found_bytes != 0)
+	//{
+	//	for (uint32_t i = 0; i < ret->f[1].count_found_bytes; i++)
+	//	{
+	//		foundBytesInfoStruct* info = &ret->f[1].found_bytes_info[i];
+	//		int num_bytes = 0;
+	//		for (int i = 0; i < 20; i++)
+	//		{
+	//			if (*(uint8_t*)((uint8_t*)info->hash160 + i) != *(uint8_t*)((uint8_t*)info->hash160_from_table + i)) break;
+	//			num_bytes++;
+	//		}
+
+	//		std::string mnemonic_str = (const char*)info->mnemonic;
+	//		std::string hash160 = tools::bytesToHexString((const uint8_t*)info->hash160, 20);
+	//		std::string hash160_in_table = tools::bytesToHexString((const uint8_t*)info->hash160_from_table, 20);
+	//		std::string addr;
+	//		std::string addr_in_table;
+	//		std::string path = getPath(info->path, info->child);
+	//		tools::encodeAddressBIP49((const uint8_t*)info->hash160, addr);
+	//		tools::encodeAddressBIP49((const uint8_t*)info->hash160_from_table, addr_in_table);
+	//		std::cout << "\n!!!FOUND IN ADDRESS(HASH160) (" << path << ") EQUAL " << num_bytes << " BYTES: " << mnemonic_str << "," << addr << "," << addr_in_table << "," << hash160 << "," << hash160_in_table << " \n";
+	//		tools::addInFileTest(num_bytes, path, mnemonic_str, hash160, hash160_in_table, addr, addr_in_table);
+	//	}
+	//}
+	//if (ret->f[2].count_found_bytes != 0)
+	//{
+	//	for (uint32_t i = 0; i < ret->f[2].count_found_bytes; i++)
+	//	{
+	//		foundBytesInfoStruct* info = &ret->f[2].found_bytes_info[i];
+	//		int num_bytes = 0;
+	//		for (int i = 0; i < 20; i++)
+	//		{
+	//			if (*(uint8_t*)((uint8_t*)info->hash160 + i) != *(uint8_t*)((uint8_t*)info->hash160_from_table + i)) break;
+	//			num_bytes++;
+	//		}
+
+	//		std::string mnemonic_str = (const char*)info->mnemonic;
+	//		std::string hash160 = tools::bytesToHexString((const uint8_t*)info->hash160, 20);
+	//		std::string hash160_in_table = tools::bytesToHexString((const uint8_t*)info->hash160_from_table, 20);
+	//		std::string addr;
+	//		std::string addr_in_table;
+	//		std::string path = getPath(info->path, info->child);
+	//		tools::encodeAddressBase32((const uint8_t*)info->hash160, addr);
+	//		tools::encodeAddressBase32((const uint8_t*)info->hash160_from_table, addr_in_table);
+	//		std::cout << "\n!!!FOUND IN ADDRESS(HASH160) (" << path << ") EQUAL " << num_bytes << " BYTES: " << mnemonic_str << "," << addr << "," << addr_in_table << "," << hash160 << "," << hash160_in_table << " \n";
+	//		tools::addInFileTest(num_bytes, path, mnemonic_str, hash160, hash160_in_table, addr, addr_in_table);
+	//	}
+	//}
+	return 0;
+}
+
 
 
 __constant__ uint64_t dev_EntropyAbsolutePrefix64[1];
@@ -49,7 +196,7 @@ __constant__ int16_t dev_AdaptiveBaseCurrentBatchInitialDigits[MAX_ADAPTIVE_BASE
 __constant__ uint64_t dev_EntropyBatchNext24[1]; //Per-Batch Const
  uint64_t host_EntropyBatchNext24[1]; //Per-Batch Const
 
-
+ 
 
 __host__ /* __and__ */ __device__ void IncrementAdaptiveDigits(int16_t * local_AdaptiveBaseCurrentBatchInitialDigits, int16_t * local_AdaptiveBaseDigitCarryTrigger, int16_t* inDigits, uint64_t howMuch, int16_t* outDigits) {
 	uint64_t nYetToAdd = howMuch;
@@ -134,105 +281,175 @@ __host__ /* __and__ */ __device__ void AdaptiveDigitsToEntropy(
 
 
 __global__ void gl_DictionaryAttack(
-	const uint64_t* __restrict__ entropy,
+	 uint64_t*  nBatchPlannedProc,
+	 uint64_t*  nBatchMoreProc,
 	const tableStruct* __restrict__ tables_legacy,
 	const tableStruct* __restrict__ tables_segwit,
 	const tableStruct* __restrict__ tables_native_segwit,
 	retStruct* __restrict__ ret
 )
 {
+	__shared__ uint64_t ourBlockProcNormal;
+	__shared__ uint64_t ourBlockProcExtra;
+	__shared__ uint64_t ourBlockBadChkSum;
+	__shared__ uint64_t ourBlockGoodChkSum;
+
+
+	// Initialize the shared variable
+	if (threadIdx.x == 0) {
+		ourBlockProcNormal = 0; // Only the first thread initializes it
+		ourBlockProcExtra = 0;
+	}
+	__syncthreads(); // Synchronize to ensure the initialization is complete
+
 
 	//TODO: Each thread picks is load from Incremental Base!
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
+	atomicAdd(&ourBlockProcNormal,1);
+
+	uint8_t reqChecksum;
+	uint8_t achievedChecksum;
+	bool bChkSumFailed;
+
 	int16_t curDigits[MAX_ADAPTIVE_BASE_POSITIONS];
 	uint64_t curEntropy[2];
-	uint8_t reqChecksum;
+
+	int nAlternateCandidateRemaining = MAX_ALTERNATE_CANDIDATE;
+	while (nAlternateCandidateRemaining) {
+		IncrementAdaptiveDigits(dev_AdaptiveBaseCurrentBatchInitialDigits
+			, dev_AdaptiveBaseDigitCarryTrigger
+			, dev_AdaptiveBaseCurrentBatchInitialDigits
+			, idx, curDigits);
+
+		AdaptiveDigitsToEntropy(curDigits
+			, dev_AdaptiveBaseDigitCarryTrigger
+			, dev_AdaptiveBaseDigitSet
+			, dev_EntropyAbsolutePrefix64
+			, dev_EntropyBatchNext24
+			, curDigits, curEntropy, &reqChecksum);
 
 
-	IncrementAdaptiveDigits(dev_AdaptiveBaseCurrentBatchInitialDigits
-		,dev_AdaptiveBaseDigitCarryTrigger
-		, dev_AdaptiveBaseCurrentBatchInitialDigits
-		,idx, curDigits);
+		uint8_t entropy_hash[32];
+		uint8_t bytes[16];
+		uint64_t* entropy = curEntropy;
 
-	AdaptiveDigitsToEntropy(dev_AdaptiveBaseCurrentBatchInitialDigits
-		, dev_AdaptiveBaseDigitCarryTrigger
-		,  dev_AdaptiveBaseDigitSet
-		,dev_EntropyAbsolutePrefix64
-		,dev_EntropyBatchNext24 
-		, curDigits, curEntropy, &reqChecksum);
+		bytes[15] = entropy[1] & 0xFF;
+		bytes[14] = (entropy[1] >> 8) & 0xFF;
+		bytes[13] = (entropy[1] >> 16) & 0xFF;
+		bytes[12] = (entropy[1] >> 24) & 0xFF;
+		bytes[11] = (entropy[1] >> 32) & 0xFF;
+		bytes[10] = (entropy[1] >> 40) & 0xFF;
+		bytes[9] = (entropy[1] >> 48) & 0xFF;
+		bytes[8] = (entropy[1] >> 56) & 0xFF;
+
+		bytes[7] = entropy[0] & 0xFF;
+		bytes[6] = (entropy[0] >> 8) & 0xFF;
+		bytes[5] = (entropy[0] >> 16) & 0xFF;
+		bytes[4] = (entropy[0] >> 24) & 0xFF;
+		bytes[3] = (entropy[0] >> 32) & 0xFF;
+		bytes[2] = (entropy[0] >> 40) & 0xFF;
+		bytes[1] = (entropy[0] >> 48) & 0xFF;
+		bytes[0] = (entropy[0] >> 56) & 0xFF;
+		sha256((uint32_t*)bytes, 16, (uint32_t*)entropy_hash);
+		achievedChecksum = (entropy_hash[0] >> 4) & 0x0F;
+
+		bChkSumFailed = (achievedChecksum != reqChecksum);
+
+		if (bChkSumFailed) {
+			atomicAdd(&ourBlockProcExtra,1);
+			nAlternateCandidateRemaining--;
+		}
+		else {
+			nAlternateCandidateRemaining = 0; //no need to process more in this thread-batch
+		}
+	} //do
+
+	__syncthreads(); // Synchronize to and check if have a valid checksum to continue with
+	if (!bChkSumFailed) {
+		atomicAdd(&ourBlockGoodChkSum, 1);
+
+		uint8_t mnemonic_phrase[SIZE_MNEMONIC_FRAME] = { 0 };
+		uint8_t* mnemonic = mnemonic_phrase;
+		uint32_t ipad[256 / 4];
+		uint32_t opad[256 / 4];
+		uint32_t seed[64 / 4];
 
 
-	uint8_t mnemonic_phrase[SIZE_MNEMONIC_FRAME] = { 0 };
-	uint8_t* mnemonic = mnemonic_phrase;
-	uint32_t ipad[256 / 4];
-	uint32_t opad[256 / 4];
-	uint32_t seed[64 / 4];
+		//Work with Current Entropy
+		entropy_to_mnemonic(curEntropy, mnemonic);
 
-	entropy_to_mnemonic(entropy, mnemonic);
+		//entropy_to_mnemonic(entropy, mnemonic);
 #pragma unroll
-	for (int x = 0; x < 120 / 8; x++) {
-		*(uint64_t*)((uint64_t*)ipad + x) = 0x3636363636363636ULL ^ SWAP512(*(uint64_t*)((uint64_t*)mnemonic + x));
-	}
+		for (int x = 0; x < 120 / 8; x++) {
+			*(uint64_t*)((uint64_t*)ipad + x) = 0x3636363636363636ULL ^ SWAP512(*(uint64_t*)((uint64_t*)mnemonic + x));
+		}
 #pragma unroll
-	for (int x = 0; x < 120 / 8; x++) {
-		*(uint64_t*)((uint64_t*)opad + x) = 0x5C5C5C5C5C5C5C5CULL ^ SWAP512(*(uint64_t*)((uint64_t*)mnemonic + x));
-	}
+		for (int x = 0; x < 120 / 8; x++) {
+			*(uint64_t*)((uint64_t*)opad + x) = 0x5C5C5C5C5C5C5C5CULL ^ SWAP512(*(uint64_t*)((uint64_t*)mnemonic + x));
+		}
 #pragma unroll
-	for (int x = 120 / 4; x < 128 / 4; x++) {
-		ipad[x] = 0x36363636;
-	}
+		for (int x = 120 / 4; x < 128 / 4; x++) {
+			ipad[x] = 0x36363636;
+		}
 #pragma unroll
-	for (int x = 120 / 4; x < 128 / 4; x++) {
-		opad[x] = 0x5C5C5C5C;
-	}
+		for (int x = 120 / 4; x < 128 / 4; x++) {
+			opad[x] = 0x5C5C5C5C;
+		}
 #pragma unroll
-	for (int x = 0; x < 16 / 4; x++) {
-		ipad[x + 128 / 4] = *(uint32_t*)((uint32_t*)&salt_swap + x);
-	}
-	sha512_swap((uint64_t*)ipad, 140, (uint64_t*)&opad[128 / 4]);
-	sha512_swap((uint64_t*)opad, 192, (uint64_t*)&ipad[128 / 4]);
-#pragma unroll
-	for (int x = 0; x < 64 / 4; x++) {
-		seed[x] = ipad[128 / 4 + x];
-	}
-	for (int x = 1; x < 2048; x++) {
-		sha512_swap((uint64_t*)ipad, 192, (uint64_t*)&opad[128 / 4]);
+		for (int x = 0; x < 16 / 4; x++) {
+			ipad[x + 128 / 4] = *(uint32_t*)((uint32_t*)&salt_swap + x);
+		}
+		sha512_swap((uint64_t*)ipad, 140, (uint64_t*)&opad[128 / 4]);
 		sha512_swap((uint64_t*)opad, 192, (uint64_t*)&ipad[128 / 4]);
 #pragma unroll
 		for (int x = 0; x < 64 / 4; x++) {
-			seed[x] = seed[x] ^ ipad[128 / 4 + x];
+			seed[x] = ipad[128 / 4 + x];
 		}
-	}
+		for (int x = 1; x < 2048; x++) {
+			sha512_swap((uint64_t*)ipad, 192, (uint64_t*)&opad[128 / 4]);
+			sha512_swap((uint64_t*)opad, 192, (uint64_t*)&ipad[128 / 4]);
 #pragma unroll
-	for (int x = 0; x < 16 / 4; x++) {
-		ipad[x] = 0x36363636 ^ *(uint32_t*)((uint32_t*)&key_swap + x);
-	}
+			for (int x = 0; x < 64 / 4; x++) {
+				seed[x] = seed[x] ^ ipad[128 / 4 + x];
+			}
+		}
 #pragma unroll
-	for (int x = 0; x < 16 / 4; x++) {
-		opad[x] = 0x5C5C5C5C ^ *(uint32_t*)((uint32_t*)&key_swap + x);
-	}
+		for (int x = 0; x < 16 / 4; x++) {
+			ipad[x] = 0x36363636 ^ *(uint32_t*)((uint32_t*)&key_swap + x);
+		}
 #pragma unroll
-	for (int x = 16 / 4; x < 128 / 4; x++) {
-		ipad[x] = 0x36363636;
-	}
+		for (int x = 0; x < 16 / 4; x++) {
+			opad[x] = 0x5C5C5C5C ^ *(uint32_t*)((uint32_t*)&key_swap + x);
+		}
 #pragma unroll
-	for (int x = 16 / 4; x < 128 / 4; x++) {
-		opad[x] = 0x5C5C5C5C;
-	}
+		for (int x = 16 / 4; x < 128 / 4; x++) {
+			ipad[x] = 0x36363636;
+		}
 #pragma unroll
-	for (int x = 0; x < 64 / 4; x++) {
-		ipad[x + 128 / 4] = seed[x];
-	}
-	//ipad[192 / 4] = 0;
-	//opad[192 / 4] = 0;
-	sha512_swap((uint64_t*)ipad, 192, (uint64_t*)&opad[128 / 4]);
-	sha512_swap((uint64_t*)opad, 192, (uint64_t*)&ipad[128 / 4]);
+		for (int x = 16 / 4; x < 128 / 4; x++) {
+			opad[x] = 0x5C5C5C5C;
+		}
 #pragma unroll
-	for (int x = 0; x < 128 / 8; x++) {
-		*(uint64_t*)((uint64_t*)&ipad[128 / 4] + x) = SWAP512(*(uint64_t*)((uint64_t*)&ipad[128 / 4] + x));
+		for (int x = 0; x < 64 / 4; x++) {
+			ipad[x + 128 / 4] = seed[x];
+		}
+		//ipad[192 / 4] = 0;
+		//opad[192 / 4] = 0;
+		sha512_swap((uint64_t*)ipad, 192, (uint64_t*)&opad[128 / 4]);
+		sha512_swap((uint64_t*)opad, 192, (uint64_t*)&ipad[128 / 4]);
+#pragma unroll
+		for (int x = 0; x < 128 / 8; x++) {
+			*(uint64_t*)((uint64_t*)&ipad[128 / 4] + x) = SWAP512(*(uint64_t*)((uint64_t*)&ipad[128 / 4] + x));
+		}
+		key_to_hash160((extended_private_key_t*)&ipad[128 / 4], tables_legacy, tables_segwit, tables_native_segwit, (uint32_t*)mnemonic, ret);
+		//__syncthreads();
 	}
-	key_to_hash160((extended_private_key_t*)&ipad[128 / 4], tables_legacy, tables_segwit, tables_native_segwit, (uint32_t*)mnemonic, ret);
-	//__syncthreads();
+	__syncthreads(); // Synchronize to ensure all data is loaded
+	if (threadIdx.x == 0) {
+		atomicAdd(nBatchPlannedProc , ourBlockProcNormal);
+		atomicAdd(nBatchMoreProc, ourBlockProcExtra);
+	}
+
 }
 
