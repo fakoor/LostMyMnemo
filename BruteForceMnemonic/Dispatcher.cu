@@ -459,6 +459,23 @@ int Generate_Mnemonic(void)
 
 			IncrementAdaptiveDigits(host_AdaptiveBaseDigitCarryTrigger, host_AdaptiveBaseCurrentBatchInitialDigits, 0, batchDigits);
 	
+
+			int16_t tmp2[12] = {
+(batchMnemo[0] >> 53) & 2047,
+(batchMnemo[0] >> 42) & 2047,
+(batchMnemo[0] >> 31) & 2047,
+(batchMnemo[0] >> 20) & 2047,
+(batchMnemo[0] >> 9) & 2047,
+((batchMnemo[0] & ((1 << 9) - 1)) << 2) | ((batchMnemo[1] >> 62) & 3),
+(batchMnemo[1] >> 51) & 2047,
+(batchMnemo[1] >> 40) & 2047,
+(batchMnemo[1] >> 29) & 2047,
+(batchMnemo[1] >> 18) & 2047,
+(batchMnemo[1] >> 7) & 2047,
+((batchMnemo[1] & ((1 << 7) - 1)) << 4)
+
+			};
+
 			int16_t temArr[6] = {
 		host_AdaptiveBaseDigitSet[0][batchDigits[0]]
 	,	host_AdaptiveBaseDigitSet[1][batchDigits[1]]
@@ -485,7 +502,8 @@ int Generate_Mnemonic(void)
 	
 				std::cout << ">> NEW BATCH -- "
 					<< "No:" << nBatch << "/" << nBatchMax << std::endl;
-				std::cout << "Stars from " << tools::GetMnemoString(temArr, 6) << std::endl;
+				std::cout << "Stars from 2nd half:" << tools::GetMnemoString(temArr, 6) << std::endl;
+					std::cout <<"Fully:"<< tools::GetMnemoString(tmp2, 12) << std::endl;
 				*Data->host.host_nProcessedFromBatch = 0;
 				*Data->host.host_nProcessedMoreThanBatch = 0;
 
