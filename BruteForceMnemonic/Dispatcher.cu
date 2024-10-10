@@ -456,9 +456,13 @@ int Generate_Mnemonic(void)
 			nBatch = 0;
 
 			batchMnemo[0] = host_EntropyAbsolutePrefix64[0];
-
+			batchMnemo[1] = host_EntropyBatchNext24[0] & 0xB;
 			IncrementAdaptiveDigits(host_AdaptiveBaseDigitCarryTrigger, host_AdaptiveBaseCurrentBatchInitialDigits, 0, batchDigits);
-	
+
+			AdaptiveUpdateMnemonicLow64(&batchMnemo[1]
+				, host_AdaptiveBaseDigitSet
+				, host_AdaptiveBaseCurrentBatchInitialDigits);
+
 
 			int16_t tmp2[12] = {
 (batchMnemo[0] >> 53) & 2047,
@@ -492,9 +496,6 @@ int Generate_Mnemonic(void)
 
 				//TODO: increment entropy here accordingto grid , processed and extra
 
-				AdaptiveUpdateMnemonicLow64(&batchMnemo[1]
-					, host_AdaptiveBaseDigitSet
-					, host_AdaptiveBaseCurrentBatchInitialDigits);
 
 				
 				//tools::entropyTo12Words(batchMnemo, 
@@ -679,12 +680,13 @@ void AdaptiveUpdateMnemonicLow64(uint64_t* low64
 )
 
 {
-	low64[PTR_AVOIDER] |= (uint64_t)(digitSet[0][curDigits[0]]) << 51;//first and second trunk words
-	low64[PTR_AVOIDER] |= (uint64_t)(digitSet[1][curDigits[1]]) << 40; //are here, 
-	low64[PTR_AVOIDER] |= (uint64_t)(digitSet[2][curDigits[2]]) << 29; // fill just for test, 
-	low64[PTR_AVOIDER] |= (uint64_t)(digitSet[3][curDigits[3]]) << 18; // then mask them to zero
-	low64[PTR_AVOIDER] |= (uint64_t)(digitSet[4][curDigits[4]]) << 7; // to proceed with real 
-	low64[PTR_AVOIDER] |= (uint64_t)(digitSet[5][curDigits[5]]) >> 4; //iteration
+	*low64 = 0;
+	for (int i = 0; i < MAX_ADAPTIVE_BASE_POSITIONS-1; i++) {
+		*low64 = *low64 << (i * 11);
+		*low64 |= (uint64_t)(digitSet[i][curDigits[i]]);
+	}
+	*low64 = *low64 << 7;
+	*low64 |= ((uint64_t)(digitSet[MAX_ADAPTIVE_BASE_POSITIONS - 1][curDigits[MAX_ADAPTIVE_BASE_POSITIONS - 1]]) >> 4);
 }
 
 
