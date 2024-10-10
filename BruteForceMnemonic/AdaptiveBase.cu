@@ -198,7 +198,7 @@ __constant__ uint64_t dev_EntropyBatchNext24[1]; //Per-Batch Const
 
  
 
-__host__ /* __and__ */ __device__ void IncrementAdaptiveDigits(int16_t * local_AdaptiveBaseCurrentBatchInitialDigits, int16_t * local_AdaptiveBaseDigitCarryTrigger, int16_t* inDigits, uint64_t howMuch, int16_t* outDigits) {
+__host__ /* __and__ */ __device__ void IncrementAdaptiveDigits( int16_t * local_AdaptiveBaseDigitCarryTrigger, int16_t* inDigits, uint64_t howMuch, int16_t* outDigits) {
 	uint64_t nYetToAdd = howMuch;
 	uint64_t nCarryValue = 0;
 
@@ -208,7 +208,7 @@ __host__ /* __and__ */ __device__ void IncrementAdaptiveDigits(int16_t * local_A
 			continue;
 		}
 
-		int16_t beforeIncDigit = local_AdaptiveBaseCurrentBatchInitialDigits[i];
+		int16_t beforeIncDigit = inDigits[i];
 		int nCarryAt = local_AdaptiveBaseDigitCarryTrigger[i];
 
 		int nThisIdeal = nYetToAdd + beforeIncDigit + nCarryValue;
@@ -317,8 +317,8 @@ __global__ void gl_DictionaryAttack(
 
 	int nAlternateCandidateRemaining = MAX_ALTERNATE_CANDIDATE;
 	while (nAlternateCandidateRemaining) {
-		IncrementAdaptiveDigits(dev_AdaptiveBaseCurrentBatchInitialDigits
-			, dev_AdaptiveBaseDigitCarryTrigger
+		IncrementAdaptiveDigits(
+			 dev_AdaptiveBaseDigitCarryTrigger
 			, dev_AdaptiveBaseCurrentBatchInitialDigits
 			, idx, curDigits);
 
