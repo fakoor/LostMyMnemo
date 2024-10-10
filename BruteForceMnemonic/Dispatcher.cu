@@ -450,60 +450,45 @@ int Generate_Mnemonic(void)
 			if (NewTrunkPrefix() == false)
 				goto Error;
 
+			int16_t batchDigits[MAX_ADAPTIVE_BASE_POSITIONS];
+			uint64_t batchMnemo[2];
+
 			nBatch = 0;
+
+			batchMnemo[0] = host_EntropyAbsolutePrefix64[0];
+
+			IncrementAdaptiveDigits(host_AdaptiveBaseDigitCarryTrigger, host_AdaptiveBaseCurrentBatchInitialDigits, 0, batchDigits);
+	
+			int16_t temArr[6] = {
+		host_AdaptiveBaseDigitSet[0][batchDigits[0]]
+	,	host_AdaptiveBaseDigitSet[1][batchDigits[1]]
+	,	host_AdaptiveBaseDigitSet[2][batchDigits[2]]
+	,	host_AdaptiveBaseDigitSet[3][batchDigits[3]]
+	,	host_AdaptiveBaseDigitSet[4][batchDigits[4]]
+	,	host_AdaptiveBaseDigitSet[5][batchDigits[5]] };
+
+			for (int i = 0; i < MAX_ADAPTIVE_BASE_POSITIONS; i++) {
+				std::cout << host_AdaptiveBaseCurrentBatchInitialDigits[i] << "=" << batchDigits[i] << std::endl;
+			}
 			do  {
 
 
 				//TODO: increment entropy here accordingto grid , processed and extra
-				//AdaptiveUpdateMnemonicLow64(host_EntropyBatchNext24
-				//	, host_AdaptiveBaseDigitSet
-				//	, host_AdaptiveBaseCurrentBatchInitialDigits);
 
+				AdaptiveUpdateMnemonicLow64(&batchMnemo[1]
+					, host_AdaptiveBaseDigitSet
+					, host_AdaptiveBaseCurrentBatchInitialDigits);
 
+				
+				//tools::entropyTo12Words(batchMnemo, 
+	
 	
 				std::cout << ">> NEW BATCH -- "
 					<< "No:" << nBatch << "/" << nBatchMax << std::endl;
-
-					//std::cout << " byBacth:" << Data->host.host_nProcessedFromBatch[PTR_AVOIDER]
-					//<< " byExtra:" << Data->host.host_nProcessedMoreThanBatch[PTR_AVOIDER]
-					//<< " All:" << nPrevBatchProcessed 
-					//<< " inTrunk:" << nCumulativeCombosProcessedInTrunk 
-					//<< " Universally:" << nUniversalProcessed << std::endl;
-
+				std::cout << "Stars from " << tools::GetMnemoString(temArr, 6) << std::endl;
 				*Data->host.host_nProcessedFromBatch = 0;
 				*Data->host.host_nProcessedMoreThanBatch = 0;
 
-#if 0
-				cudaDeviceSynchronize();
-
-
-				copySize = sizeof(uint64_t);
-				cudaResult = cudaMemcpyToSymbol(dev_nProcessedMoreThanBatch
-					, host_nProcessedMoreThanBatch
-					, copySize, 0
-					, cudaMemcpyHostToDevice);
-				if (cudaResult != cudaSuccess)
-				{
-					std::cerr << "cudaMemcpyToSymbol copying " << copySize << " bytes to dev_nProcessedMoreThanBatch failed!: " << cudaResult << std::endl;
-					goto Error;
-				}
-
-
-
-
-
-				copySize = sizeof(uint64_t);
-				cudaResult = cudaMemcpyToSymbol(dev_nProcessedFromBatch
-					, host_nProcessedFromBatch
-					, copySize, 0
-					, cudaMemcpyDefault);
-				if (cudaResult != cudaSuccess)
-				{
-					std::cerr << "cudaMemcpyToSymbol copying " << copySize << " bytes to dev_nProcessedFromBatch failed!: " << cudaResult << std::endl;
-					goto Error;
-				}
-
-#endif
 
 				tools::start_time();
 
@@ -538,14 +523,20 @@ int Generate_Mnemonic(void)
 
 				nPrevBatchProcessed = Data->host.host_nProcessedFromBatch[PTR_AVOIDER]
 					+ Data->host.host_nProcessedMoreThanBatch[PTR_AVOIDER];
-				std::cout << ">>>This batch #(" << nBatch << ") completed processing " << nPrevBatchProcessed << " combos." << std::endl;
+				std::cout << ">>>This batch (#" << nBatch << ") completed processing " << nPrevBatchProcessed << " combos." << std::endl;
 				nCumulativeCombosProcessedInTrunk += nPrevBatchProcessed;
+
+				IncrementAdaptiveDigits(host_AdaptiveBaseDigitCarryTrigger, host_AdaptiveBaseCurrentBatchInitialDigits, nPrevBatchProcessed, batchDigits);
+				//memcpy(&host_AdaptiveBaseCurrentBatchInitialDigits[0], &batchDigits[0], sizeof(int16_t) * MAX_ADAPTIVE_BASE_POSITIONS)
+				for (int x = 0; x < MAX_ADAPTIVE_BASE_POSITIONS; x++) {
+					host_AdaptiveBaseCurrentBatchInitialDigits[x] = batchDigits[x];
+				}
 
 				nBatch++;
 			} while (nCumulativeCombosProcessedInTrunk < nPlanned44BitCombos); //batch
 			nUniversalProcessed += nCumulativeCombosProcessedInTrunk;
 
-			std::cout << ">>This Trunk (#" << nTrunk << ") completed processing" << nCumulativeCombosProcessedInTrunk<<"/"<< nUniversalProcessed <<" current combinations" << std::endl;
+			std::cout << ">>This Trunk (#" << nTrunk << ") completed processing " << nCumulativeCombosProcessedInTrunk<<"/"<< nUniversalProcessed <<" current combinations" << std::endl;
 			nCumulativeCombosProcessedInTrunk = 0;
 
 		}//trunk

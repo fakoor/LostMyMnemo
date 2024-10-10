@@ -45,6 +45,8 @@ extern uint64_t host_EntropyBatchNext24[1]; //Per-Batch Const
 //
 //extern uint64_t* host_nProcessedMoreThanBatch;
 
+__host__ /* __and__ */ __device__ void IncrementAdaptiveDigits(int16_t* local_AdaptiveBaseDigitCarryTrigger, int16_t* inDigits, uint64_t howMuch, int16_t* outDigits);
+
 __host__ /* __and__ */ __device__ void GetBipForAdaptiveDigit(
 	int16_t* local_AdaptiveBaseCurrentBatchInitialDigits
 	, int16_t* local_AdaptiveBaseDigitCarryTrigger
