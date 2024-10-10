@@ -461,7 +461,7 @@ int Generate_Mnemonic(void)
 
 			AdaptiveUpdateMnemonicLow64(&batchMnemo[1]
 				, host_AdaptiveBaseDigitSet
-				, host_AdaptiveBaseCurrentBatchInitialDigits);
+				, batchDigits);
 
 
 			int16_t tmp2[12] = {
@@ -682,7 +682,7 @@ void AdaptiveUpdateMnemonicLow64(uint64_t* low64
 {
 	*low64 = 0;
 	for (int i = 0; i < MAX_ADAPTIVE_BASE_POSITIONS-1; i++) {
-		*low64 = *low64 << (i * 11);
+		*low64 = *low64 << 11;
 		*low64 |= (uint64_t)(digitSet[i][curDigits[i]]);
 	}
 	*low64 = *low64 << 7;
