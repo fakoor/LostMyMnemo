@@ -350,7 +350,8 @@ __global__ void gl_DictionaryAttack(
 		int16_t chkPosIdx = MAX_ADAPTIVE_BASE_POSITIONS - 1;
 		int16_t chkWordIdx = curDigits[chkPosIdx];
 		uint16_t thisVal = (myDigSet[chkPosIdx][chkWordIdx]);
-		reqChecksum = 3;// (uint8_t)(thisVal & 0x0F);
+		uint8_t tmp = (uint8_t)(thisVal & 0x0F);
+		reqChecksum = 3;// ;
 
 		uint8_t entropy_hash[32];
 		uint8_t bytes[16];
