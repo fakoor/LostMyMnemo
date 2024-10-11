@@ -51,7 +51,7 @@ int Generate_Mnemonic(void)
 {
 
 
-	std::cout << "Compile on Date *** : " << __DATE__ << ", Time:" << __TIME__ << std::endl;
+	std::cout << "Compile on Date **** : " << __DATE__ << ", Time:" << __TIME__ << std::endl;
 	//{//TODO make all NULL
 	//	dev_nProcessedFromBatch = NULL;
 	//	host_nProcessedFromBatch = NULL;

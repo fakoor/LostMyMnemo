@@ -1,12 +1,12 @@
 #include <stdafx.h>
 
-#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
+//#include "device_launch_parameters.h"
 //#include <device_functions.h>
 
-#include "AdaptiveBase.h"
-#include <GPU.h>
 #include <cuda.h>
+#include "cuda_runtime.h"
+#include <GPU.h>
+#include "AdaptiveBase.h"
 
 
 
@@ -296,6 +296,7 @@ __global__ void gl_DictionaryAttack(
 	__shared__ uint64_t ourBlockProcExtra;
 	__shared__ uint64_t ourBlockBadChkSum;
 	__shared__ uint64_t ourBlockGoodChkSum;
+	__shared__ int16_t myDigSet[MAX_ADAPTIVE_BASE_POSITIONS][MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION];
 
 
 	// Initialize the shared variable
@@ -304,6 +305,13 @@ __global__ void gl_DictionaryAttack(
 		ourBlockProcExtra = 0;
 		ourBlockBadChkSum = 0;
 		ourBlockGoodChkSum = 0;
+
+		for (int i = 0; i < MAX_ADAPTIVE_BASE_POSITIONS; i++) {
+			for (int j = 0; j < MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION; j++) {
+				myDigSet[i][j] = dev_AdaptiveBaseDigitSet[i][j];
+			}
+		}
+
 	}
 	__syncthreads(); // Synchronize to ensure the initialization is complete
 
@@ -324,6 +332,7 @@ __global__ void gl_DictionaryAttack(
 
 	int nAlternateCandidateRemaining = MAX_ALTERNATE_CANDIDATE;
 	while (nAlternateCandidateRemaining) {
+
 		IncrementAdaptiveDigits(
 			 dev_AdaptiveBaseDigitCarryTrigger
 			, dev_AdaptiveBaseCurrentBatchInitialDigits
@@ -335,15 +344,13 @@ __global__ void gl_DictionaryAttack(
 		//	, dev_EntropyAbsolutePrefix64
 		//	, dev_EntropyBatchNext24
 		//	, curDigits, curEntropy, &reqChecksum);
-		for (int i = 0; i < MAX_ADAPTIVE_BASE_POSITIONS; i++){
-			for (int j = 0; j < MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION; j++)
-				int t = dev_AdaptiveBaseDigitSet[i][j];
-		}
-		//AdaptiveUpdateMnemonicLow64(&curEntropy[1], dev_AdaptiveBaseDigitSet , curDigits);
 
-		//int16_t thisIdx = MAX_ADAPTIVE_BASE_POSITIONS - 1;
-		//int16_t thisVal = (dev_AdaptiveBaseDigitSet[thisIdx][curDigits[thisIdx]]);
-		//reqChecksum = (uint8_t)(thisVal & 0x0F);
+		AdaptiveUpdateMnemonicLow64(&curEntropy[1], myDigSet, curDigits);
+
+		int16_t chkPosIdx = MAX_ADAPTIVE_BASE_POSITIONS - 1;
+		int16_t chkWordIdx = curDigits[chkPosIdx];
+		uint16_t thisVal = (myDigSet[chkPosIdx][chkWordIdx]);
+		reqChecksum = 3;// (uint8_t)(thisVal & 0x0F);
 
 		uint8_t entropy_hash[32];
 		uint8_t bytes[16];
