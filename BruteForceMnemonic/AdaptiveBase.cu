@@ -317,17 +317,17 @@ __global__ void gl_DictionaryAttack(
 	uint8_t achievedChecksum=1;
 	bool bChkSumFailed=true;
 
-	int16_t curDigits[MAX_ADAPTIVE_BASE_POSITIONS];
+	int16_t curDigits[MAX_ADAPTIVE_BASE_POSITIONS] = {0,0,0,0,0,0};
 	uint64_t curEntropy[2];
 	curEntropy[0] = dev_EntropyAbsolutePrefix64[PTR_AVOIDER];
 	curEntropy[1] = dev_EntropyBatchNext24[PTR_AVOIDER];
 
 	int nAlternateCandidateRemaining = MAX_ALTERNATE_CANDIDATE;
 	while (nAlternateCandidateRemaining) {
-		//IncrementAdaptiveDigits(
-		//	 dev_AdaptiveBaseDigitCarryTrigger
-		//	, dev_AdaptiveBaseCurrentBatchInitialDigits
-		//	, idx, curDigits);
+		IncrementAdaptiveDigits(
+			 dev_AdaptiveBaseDigitCarryTrigger
+			, dev_AdaptiveBaseCurrentBatchInitialDigits
+			, idx, curDigits);
 
 		//AdaptiveDigitsToEntropy(curDigits
 		//	, dev_AdaptiveBaseDigitCarryTrigger
