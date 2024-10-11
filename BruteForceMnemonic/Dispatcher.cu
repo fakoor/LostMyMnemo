@@ -372,37 +372,9 @@ int Generate_Mnemonic(void)
 
 	host_EntropyBatchNext24[0] &= 0xFFFFFF0000000000ULL; //test done, revert nack to only 24 msbs
 
-	size_t copySize;
-	cudaError cudaResult;
 
-	copySize = sizeof(uint64_t);
-	cudaResult = cudaMemcpyToSymbol(dev_EntropyAbsolutePrefix64, host_EntropyAbsolutePrefix64, copySize, 0, cudaMemcpyHostToDevice);
-	if ( cudaResult != cudaSuccess)
-	{
-		std::cerr << "cudaMemcpyToSymbol copying "<< copySize <<" bytes to dev_EntropyAbsolutePrefix64 failed!: " << cudaResult << std::endl;
-		goto Error;
-	}
-
-
-	const int elemSize = sizeof(host_AdaptiveBaseCurrentBatchInitialDigits[0]);
-	copySize = elemSize * MAX_ADAPTIVE_BASE_POSITIONS;
-
-	cudaResult = cudaMemcpyToSymbol(dev_AdaptiveBaseCurrentBatchInitialDigits, host_AdaptiveBaseCurrentBatchInitialDigits, copySize , 0, cudaMemcpyHostToDevice);
-	if (cudaResult != cudaSuccess)
-	{
-		std::cerr << "cudaMemcpyToSymbol copying " << copySize << " bytes to dev_AdaptiveBaseCurrentBatchInitialDigits failed!: " << cudaResult << std::endl;
-		goto Error;
-	}
-	copySize = sizeof(host_AdaptiveBaseDigitCarryTrigger[0]) * MAX_ADAPTIVE_BASE_POSITIONS;
-	cudaResult = cudaMemcpyToSymbol(dev_AdaptiveBaseDigitCarryTrigger, host_AdaptiveBaseDigitCarryTrigger, copySize, 0, cudaMemcpyHostToDevice);
-	if (cudaResult != cudaSuccess)
-	{
-		std::cerr << "cudaMemcpyToSymbol copying " << copySize << " bytes to dev_AdaptiveBaseDigitCarryTrigger failed!: " << cudaResult << std::endl;
-		goto Error;
-	}
-
-	copySize = sizeof(host_AdaptiveBaseDigitSet[0][0]) * MAX_ADAPTIVE_BASE_POSITIONS * MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION;
-	cudaResult = cudaMemcpyToSymbol(dev_AdaptiveBaseDigitSet, host_AdaptiveBaseDigitSet, copySize, 0, cudaMemcpyHostToDevice);
+	size_t copySize = sizeof(int16_t) * MAX_ADAPTIVE_BASE_POSITIONS * MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION;
+	cudaError_t cudaResult = cudaMemcpyToSymbol(dev_AdaptiveBaseDigitSet, host_AdaptiveBaseDigitSet, copySize, 0, cudaMemcpyHostToDevice);
 	if (cudaResult != cudaSuccess)
 	{
 		std::cerr << "dev_AdaptiveBaseCurrentBatchInitialDigits copying " << copySize << " bytes to dev_AdaptiveBaseDigitSet failed!: " << cudaResult << std::endl;
@@ -496,6 +468,34 @@ int Generate_Mnemonic(void)
 
 				//TODO: increment entropy here accordingto grid , processed and extra
 
+				size_t copySize;
+				cudaError cudaResult;
+
+				copySize = sizeof(uint64_t);
+				cudaResult = cudaMemcpyToSymbol(dev_EntropyAbsolutePrefix64, host_EntropyAbsolutePrefix64, copySize, 0, cudaMemcpyHostToDevice);
+				if (cudaResult != cudaSuccess)
+				{
+					std::cerr << "cudaMemcpyToSymbol copying " << copySize << " bytes to dev_EntropyAbsolutePrefix64 failed!: " << cudaResult << std::endl;
+					goto Error;
+				}
+
+
+				const int elemSize = sizeof(host_AdaptiveBaseCurrentBatchInitialDigits[0]);
+				copySize = elemSize * MAX_ADAPTIVE_BASE_POSITIONS;
+
+				cudaResult = cudaMemcpyToSymbol(dev_AdaptiveBaseCurrentBatchInitialDigits, batchDigits, copySize, 0, cudaMemcpyHostToDevice);
+				if (cudaResult != cudaSuccess)
+				{
+					std::cerr << "cudaMemcpyToSymbol copying " << copySize << " bytes to dev_AdaptiveBaseCurrentBatchInitialDigits failed!: " << cudaResult << std::endl;
+					goto Error;
+				}
+				copySize = sizeof(host_AdaptiveBaseDigitCarryTrigger[0]) * MAX_ADAPTIVE_BASE_POSITIONS;
+				cudaResult = cudaMemcpyToSymbol(dev_AdaptiveBaseDigitCarryTrigger, host_AdaptiveBaseDigitCarryTrigger, copySize, 0, cudaMemcpyHostToDevice);
+				if (cudaResult != cudaSuccess)
+				{
+					std::cerr << "cudaMemcpyToSymbol copying " << copySize << " bytes to dev_AdaptiveBaseDigitCarryTrigger failed!: " << cudaResult << std::endl;
+					goto Error;
+				}
 
 				
 				//tools::entropyTo12Words(batchMnemo, 

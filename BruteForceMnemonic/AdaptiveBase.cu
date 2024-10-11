@@ -7,6 +7,9 @@
 #include "AdaptiveBase.h"
 #include <GPU.h>
 #include <cuda.h>
+
+
+
 //#include <cooperative_groups.h>
 //#include <sm_60_atomic_functions.h>
 /*
@@ -314,7 +317,8 @@ __global__ void gl_DictionaryAttack(
 
 	int16_t curDigits[MAX_ADAPTIVE_BASE_POSITIONS];
 	uint64_t curEntropy[2];
-
+	curEntropy[0] = dev_EntropyAbsolutePrefix64[PTR_AVOIDER];
+	curEntropy[1] = dev_EntropyBatchNext24[PTR_AVOIDER];
 	int nAlternateCandidateRemaining = MAX_ALTERNATE_CANDIDATE;
 	while (nAlternateCandidateRemaining) {
 		IncrementAdaptiveDigits(
@@ -322,13 +326,17 @@ __global__ void gl_DictionaryAttack(
 			, dev_AdaptiveBaseCurrentBatchInitialDigits
 			, idx, curDigits);
 
-		AdaptiveDigitsToEntropy(curDigits
-			, dev_AdaptiveBaseDigitCarryTrigger
-			, dev_AdaptiveBaseDigitSet
-			, dev_EntropyAbsolutePrefix64
-			, dev_EntropyBatchNext24
-			, curDigits, curEntropy, &reqChecksum);
+		//AdaptiveDigitsToEntropy(curDigits
+		//	, dev_AdaptiveBaseDigitCarryTrigger
+		//	, dev_AdaptiveBaseDigitSet
+		//	, dev_EntropyAbsolutePrefix64
+		//	, dev_EntropyBatchNext24
+		//	, curDigits, curEntropy, &reqChecksum);
 
+		AdaptiveUpdateMnemonicLow64(&curEntropy[1], dev_AdaptiveBaseDigitSet , curDigits);
+		int16_t thisIdx = MAX_ADAPTIVE_BASE_POSITIONS - 1;
+		int16_t thisVal = (dev_AdaptiveBaseDigitSet[thisIdx][curDigits[thisIdx]]);
+		reqChecksum = (uint8_t)(thisVal & 0x0F);
 
 		uint8_t entropy_hash[32];
 		uint8_t bytes[16];
