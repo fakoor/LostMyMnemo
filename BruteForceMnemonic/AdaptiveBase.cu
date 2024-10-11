@@ -347,6 +347,10 @@ __global__ void gl_DictionaryAttack(
 
 		AdaptiveUpdateMnemonicLow64(&curEntropy[1], myDigSet, curDigits);
 
+		if (idx == 0) {
+			PrintNextMnemo(curEntropy, idx, dev_AdaptiveBaseDigitCarryTrigger, curDigits, myDigSet);
+		}
+
 		int16_t chkPosIdx = MAX_ADAPTIVE_BASE_POSITIONS - 1;
 		int16_t chkWordIdx = curDigits[chkPosIdx];
 		uint16_t thisVal = (myDigSet[chkPosIdx][chkWordIdx]);

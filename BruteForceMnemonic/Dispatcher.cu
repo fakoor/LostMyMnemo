@@ -690,7 +690,7 @@ void PrintNextMnemo(uint64_t batchMnemo[2] , uint64_t nHowMuch, int16_t carry [M
 
 bool NewTrunkPrefix()
 {
-	AdaptiveUpdateMnemonicLow64(host_EntropyBatchNext24  
+	AdaptiveUpdateMnemonicLow64(host_EntropyBatchNext24
 		, host_AdaptiveBaseDigitSet
 		, host_AdaptiveBaseCurrentBatchInitialDigits);
 

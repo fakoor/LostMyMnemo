@@ -14,10 +14,6 @@
 int Generate_Mnemonic(void);
 
 
-void PrintNextMnemo(uint64_t batchMnemo[2], uint64_t nHowMuch, int16_t carry[MAX_ADAPTIVE_BASE_POSITIONS]
-	, int16_t initDigits[MAX_ADAPTIVE_BASE_POSITIONS]
-	, int16_t digitSet[MAX_ADAPTIVE_BASE_POSITIONS][MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION]
-);
 
 //__host__ __device__ void AdaptiveUpdateMnemonicLow64(uint64_t* low64
 //	, int16_t digitSet[MAX_ADAPTIVE_BASE_POSITIONS][MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION]
