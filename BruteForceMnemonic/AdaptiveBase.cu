@@ -2,7 +2,7 @@
 
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
-#include <device_functions.h>
+//#include <device_functions.h>
 
 #include "AdaptiveBase.h"
 #include <GPU.h>
@@ -335,7 +335,10 @@ __global__ void gl_DictionaryAttack(
 		//	, dev_EntropyAbsolutePrefix64
 		//	, dev_EntropyBatchNext24
 		//	, curDigits, curEntropy, &reqChecksum);
-
+		for (int i = 0; i < MAX_ADAPTIVE_BASE_POSITIONS; i++){
+			for (int j = 0; j < MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION; j++)
+				int t = dev_AdaptiveBaseDigitSet[i][j];
+		}
 		//AdaptiveUpdateMnemonicLow64(&curEntropy[1], dev_AdaptiveBaseDigitSet , curDigits);
 
 		//int16_t thisIdx = MAX_ADAPTIVE_BASE_POSITIONS - 1;
@@ -464,4 +467,29 @@ __global__ void gl_DictionaryAttack(
 	}
 
 }
+
+__host__ /*and */ __device__
+void AdaptiveUpdateMnemonicLow64(uint64_t* low64
+	, int16_t digitSet[MAX_ADAPTIVE_BASE_POSITIONS][MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION]
+	, int16_t curDigits[MAX_ADAPTIVE_BASE_POSITIONS]
+)
+
+{
+	uint64_t tmpHigh = *low64;
+	uint64_t tmpAns = tmpHigh;
+
+	tmpAns = tmpHigh >> 62;
+	tmpAns = tmpAns << 2;
+
+	for (int i = 0; i < MAX_ADAPTIVE_BASE_POSITIONS - 1; i++) {
+		tmpAns = tmpAns << 11;
+		tmpAns & 0xFFFFFFFFFFFFF7F;
+		tmpAns |= (uint64_t)(digitSet[i][curDigits[i]]);
+	}
+	tmpAns = tmpAns << 7;
+	tmpAns |= ((uint64_t)(digitSet[MAX_ADAPTIVE_BASE_POSITIONS - 1][curDigits[MAX_ADAPTIVE_BASE_POSITIONS - 1]]) >> 4);
+
+	*low64 = tmpAns;
+}
+
 
