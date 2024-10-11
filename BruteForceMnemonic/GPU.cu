@@ -3059,11 +3059,16 @@ __constant__ uint32_t dev_num_childs[1];
 __constant__ int16_t dev_static_words_indices[12];
 
 
-
 __device__
 void entropy_to_mnemonic(const uint64_t* gl_entropy, uint8_t* mnemonic_phrase) {
-	int16_t indices[12] = {-1, -1, -1 , -1 , -1 , -1 , -1 , -1 , -1 , -1 , -1 , -1 };
 	uint32_t idx = blockIdx.x * blockDim.x + threadIdx.x;
+	entropy_to_mnemonic_with_offset(gl_entropy, mnemonic_phrase, idx);
+}
+
+__device__
+void entropy_to_mnemonic_with_offset(const uint64_t* gl_entropy, uint8_t* mnemonic_phrase, uint32_t idx) {
+	int16_t indices[12] = {-1, -1, -1 , -1 , -1 , -1 , -1 , -1 , -1 , -1 , -1 , -1 };
+	//uint32_t idx = blockIdx.x * blockDim.x + threadIdx.x;
 	uint64_t entropy[2];
 	if (idx < NUM_ENTROPY_FRAME) {
 		entropy[0] = gl_entropy[0 + idx * 2];

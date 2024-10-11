@@ -1,25 +1,5 @@
 #pragma once
-
-#define MAX_ALTERNATE_CANDIDATE	1
-
-#define MAX_ADAPTIVE_BASE_POSITIONS 6
-#define MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION 262
-
-//struct  __align__(8) AdaptiveStructConstType {
-//};
-
-//struct  __align__(8) AdaptiveStructVarType {
-//	uint64_t dev_largestBatchIncrementProcessed;
-//	int16_t dev_largestBatchDigitsAchieved[MAX_ADAPTIVE_BASE_POSITIONS];
-//	uint64_t dev_CompletedBatches;
-//
-//};
-//
-//extern __device__ AdaptiveStructVarType dev_adaptiveVars;
-//extern __constant__ AdaptiveStructConstType dev_adaptiveConsts;
-
-//extern AdaptiveStructConstType host_adaptiveConsts;
-//extern AdaptiveStructVarType host_adaptiveVars;
+#include "consts.h"
 
 
 extern __constant__ uint64_t dev_EntropyAbsolutePrefix64[1];

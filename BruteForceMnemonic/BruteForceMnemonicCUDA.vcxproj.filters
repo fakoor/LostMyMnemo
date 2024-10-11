@@ -15,6 +15,7 @@
     <ClInclude Include="KernelStride.hpp" />
     <ClInclude Include="Helper.h" />
     <ClInclude Include="AdaptiveBase.h" />
+    <ClInclude Include="consts.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="config.cfg" />

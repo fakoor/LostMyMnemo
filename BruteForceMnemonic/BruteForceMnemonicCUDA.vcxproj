@@ -140,6 +140,7 @@ If exist "config.cfg" copy "config.cfg" "$(OutDir)\"</Command>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AdaptiveBase.h" />
+    <ClInclude Include="consts.h" />
     <ClInclude Include="GPU.h" />
     <ClInclude Include="Dispatcher.h" />
     <ClInclude Include="Helper.h" />

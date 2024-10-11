@@ -38,6 +38,8 @@ void sha256(const uint32_t* pass, int pass_len, uint32_t* hash);
 __device__
 void entropy_to_mnemonic(const uint64_t* gl_entropy, uint8_t* mnemonic_phrase);
 
+__device__
+void entropy_to_mnemonic_with_offset(const uint64_t* gl_entropy, uint8_t* mnemonic_phrase, uint32_t idx);
 
 __device__
  uint64_t SWAP512(uint64_t val);

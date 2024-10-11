@@ -51,7 +51,7 @@ int Generate_Mnemonic(void)
 {
 
 
-	std::cout << "Compile on Date *** : " << __DATE__ << ", Time:" << __TIME__ << std::endl;
+	std::cout << "Compile on Date **** : " << __DATE__ << ", Time:" << __TIME__ << std::endl;
 	//{//TODO make all NULL
 	//	dev_nProcessedFromBatch = NULL;
 	//	host_nProcessedFromBatch = NULL;
@@ -410,7 +410,8 @@ int Generate_Mnemonic(void)
 		uint64_t nCumulativeCombosProcessedInTrunk = 0;
 		int nBatch = 0;
 
-		std::cout << "Planing to check total "<< nUniversalMax <<" combinations structured in " << nPlanned24BitTrunks << " Trunks X " << nPlanned44BitCombos << " Subordinates via " << nBatchMax << " batches "
+
+		std::cout << ">> " << __DATE__ << "@" << __TIME__ << "->" << "Planing to check total "<< nUniversalMax <<" combinations structured in " << nPlanned24BitTrunks << " Trunks X " << nPlanned44BitCombos << " Subordinates via " << nBatchMax << " batches "
 			" of " << nThreadsInBatch << " threads each" << std::endl;
 
 
@@ -422,48 +423,25 @@ int Generate_Mnemonic(void)
 			if (NewTrunkPrefix() == false)
 				goto Error;
 
-			int16_t batchDigits[MAX_ADAPTIVE_BASE_POSITIONS];
-			uint64_t batchMnemo[2];
 
 			nBatch = 0;
 
+			int16_t batchDigits[MAX_ADAPTIVE_BASE_POSITIONS];
+
+			std::cout << "ALL VARIANTS:" << std::endl;
+
+			uint64_t batchMnemo[2];
 			batchMnemo[0] = host_EntropyAbsolutePrefix64[0];
 			batchMnemo[1] = host_EntropyBatchNext24[0] & 0xB0000000; //scrutinize;
-			IncrementAdaptiveDigits(host_AdaptiveBaseDigitCarryTrigger, host_AdaptiveBaseCurrentBatchInitialDigits, 0, batchDigits);
 
-			AdaptiveUpdateMnemonicLow64(&batchMnemo[1]
-				, host_AdaptiveBaseDigitSet
-				, batchDigits);
-
-
-			int16_t tmp2[12] = {
-(batchMnemo[0] >> 53) & 2047,
-(batchMnemo[0] >> 42) & 2047,
-(batchMnemo[0] >> 31) & 2047,
-(batchMnemo[0] >> 20) & 2047,
-(batchMnemo[0] >> 9) & 2047,
-((batchMnemo[0] & ((1 << 9) - 1)) << 2) | ((batchMnemo[1] >> 62) & 3),
-(batchMnemo[1] >> 51) & 2047,
-(batchMnemo[1] >> 40) & 2047,
-(batchMnemo[1] >> 29) & 2047,
-(batchMnemo[1] >> 18) & 2047,
-(batchMnemo[1] >> 7) & 2047,
-((batchMnemo[1] & ((1 << 7) - 1)) << 4)
-
-			};
-
-			int16_t temArr[6] = {
-		host_AdaptiveBaseDigitSet[0][batchDigits[0]]
-	,	host_AdaptiveBaseDigitSet[1][batchDigits[1]]
-	,	host_AdaptiveBaseDigitSet[2][batchDigits[2]]
-	,	host_AdaptiveBaseDigitSet[3][batchDigits[3]]
-	,	host_AdaptiveBaseDigitSet[4][batchDigits[4]]
-	,	host_AdaptiveBaseDigitSet[5][batchDigits[5]] };
-
-			for (int i = 0; i < MAX_ADAPTIVE_BASE_POSITIONS; i++) {
-				std::cout << host_AdaptiveBaseCurrentBatchInitialDigits[i] << "=" << batchDigits[i] << std::endl;
+			for (int i = 0; i < 64; i++) {
+				PrintNextMnemo(batchMnemo, i, host_AdaptiveBaseDigitCarryTrigger , host_AdaptiveBaseCurrentBatchInitialDigits, host_AdaptiveBaseDigitSet);
 			}
-			do  {
+
+			//for (int i = 0; i < MAX_ADAPTIVE_BASE_POSITIONS; i++) {
+			//	std::cout << host_AdaptiveBaseCurrentBatchInitialDigits[i] << "=" << batchDigits[i] << std::endl;
+			//}
+			do  { //batch
 
 
 				//TODO: increment entropy here accordingto grid , processed and extra
@@ -503,11 +481,17 @@ int Generate_Mnemonic(void)
 	
 				std::cout << ">> NEW BATCH -- "
 					<< "No:" << nBatch << "/" << nBatchMax << std::endl;
-				std::cout << "Stars from 2nd half:" << tools::GetMnemoString(temArr, 6) << std::endl;
-					std::cout <<"Fully:"<< tools::GetMnemoString(tmp2, 12) << std::endl;
+
 				*Data->host.host_nProcessedFromBatch = 0;
 				*Data->host.host_nProcessedMoreThanBatch = 0;
+				
+				if (cudaSuccess != cudaMemcpy(Data->dev.dev_nProcessedFromBatch, Data->host.host_nProcessedFromBatch, 8, cudaMemcpyHostToDevice)) {
+					std::cout << "Error-Line--" << __LINE__ << std::endl;
+				}
 
+				if (cudaSuccess != cudaMemcpy(Data->dev.dev_nProcessedMoreThanBatch, Data->host.host_nProcessedMoreThanBatch, 8, cudaMemcpyHostToDevice)) {
+					std::cout << "Error-Line--" << __LINE__ << std::endl;
+				}
 
 				tools::start_time();
 
@@ -655,10 +639,58 @@ Error:
 
 
 }
+__host__ __device__
+void PrintNextMnemo(uint64_t batchMnemo[2] , uint64_t nHowMuch, int16_t carry [MAX_ADAPTIVE_BASE_POSITIONS]
+	, int16_t initDigits[MAX_ADAPTIVE_BASE_POSITIONS]
+	, int16_t digitSet [MAX_ADAPTIVE_BASE_POSITIONS][MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION]
+)
+{
+	int16_t  batchDigits[6];
+	//uint64_t batchMnemo[2];
+	//batchMnemo[0] = host_EntropyAbsolutePrefix64[0];
+	//batchMnemo[1] = host_EntropyBatchNext24[0] & 0xB0000000; //scrutinize;
+	printf("before->after::[%ul] == \n", nHowMuch  );
+
+	IncrementAdaptiveDigits(carry, initDigits, nHowMuch, batchDigits);
+
+	for (int i = 0; i < MAX_ADAPTIVE_BASE_POSITIONS; i++)
+		printf("[ %d,  %d ] - ", initDigits[i] ,batchDigits[i]);
+
+	AdaptiveUpdateMnemonicLow64(&batchMnemo[1]
+		, digitSet
+		, batchDigits);
+
+
+	int16_t tmp2[12] = {
+		(batchMnemo[0] >> 53) & 2047,
+		(batchMnemo[0] >> 42) & 2047,
+		(batchMnemo[0] >> 31) & 2047,
+		(batchMnemo[0] >> 20) & 2047,
+		(batchMnemo[0] >> 9) & 2047,
+		((batchMnemo[0] & ((1 << 9) - 1)) << 2) | ((batchMnemo[1] >> 62) & 3),
+		(batchMnemo[1] >> 51) & 2047,
+		(batchMnemo[1] >> 40) & 2047,
+		(batchMnemo[1] >> 29) & 2047,
+		(batchMnemo[1] >> 18) & 2047,
+		(batchMnemo[1] >> 7) & 2047,
+		((batchMnemo[1] & ((1 << 7) - 1)) << 4)
+
+	};
+
+	int16_t temArr[6] = {
+		digitSet[0][batchDigits[0]]
+		,	digitSet[1][batchDigits[1]]
+		,	digitSet[2][batchDigits[2]]
+		,	digitSet[3][batchDigits[3]]
+		,	digitSet[4][batchDigits[4]]
+		,	digitSet[5][batchDigits[5]] };
+	printf ("Stars from 2nd half [%ull] --> %s\r\n", nHowMuch , tools::GetMnemoString(temArr, 6).c_str() );
+	printf ("Fully last checksum: [%ull] --> %s\r\n" ,nHowMuch, tools::GetMnemoString(tmp2, 12).c_str());
+}
 
 bool NewTrunkPrefix()
 {
-	AdaptiveUpdateMnemonicLow64(host_EntropyBatchNext24
+	AdaptiveUpdateMnemonicLow64(host_EntropyBatchNext24  
 		, host_AdaptiveBaseDigitSet
 		, host_AdaptiveBaseCurrentBatchInitialDigits);
 

@@ -1,0 +1,9 @@
+#pragma once
+
+#ifndef __CONSTS_H__
+#define __CONSTS_H__
+#define MAX_ALTERNATE_CANDIDATE	1
+
+#define MAX_ADAPTIVE_BASE_POSITIONS 6
+#define MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION 262
+#endif

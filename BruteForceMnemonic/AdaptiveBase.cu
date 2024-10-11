@@ -305,7 +305,7 @@ __global__ void gl_DictionaryAttack(
 		ourBlockProcExtra = 0;
 		ourBlockBadChkSum = 0;
 		ourBlockGoodChkSum = 0;
-
+		
 		for (int i = 0; i < MAX_ADAPTIVE_BASE_POSITIONS; i++) {
 			for (int j = 0; j < MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION; j++) {
 				myDigSet[i][j] = dev_AdaptiveBaseDigitSet[i][j];
@@ -351,7 +351,7 @@ __global__ void gl_DictionaryAttack(
 		int16_t chkWordIdx = curDigits[chkPosIdx];
 		uint16_t thisVal = (myDigSet[chkPosIdx][chkWordIdx]);
 		uint8_t tmp = (uint8_t)(thisVal & 0x0F);
-		reqChecksum = 3;// ;
+		reqChecksum = tmp;
 
 		uint8_t entropy_hash[32];
 		uint8_t bytes[16];
@@ -374,6 +374,7 @@ __global__ void gl_DictionaryAttack(
 		bytes[2] = (entropy[0] >> 40) & 0xFF;
 		bytes[1] = (entropy[0] >> 48) & 0xFF;
 		bytes[0] = (entropy[0] >> 56) & 0xFF;
+		
 		sha256((uint32_t*)bytes, 16, (uint32_t*)entropy_hash);
 		achievedChecksum = (entropy_hash[0] >> 4) & 0x0F;
 
@@ -389,7 +390,7 @@ __global__ void gl_DictionaryAttack(
 	} //do
 
 	__syncthreads(); // Synchronize to and check if have a valid checksum to continue with
-	if (!bChkSumFailed) {
+	if (bChkSumFailed == false) { //scrutinize
 		atomicAdd(&ourBlockGoodChkSum, 1);
 
 		uint8_t mnemonic_phrase[SIZE_MNEMONIC_FRAME] = { 0 };
@@ -400,8 +401,7 @@ __global__ void gl_DictionaryAttack(
 
 
 		//Work with Current Entropy
-		entropy_to_mnemonic(curEntropy, mnemonic);
-
+		entropy_to_mnemonic_with_offset(curEntropy, mnemonic, 0);
 		//entropy_to_mnemonic(entropy, mnemonic);
 #pragma unroll
 		for (int x = 0; x < 120 / 8; x++) {
@@ -474,7 +474,7 @@ __global__ void gl_DictionaryAttack(
 		atomicAdd(nBatchMoreProc, ourBlockProcExtra);
 	}
 
-}
+}//DICTIONARY ATTACK
 
 __host__ /*and */ __device__
 void AdaptiveUpdateMnemonicLow64(uint64_t* low64
