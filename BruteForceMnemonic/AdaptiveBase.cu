@@ -302,6 +302,8 @@ __global__ void gl_DictionaryAttack(
 	if (threadIdx.x == 0) {
 		ourBlockProcNormal = 0; // Only the first thread initializes it
 		ourBlockProcExtra = 0;
+		ourBlockBadChkSum = 0;
+		ourBlockGoodChkSum = 0;
 	}
 	__syncthreads(); // Synchronize to ensure the initialization is complete
 
@@ -311,20 +313,21 @@ __global__ void gl_DictionaryAttack(
 
 	atomicAdd(&ourBlockProcNormal,1);
 
-	uint8_t reqChecksum;
-	uint8_t achievedChecksum;
-	bool bChkSumFailed;
+	uint8_t reqChecksum=0;
+	uint8_t achievedChecksum=1;
+	bool bChkSumFailed=true;
 
 	int16_t curDigits[MAX_ADAPTIVE_BASE_POSITIONS];
 	uint64_t curEntropy[2];
 	curEntropy[0] = dev_EntropyAbsolutePrefix64[PTR_AVOIDER];
 	curEntropy[1] = dev_EntropyBatchNext24[PTR_AVOIDER];
+
 	int nAlternateCandidateRemaining = MAX_ALTERNATE_CANDIDATE;
 	while (nAlternateCandidateRemaining) {
-		IncrementAdaptiveDigits(
-			 dev_AdaptiveBaseDigitCarryTrigger
-			, dev_AdaptiveBaseCurrentBatchInitialDigits
-			, idx, curDigits);
+		//IncrementAdaptiveDigits(
+		//	 dev_AdaptiveBaseDigitCarryTrigger
+		//	, dev_AdaptiveBaseCurrentBatchInitialDigits
+		//	, idx, curDigits);
 
 		//AdaptiveDigitsToEntropy(curDigits
 		//	, dev_AdaptiveBaseDigitCarryTrigger
@@ -333,10 +336,11 @@ __global__ void gl_DictionaryAttack(
 		//	, dev_EntropyBatchNext24
 		//	, curDigits, curEntropy, &reqChecksum);
 
-		AdaptiveUpdateMnemonicLow64(&curEntropy[1], dev_AdaptiveBaseDigitSet , curDigits);
-		int16_t thisIdx = MAX_ADAPTIVE_BASE_POSITIONS - 1;
-		int16_t thisVal = (dev_AdaptiveBaseDigitSet[thisIdx][curDigits[thisIdx]]);
-		reqChecksum = (uint8_t)(thisVal & 0x0F);
+		//AdaptiveUpdateMnemonicLow64(&curEntropy[1], dev_AdaptiveBaseDigitSet , curDigits);
+
+		//int16_t thisIdx = MAX_ADAPTIVE_BASE_POSITIONS - 1;
+		//int16_t thisVal = (dev_AdaptiveBaseDigitSet[thisIdx][curDigits[thisIdx]]);
+		//reqChecksum = (uint8_t)(thisVal & 0x0F);
 
 		uint8_t entropy_hash[32];
 		uint8_t bytes[16];

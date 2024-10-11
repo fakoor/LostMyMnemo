@@ -19,7 +19,7 @@
 #include "../Tools/utils.h"
 
 
-int stride_class::DictionaryAttack(uint64_t grid, uint64_t block, uint64_t* nProcessedFromBatch, uint64_t* nProcessedMoreThanBatch) {
+int stride_class::DictionaryAttack(uint64_t grid, uint64_t block) {
 	gl_DictionaryAttack << <(uint32_t)grid, (uint32_t)block, 0, dt->stream1 >> > (dt->dev.dev_nProcessedFromBatch, dt->dev.dev_nProcessedMoreThanBatch,dt->dev.dev_tables_legacy, dt->dev.dev_tables_segwit, dt->dev.dev_tables_native_segwit, dt->dev.ret);
 	cudaError_t err = cudaGetLastError();
 	if (err != cudaSuccess) {
@@ -142,10 +142,10 @@ int stride_class::init()
 }
 
 
-int stride_class::startDictionaryAttack(uint64_t grid, uint64_t block, uint64_t* nProcessedFromBatch, uint64_t* nProcessedMoreThanBatch)
+int stride_class::startDictionaryAttack(uint64_t grid, uint64_t block)
 {
 	if (memsetGlobalMnemonic() != 0) return -1;
-	if (DictionaryAttack(grid, block, nProcessedFromBatch, nProcessedMoreThanBatch) != 0) return -1;
+	if (DictionaryAttack(grid, block) != 0) return -1;
 
 	return 0;
 }

@@ -428,7 +428,7 @@ int Generate_Mnemonic(void)
 			nBatch = 0;
 
 			batchMnemo[0] = host_EntropyAbsolutePrefix64[0];
-			batchMnemo[1] = host_EntropyBatchNext24[0] & 0xB;
+			batchMnemo[1] = host_EntropyBatchNext24[0] & 0xB0000000; //scrutinize;
 			IncrementAdaptiveDigits(host_AdaptiveBaseDigitCarryTrigger, host_AdaptiveBaseCurrentBatchInitialDigits, 0, batchDigits);
 
 			AdaptiveUpdateMnemonicLow64(&batchMnemo[1]
@@ -511,7 +511,7 @@ int Generate_Mnemonic(void)
 
 				tools::start_time();
 
-				if (Stride->startDictionaryAttack(Config.cuda_grid, Config.cuda_block, Data->host.host_nProcessedFromBatch, Data->host.host_nProcessedMoreThanBatch) != 0) {
+				if (Stride->startDictionaryAttack(Config.cuda_grid, Config.cuda_block) != 0) {
 					std::cerr << "Error START!!" << std::endl;
 					goto Error;
 				}
@@ -681,17 +681,20 @@ void AdaptiveUpdateMnemonicLow64(uint64_t* low64
 
 {
 	uint64_t tmpHigh = *low64;
-	
-	*low64 = tmpHigh >> 62;
-	*low64 = *low64 << 2;
+	uint64_t tmpAns = tmpHigh;
+
+	tmpAns = tmpHigh >> 62;
+	tmpAns = tmpAns << 2;
 
 	for (int i = 0; i < MAX_ADAPTIVE_BASE_POSITIONS-1; i++) {
-		*low64 = *low64 << 11;
-		*low64 & 0xFFFFFFFFFFFFF7F;
-		*low64 |= (uint64_t)(digitSet[i][curDigits[i]]);
+		tmpAns = tmpAns << 11;
+		tmpAns & 0xFFFFFFFFFFFFF7F;
+		tmpAns |= (uint64_t)(digitSet[i][curDigits[i]]);
 	}
-	*low64 = *low64 << 7;
-	*low64 |= ((uint64_t)(digitSet[MAX_ADAPTIVE_BASE_POSITIONS - 1][curDigits[MAX_ADAPTIVE_BASE_POSITIONS - 1]]) >> 4);
+	tmpAns = tmpAns << 7;
+	tmpAns |= ((uint64_t)(digitSet[MAX_ADAPTIVE_BASE_POSITIONS - 1][curDigits[MAX_ADAPTIVE_BASE_POSITIONS - 1]]) >> 4);
+
+	*low64 = tmpAns;
 }
 
 
