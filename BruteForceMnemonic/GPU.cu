@@ -3062,11 +3062,11 @@ __constant__ int16_t dev_static_words_indices[12];
 __device__
 void entropy_to_mnemonic(const uint64_t* gl_entropy, uint8_t* mnemonic_phrase) {
 	uint32_t idx = blockIdx.x * blockDim.x + threadIdx.x;
-	entropy_to_mnemonic_with_offset(gl_entropy, mnemonic_phrase, idx);
+	entropy_to_mnemonic_with_offset(gl_entropy, mnemonic_phrase, idx, dev_static_words_indices);
 }
 
 __device__
-void entropy_to_mnemonic_with_offset(const uint64_t* gl_entropy, uint8_t* mnemonic_phrase, uint32_t idx) {
+void entropy_to_mnemonic_with_offset(const uint64_t* gl_entropy, uint8_t* mnemonic_phrase, uint32_t idx, int16_t  local_static_words_indices[12]) {
 	int16_t indices[12] = {-1, -1, -1 , -1 , -1 , -1 , -1 , -1 , -1 , -1 , -1 , -1 };
 	//uint32_t idx = blockIdx.x * blockDim.x + threadIdx.x;
 	uint64_t entropy[2];
@@ -3084,7 +3084,7 @@ void entropy_to_mnemonic_with_offset(const uint64_t* gl_entropy, uint8_t* mnemon
 	entropy[1] += idx;
 	if (idx > entropy[1]) entropy[0]++;
 
-	for (int i = 0; i < 12; i++) if (dev_static_words_indices[i] != -1) indices[i] = dev_static_words_indices[i];
+	for (int i = 0; i < 12; i++) if (local_static_words_indices[i] != -1) indices[i] = local_static_words_indices[i];
 	for (int i = 11, pos = 11; i >= 0; i--)
 	{
 		if (indices[i] == -1)

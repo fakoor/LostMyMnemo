@@ -422,9 +422,9 @@ int Generate_Mnemonic(void)
 			batchMnemo[0] = host_EntropyAbsolutePrefix64[0];
 			batchMnemo[1] = host_EntropyNextPrefix2[0] & 0xB0000000; //scrutinize;
 
-			//for (int i = 0; i < 64; i++) {
-			//	PrintNextMnemo(batchMnemo, i, host_AdaptiveBaseDigitCarryTrigger , host_AdaptiveBaseCurrentBatchInitialDigits, host_AdaptiveBaseDigitSet);
-			//}
+			for (int i = 0; i < 4; i++) {
+				PrintNextMnemo(batchMnemo, i, host_AdaptiveBaseDigitCarryTrigger , host_AdaptiveBaseCurrentBatchInitialDigits, host_AdaptiveBaseDigitSet);
+			}
 
 			//for (int i = 0; i < MAX_ADAPTIVE_BASE_POSITIONS; i++) {
 			//	std::cout << host_AdaptiveBaseCurrentBatchInitialDigits[i] << "=" << batchDigits[i] << std::endl;
@@ -503,6 +503,7 @@ int Generate_Mnemonic(void)
 					//tools::saveResult((char*)Data->host.mnemonic, (uint8_t*)Data->host.hash160, Data->wallets_in_round_gpu, Data->num_all_childs, Data->num_childs, Config.generate_path);
 				}
 
+				printf("checking results\r\n");
 				tools::checkResult(Data->host.ret);
 
 				float delay;
@@ -639,7 +640,9 @@ void PrintNextMnemo(uint64_t batchMnemo[2] , uint64_t nHowMuch, int16_t carry [M
 	//batchMnemo[1] = host_EntropyBatchNext24[0] & 0xB0000000; //scrutinize;
 	printf("before->after::[%ul] == \n", nHowMuch  );
 
-	IncrementAdaptiveDigits(carry, initDigits, nHowMuch, batchDigits);
+	if (IncrementAdaptiveDigits(carry, initDigits, nHowMuch, batchDigits) == false) {
+		printf("Not able to add %ul\r\n", nHowMuch);
+	}
 
 	for (int i = 0; i < MAX_ADAPTIVE_BASE_POSITIONS; i++)
 		printf("[ %d,  %d ] - ", initDigits[i] ,batchDigits[i]);
@@ -672,8 +675,8 @@ void PrintNextMnemo(uint64_t batchMnemo[2] , uint64_t nHowMuch, int16_t carry [M
 		,	digitSet[3][batchDigits[3]]
 		,	digitSet[4][batchDigits[4]]
 		,	digitSet[5][batchDigits[5]] };
-	printf ("Stars from 2nd half [%ull] --> %s\r\n", nHowMuch , tools::GetMnemoString(temArr, 6).c_str() );
-	printf ("Fully last checksum: [%ull] --> %s\r\n" ,nHowMuch, tools::GetMnemoString(tmp2, 12).c_str());
+	printf ("Stars from 2nd half [%ul] --> %s\r\n", nHowMuch , tools::GetMnemoString(temArr, 6).c_str() );
+	printf ("Fully last checksum: [%ul] --> %s\r\n" ,nHowMuch, tools::GetMnemoString(tmp2, 12).c_str());
 }
 
 bool NewTrunkPrefix()

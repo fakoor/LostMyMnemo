@@ -202,7 +202,7 @@ __constant__ uint64_t dev_EntropyNextPrefix2[1]; //Per-Batch Const
 
  
 
-__host__ /* __and__ */ __device__ void IncrementAdaptiveDigits( int16_t * local_AdaptiveBaseDigitCarryTrigger, int16_t* inDigits, uint64_t howMuch, int16_t* outDigits) {
+__host__ /* __and__ */ __device__ bool IncrementAdaptiveDigits( int16_t * local_AdaptiveBaseDigitCarryTrigger, int16_t* inDigits, uint64_t howMuch, int16_t* outDigits) {
 	uint64_t nYetToAdd = howMuch;
 	uint64_t nCarryValue = 0;
 
@@ -225,7 +225,9 @@ __host__ /* __and__ */ __device__ void IncrementAdaptiveDigits( int16_t * local_
 	}
 	if (nYetToAdd != 0 || nCarryValue != 0) {
 		//ASSERT: We have carried out of our space, NOP anyway
+		return false;
 	}
+	return true;
 }
 
 
@@ -293,12 +295,15 @@ __global__ void gl_DictionaryAttack(
 	retStruct* __restrict__ ret
 )
 {
+	int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
 	__shared__ uint64_t ourBlockProcNormal;
 	__shared__ uint64_t ourBlockProcExtra;
 	__shared__ uint64_t ourBlockBadChkSum;
 	__shared__ uint64_t ourBlockGoodChkSum;
 	__shared__ int16_t myDigSet[MAX_ADAPTIVE_BASE_POSITIONS][MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION];
-
+	__shared__ uint64_t nMaxCloudAdd;
+	int16_t local_static_word_index[12];
 
 	// Initialize the shared variable
 	if (threadIdx.x == 0) {
@@ -306,11 +311,14 @@ __global__ void gl_DictionaryAttack(
 		ourBlockProcExtra = 0;
 		ourBlockBadChkSum = 0;
 		ourBlockGoodChkSum = 0;
-		
+		nMaxCloudAdd = 0;
 		for (int i = 0; i < MAX_ADAPTIVE_BASE_POSITIONS; i++) {
 			for (int j = 0; j < MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION; j++) {
 				myDigSet[i][j] = dev_AdaptiveBaseDigitSet[i][j];
 			}
+		}
+		for (int i = 0; i < 12; i++) {
+			local_static_word_index[i] = dev_static_words_indices[i];
 		}
 
 	}
@@ -318,7 +326,6 @@ __global__ void gl_DictionaryAttack(
 
 
 	//TODO: Each thread picks is load from Incremental Base!
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
 	atomicAdd(&ourBlockProcNormal,1);
 
@@ -331,14 +338,35 @@ __global__ void gl_DictionaryAttack(
 	curEntropy[0] = dev_EntropyAbsolutePrefix64[PTR_AVOIDER];
 	curEntropy[1] = dev_EntropyNextPrefix2[PTR_AVOIDER];
 
-	int nAlternateCandidateRemaining = MAX_ALTERNATE_CANDIDATE;
-	while (nAlternateCandidateRemaining) {
+	//static int ppp = 0;
+	if (idx == 0 ) {
+		printf("digit= %d %d %d %d %d %d - %ul\r\n"
+			, dev_AdaptiveBaseCurrentBatchInitialDigits[0]
+			, dev_AdaptiveBaseCurrentBatchInitialDigits[1]
+			, dev_AdaptiveBaseCurrentBatchInitialDigits[2]
+			, dev_AdaptiveBaseCurrentBatchInitialDigits[3]
+			, dev_AdaptiveBaseCurrentBatchInitialDigits[4]
+			, dev_AdaptiveBaseCurrentBatchInitialDigits[5]
+			, curEntropy[1]
+		);
 
-		IncrementAdaptiveDigits(
-			 dev_AdaptiveBaseDigitCarryTrigger
+	}
+
+
+	int nAlternateCandidateRemaining = MAX_ALTERNATE_CANDIDATE;
+	bool bCouldAdd = false;
+	while (nAlternateCandidateRemaining) {
+		bCouldAdd = IncrementAdaptiveDigits(
+			dev_AdaptiveBaseDigitCarryTrigger
 			, dev_AdaptiveBaseCurrentBatchInitialDigits
 			, idx, curDigits);
-
+		if (bCouldAdd == false && idx == nMaxCloudAdd+1) {
+			printf("Can not add at %ul", idx);
+			break;
+		}
+		else {
+			atomicMax(&nMaxCloudAdd, idx);
+		}
 		//AdaptiveDigitsToEntropy(curDigits
 		//	, dev_AdaptiveBaseDigitCarryTrigger
 		//	, dev_AdaptiveBaseDigitSet
@@ -348,8 +376,48 @@ __global__ void gl_DictionaryAttack(
 
 		AdaptiveUpdateMnemonicLow64(&curEntropy[1], myDigSet, curDigits);
 
-		if (idx == 0) {
+		if (idx == 0){
 			//PrintNextMnemo(curEntropy, idx, dev_AdaptiveBaseDigitCarryTrigger, curDigits, myDigSet);
+			//printf("inc= %d %d %d %d %d %d\r\n"
+			//	, curDigits[0]
+			//	, curDigits[1]
+			//	, curDigits[2]
+			//	, curDigits[3]
+			//	, curDigits[4]
+			//	, curDigits[5]
+			//);
+			local_static_word_index[6] = myDigSet[0][curDigits[0]];
+			local_static_word_index[7] = myDigSet[1][curDigits[1]];
+			local_static_word_index[8] = myDigSet[2][curDigits[2]];
+			local_static_word_index[9] = myDigSet[3][curDigits[3]];
+			local_static_word_index[10] = myDigSet[4][curDigits[4]];
+			local_static_word_index[11] = myDigSet[5][curDigits[5]];
+			printf("indices= %d %d %d %d %d %d - %d %d %d %d %d %d \r\n"
+				, local_static_word_index[0]
+				, local_static_word_index[1]
+				, local_static_word_index[2]
+				, local_static_word_index[3]
+				, local_static_word_index[4]
+				, local_static_word_index[5]
+				, local_static_word_index[6]
+				, local_static_word_index[7]
+				, local_static_word_index[8]
+				, local_static_word_index[9]
+				, local_static_word_index[10]
+				, local_static_word_index[11]
+//				, curEntropy[1]
+			);
+			{
+				//Work with Current Entropy
+				uint8_t mnemonic_phrase[SIZE_MNEMONIC_FRAME] = { 0 };
+				uint8_t* mnemonic = mnemonic_phrase;
+
+				entropy_to_mnemonic_with_offset(curEntropy, mnemonic, 0, local_static_word_index);
+
+				//if (idx == 0) {
+				//	printf("nemo-0:%s \r\n\r\n", mnemonic);
+				//}
+			}
 		}
 
 		int16_t chkPosIdx = MAX_ADAPTIVE_BASE_POSITIONS - 1;
@@ -395,7 +463,7 @@ __global__ void gl_DictionaryAttack(
 	} //do
 
 	__syncthreads(); // Synchronize to and check if have a valid checksum to continue with
-	if (bChkSumFailed == false) { //scrutinize
+	if (bCouldAdd/*bChkSumFailed == false*/) { //scrutinize
 		atomicAdd(&ourBlockGoodChkSum, 1);
 
 		uint8_t mnemonic_phrase[SIZE_MNEMONIC_FRAME] = { 0 };
@@ -406,11 +474,11 @@ __global__ void gl_DictionaryAttack(
 
 
 		//Work with Current Entropy
-		entropy_to_mnemonic_with_offset(curEntropy, mnemonic, 0);
+		entropy_to_mnemonic_with_offset(curEntropy, mnemonic, 0, local_static_word_index);
 
-		if (idx == 0) {
-			printf("nemo:%s \r\n\r\n", mnemonic);
-		}
+		//if (idx == 0) {
+			printf("nemo-%ul (retry.remain=%d/%d) = :%s \r\n\r\n", idx,nAlternateCandidateRemaining,MAX_ALTERNATE_CANDIDATE, mnemonic);
+		//}
 		//entropy_to_mnemonic(entropy, mnemonic);
 #pragma unroll
 		for (int x = 0; x < 120 / 8; x++) {

@@ -38,7 +38,7 @@ void AdaptiveUpdateMnemonicLow64(uint64_t* low64
 );
 
 
-__host__ /* __and__ */ __device__ void IncrementAdaptiveDigits(int16_t* local_AdaptiveBaseDigitCarryTrigger, int16_t* inDigits, uint64_t howMuch, int16_t* outDigits);
+__host__ /* __and__ */ __device__  bool IncrementAdaptiveDigits(int16_t* local_AdaptiveBaseDigitCarryTrigger, int16_t* inDigits, uint64_t howMuch, int16_t* outDigits);
 
 __host__ /* __and__ */ __device__ void GetBipForAdaptiveDigit(
 	int16_t* local_AdaptiveBaseCurrentBatchInitialDigits
