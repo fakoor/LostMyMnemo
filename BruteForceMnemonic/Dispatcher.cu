@@ -441,9 +441,9 @@ int Generate_Mnemonic(void)
 			batchMnemo[0] = host_EntropyAbsolutePrefix64[0];
 			batchMnemo[1] = host_EntropyNextPrefix2[0] & 0xB0000000; //scrutinize;
 
-			for (int i = 0; i < 4; i++) {
-				PrintNextMnemo(batchMnemo, i, host_AdaptiveBaseDigitCarryTrigger , host_AdaptiveBaseCurrentBatchInitialDigits, host_AdaptiveBaseDigitSet);
-			}
+			//for (int i = 0; i < 4; i++) {
+			//	PrintNextMnemo(batchMnemo, i, host_AdaptiveBaseDigitCarryTrigger , host_AdaptiveBaseCurrentBatchInitialDigits, host_AdaptiveBaseDigitSet);
+			//}
 
 			//for (int i = 0; i < MAX_ADAPTIVE_BASE_POSITIONS; i++) {
 			//	std::cout << host_AdaptiveBaseCurrentBatchInitialDigits[i] << "=" << batchDigits[i] << std::endl;
@@ -498,7 +498,7 @@ int Generate_Mnemonic(void)
 					std::cout << "Error-Line--" << __LINE__ << std::endl;
 				}
 
-				tools::start_time();
+				if (nBatch % 10 == 0) tools::start_time();
 
 				if (Stride->startDictionaryAttack(Config.cuda_grid, Config.cuda_block) != 0) {
 					std::cerr << "Error START!!" << std::endl;
@@ -540,7 +540,9 @@ int Generate_Mnemonic(void)
 				tools::checkResult(Data->host.ret);
 
 				float delay;
-				tools::stop_time_and_calc_sec(&delay);
+				if (nBatch % 10 == 9)
+					tools::stop_time_and_calc_sec(&delay);
+				std::cout << std::endl<<"PROCESSED: " << tools::formatPrefix((double)nTotalThisBatch*10 / delay)<< " combinations" << std::endl;
 				//std::cout << "\rGENERATE: " << tools::formatWithCommas((double)Data->wallets_in_round_gpu / delay) << " MNEMONICS/SEC AND "
 				//	<< tools::formatWithCommas((double)(Data->wallets_in_round_gpu * Data->num_all_childs) / delay) << " ADDRESSES/SEC"
 				//	<< " | SCAN: " << tools::formatPrefix((double)(Data->wallets_in_round_gpu * Data->num_all_childs * num_addresses_in_tables) / delay) << " ADDRESSES/SEC"
