@@ -67,7 +67,6 @@ int Generate_Mnemonic(void)
 
 		for (int x = 0; x < MAX_ADAPTIVE_BASE_POSITIONS; x++) {
 			host_AdaptiveBaseCurrentBatchInitialDigits[x] = 0;
-			std::cout << "ZERO:" << x << std::endl;
 		}
 
 		parse_config(&Config, "config.cfg");
@@ -378,7 +377,7 @@ int Generate_Mnemonic(void)
 
 
 
-		int nPlanned24BitTrunks = host_AdaptiveBaseDigitCarryTrigger[0] * host_AdaptiveBaseDigitCarryTrigger[1];
+	int nPlannedTrunks = 1;//host_AdaptiveBaseDigitCarryTrigger[0] * host_AdaptiveBaseDigitCarryTrigger[1];
 
 		uint64_t nPrevBatchProcessed = 0;
 
@@ -387,26 +386,40 @@ int Generate_Mnemonic(void)
 			* host_AdaptiveBaseDigitCarryTrigger[4]
 			* host_AdaptiveBaseDigitCarryTrigger[5];
 
-		uint64_t nUniversalMax = nPlanned24BitTrunks * nPlanned44BitCombos;
+		uint64_t nUniversalMax = 
+			  host_AdaptiveBaseDigitCarryTrigger[0]
+			* host_AdaptiveBaseDigitCarryTrigger[1]
+			* host_AdaptiveBaseDigitCarryTrigger[2]
+			* host_AdaptiveBaseDigitCarryTrigger[3]
+			* host_AdaptiveBaseDigitCarryTrigger[4]
+			* host_AdaptiveBaseDigitCarryTrigger[5];//nPlanned24BitTrunks* nPlanned44BitCombos;
+
 		uint64_t nUniversalProcessed = 0;
+
 		uint64_t nThreadsInBatch = Config.cuda_block * Config.cuda_grid;
-		uint64_t nBatchMax = nPlanned44BitCombos / nThreadsInBatch;
 		
-		if (nBatchMax * nThreadsInBatch < nPlanned44BitCombos)
+		uint64_t nBatchMax = nUniversalMax / nThreadsInBatch;
+		
+		if (nBatchMax * nThreadsInBatch < nUniversalMax)
 			nBatchMax++;
 
-		uint64_t nCumulativeCombosProcessedInTrunk = 0;
+		//uint64_t nCumulativeCombosProcessedInTrunk = 0;
 		int nBatch = 0;
 
 
-		std::cout << ">> " << __DATE__ << "@" << __TIME__ << "->" << "Planing to check total "<< nUniversalMax <<" combinations structured in " << nPlanned24BitTrunks << " Trunks X " << nPlanned44BitCombos << " Subordinates via " << nBatchMax << " batches "
+		std::cout << ">> (" << __DATE__ << "@" << __TIME__ << ") ->" << "Planing to check total "<< nUniversalMax <<" combinations structured in maximum " << nBatchMax << " batches "
 			" of " << nThreadsInBatch << " threads each" << std::endl;
 
 
 		//Config.number_of_generated_mnemonics / (Data->wallets_in_round_gpu)
-		for (uint64_t nTrunk = 0; nTrunk < nPlanned24BitTrunks; nTrunk++)
+		uint64_t nTrunk = 0;
+		do 
 		{
-			std::cout << "> NEW TRUNK -- " << "No:" << nTrunk << "/" << nPlanned24BitTrunks - 1 << std::endl;
+			if (nTrunk >= nPlannedTrunks) {
+				break;
+			}
+
+			std::cout << "> NEW TRUNK -- " << "No:" << nTrunk << "/" << nPlannedTrunks - 1 << std::endl;
 
 			if (NewTrunkPrefix() == false)
 				goto Error;
@@ -415,16 +428,22 @@ int Generate_Mnemonic(void)
 			nBatch = 0;
 
 			int16_t batchDigits[MAX_ADAPTIVE_BASE_POSITIONS];
-
-			std::cout << "ALL VARIANTS:" << std::endl;
-
-			uint64_t batchMnemo[2];
-			batchMnemo[0] = host_EntropyAbsolutePrefix64[0];
-			batchMnemo[1] = host_EntropyNextPrefix2[0] & 0xB0000000; //scrutinize;
-
-			for (int i = 0; i < 4; i++) {
-				PrintNextMnemo(batchMnemo, i, host_AdaptiveBaseDigitCarryTrigger , host_AdaptiveBaseCurrentBatchInitialDigits, host_AdaptiveBaseDigitSet);
+			if (IncrementAdaptiveDigits(host_AdaptiveBaseDigitCarryTrigger
+				, host_AdaptiveBaseCurrentBatchInitialDigits
+				, 0 //kinda copy
+				, batchDigits)) {
+				printf("Batch digits initialized for the first time.\r\n");
 			}
+
+			//std::cout << "ALL VARIANTS:" << std::endl;
+
+			//uint64_t batchMnemo[2];
+			//batchMnemo[0] = host_EntropyAbsolutePrefix64[0];
+			//batchMnemo[1] = host_EntropyNextPrefix2[0] & 0xB0000000; //scrutinize;
+
+			//for (int i = 0; i < 4; i++) {
+			//	PrintNextMnemo(batchMnemo, i, host_AdaptiveBaseDigitCarryTrigger , host_AdaptiveBaseCurrentBatchInitialDigits, host_AdaptiveBaseDigitSet);
+			//}
 
 			//for (int i = 0; i < MAX_ADAPTIVE_BASE_POSITIONS; i++) {
 			//	std::cout << host_AdaptiveBaseCurrentBatchInitialDigits[i] << "=" << batchDigits[i] << std::endl;
@@ -446,7 +465,7 @@ int Generate_Mnemonic(void)
 				}
 
 
-				const int elemSize = sizeof(host_AdaptiveBaseCurrentBatchInitialDigits[0]);
+				const int elemSize = sizeof(int16_t);
 				copySize = elemSize * MAX_ADAPTIVE_BASE_POSITIONS;
 
 				cudaResult = cudaMemcpyToSymbol(dev_AdaptiveBaseCurrentBatchInitialDigits, batchDigits, copySize, 0, cudaMemcpyHostToDevice);
@@ -464,8 +483,6 @@ int Generate_Mnemonic(void)
 				}
 
 				
-				//tools::entropyTo12Words(batchMnemo, 
-	
 	
 				std::cout << ">> NEW BATCH -- "
 					<< "No:" << nBatch << "/" << nBatchMax << std::endl;
@@ -503,7 +520,23 @@ int Generate_Mnemonic(void)
 					//tools::saveResult((char*)Data->host.mnemonic, (uint8_t*)Data->host.hash160, Data->wallets_in_round_gpu, Data->num_all_childs, Data->num_childs, Config.generate_path);
 				}
 
-				printf("checking results\r\n");
+				if (cudaSuccess != cudaMemcpy( Data->host.host_nProcessedFromBatch, Data->dev.dev_nProcessedFromBatch, 8, cudaMemcpyDeviceToHost)) {
+					std::cout << "Error-Line--" << __LINE__ << std::endl;
+				}
+
+				if (cudaSuccess != cudaMemcpy(Data->host.host_nProcessedMoreThanBatch, Data->dev.dev_nProcessedMoreThanBatch, 8, cudaMemcpyDeviceToHost)) {
+					std::cout << "Error-Line--" << __LINE__ << std::endl;
+				}
+
+				uint64_t nTotalThisBatch = 0;
+				uint64_t v1 = *Data->host.host_nProcessedFromBatch;
+				uint64_t v2 = *Data->host.host_nProcessedMoreThanBatch;
+				if (nBatch != nBatchMax && v1 != nThreadsInBatch) {
+					printf("This batch appears to be the last one!\r\n");
+				}
+				nTotalThisBatch = v1 + v2;
+
+				printf("checking results of %ul + %ul = %ul checkups\r\n", v1, v2, nTotalThisBatch);
 				tools::checkResult(Data->host.ret);
 
 				float delay;
@@ -513,25 +546,31 @@ int Generate_Mnemonic(void)
 				//	<< " | SCAN: " << tools::formatPrefix((double)(Data->wallets_in_round_gpu * Data->num_all_childs * num_addresses_in_tables) / delay) << " ADDRESSES/SEC"
 				//	<< " | ROUND: " << nTrunk;
 
-				nPrevBatchProcessed = Data->host.host_nProcessedFromBatch[PTR_AVOIDER]
-					+ Data->host.host_nProcessedMoreThanBatch[PTR_AVOIDER];
-				std::cout << ">>>This batch (#" << nBatch << ") completed processing " << nPrevBatchProcessed << " combos." << std::endl;
-				nCumulativeCombosProcessedInTrunk += nPrevBatchProcessed;
+				//nPrevBatchProcessed = Data->host.host_nProcessedFromBatch[PTR_AVOIDER]
+				//	+ Data->host.host_nProcessedMoreThanBatch[PTR_AVOIDER];
+				//std::cout << ">>>This batch (#" << nBatch << ") completed processing " << nPrevBatchProcessed << " combos." << std::endl;
+//				nCumulativeCombosProcessedInTrunk += nPrevBatchProcessed;
 
-				IncrementAdaptiveDigits(host_AdaptiveBaseDigitCarryTrigger, host_AdaptiveBaseCurrentBatchInitialDigits, nPrevBatchProcessed, batchDigits);
+				if (IncrementAdaptiveDigits(host_AdaptiveBaseDigitCarryTrigger
+					, host_AdaptiveBaseCurrentBatchInitialDigits
+					, nTotalThisBatch
+					, batchDigits) == false) {
+					printf("Nothing more to traverse\r\n");
+				}
 				//memcpy(&host_AdaptiveBaseCurrentBatchInitialDigits[0], &batchDigits[0], sizeof(int16_t) * MAX_ADAPTIVE_BASE_POSITIONS)
 				for (int x = 0; x < MAX_ADAPTIVE_BASE_POSITIONS; x++) {
 					host_AdaptiveBaseCurrentBatchInitialDigits[x] = batchDigits[x];
 				}
 
+				nUniversalProcessed += nTotalThisBatch;
+
 				nBatch++;
-			} while (nCumulativeCombosProcessedInTrunk < nPlanned44BitCombos); //batch
-			nUniversalProcessed += nCumulativeCombosProcessedInTrunk;
+			} while (nUniversalProcessed < nUniversalMax); //batch
 
-			std::cout << ">>This Trunk (#" << nTrunk << ") completed processing " << nCumulativeCombosProcessedInTrunk<<"/"<< nUniversalProcessed <<" current combinations" << std::endl;
-			nCumulativeCombosProcessedInTrunk = 0;
+			std::cout << ">>This Trunk (#" << nTrunk << ") completed processing " << nUniversalProcessed <<"/"<< nUniversalMax <<"  combinations" << std::endl;
+			//nCumulativeCombosProcessedInTrunk = 0;
 
-		}//trunk
+		}while (false);//trunk
 	}//NEW METHOD
 	else {
 		for (uint64_t step = 0; step < Config.number_of_generated_mnemonics / (Data->wallets_in_round_gpu); step++)

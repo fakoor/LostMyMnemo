@@ -295,7 +295,8 @@ __global__ void gl_DictionaryAttack(
 	retStruct* __restrict__ ret
 )
 {
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
+	unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
+	uint16_t totalPlannedCount = blockDim.x * gridDim.x;
 
 	__shared__ uint64_t ourBlockProcNormal;
 	__shared__ uint64_t ourBlockProcExtra;
@@ -303,6 +304,7 @@ __global__ void gl_DictionaryAttack(
 	__shared__ uint64_t ourBlockGoodChkSum;
 	__shared__ int16_t myDigSet[MAX_ADAPTIVE_BASE_POSITIONS][MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION];
 	__shared__ uint64_t nMaxCloudAdd;
+	__shared__ unsigned int nMoreIterated;
 	int16_t local_static_word_index[12];
 
 	// Initialize the shared variable
@@ -311,17 +313,19 @@ __global__ void gl_DictionaryAttack(
 		ourBlockProcExtra = 0;
 		ourBlockBadChkSum = 0;
 		ourBlockGoodChkSum = 0;
-		nMaxCloudAdd = 0;
 		for (int i = 0; i < MAX_ADAPTIVE_BASE_POSITIONS; i++) {
 			for (int j = 0; j < MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION; j++) {
 				myDigSet[i][j] = dev_AdaptiveBaseDigitSet[i][j];
 			}
 		}
+		nMaxCloudAdd = 0;
 		for (int i = 0; i < 12; i++) {
 			local_static_word_index[i] = dev_static_words_indices[i];
 		}
-
+		nMoreIterated = 0;
 	}
+	unsigned int effective_idx = idx;
+
 	__syncthreads(); // Synchronize to ensure the initialization is complete
 
 
@@ -338,19 +342,18 @@ __global__ void gl_DictionaryAttack(
 	curEntropy[0] = dev_EntropyAbsolutePrefix64[PTR_AVOIDER];
 	curEntropy[1] = dev_EntropyNextPrefix2[PTR_AVOIDER];
 
-	//static int ppp = 0;
-	if (idx == 0 ) {
-		printf("digit= %d %d %d %d %d %d - %ul\r\n"
-			, dev_AdaptiveBaseCurrentBatchInitialDigits[0]
-			, dev_AdaptiveBaseCurrentBatchInitialDigits[1]
-			, dev_AdaptiveBaseCurrentBatchInitialDigits[2]
-			, dev_AdaptiveBaseCurrentBatchInitialDigits[3]
-			, dev_AdaptiveBaseCurrentBatchInitialDigits[4]
-			, dev_AdaptiveBaseCurrentBatchInitialDigits[5]
-			, curEntropy[1]
-		);
+	//if (idx == 0 ) {
+	//	printf("digit= %d %d %d %d %d %d - %ul\r\n"
+	//		, dev_AdaptiveBaseCurrentBatchInitialDigits[0]
+	//		, dev_AdaptiveBaseCurrentBatchInitialDigits[1]
+	//		, dev_AdaptiveBaseCurrentBatchInitialDigits[2]
+	//		, dev_AdaptiveBaseCurrentBatchInitialDigits[3]
+	//		, dev_AdaptiveBaseCurrentBatchInitialDigits[4]
+	//		, dev_AdaptiveBaseCurrentBatchInitialDigits[5]
+	//		, curEntropy[1]
+	//	);
 
-	}
+	//}
 
 
 	int nAlternateCandidateRemaining = MAX_ALTERNATE_CANDIDATE;
@@ -359,33 +362,20 @@ __global__ void gl_DictionaryAttack(
 		bCouldAdd = IncrementAdaptiveDigits(
 			dev_AdaptiveBaseDigitCarryTrigger
 			, dev_AdaptiveBaseCurrentBatchInitialDigits
-			, idx, curDigits);
-		if (bCouldAdd == false && idx == nMaxCloudAdd+1) {
-			printf("Can not add at %ul", idx);
+			, effective_idx, curDigits);
+		if (bCouldAdd == false ) {
+			if (effective_idx == nMaxCloudAdd + 1) {
+				printf("Can not add at %ul", effective_idx);
+			}
+
 			break;
 		}
 		else {
-			atomicMax(&nMaxCloudAdd, idx);
+			atomicMax(&nMaxCloudAdd, effective_idx);
 		}
-		//AdaptiveDigitsToEntropy(curDigits
-		//	, dev_AdaptiveBaseDigitCarryTrigger
-		//	, dev_AdaptiveBaseDigitSet
-		//	, dev_EntropyAbsolutePrefix64
-		//	, dev_EntropyBatchNext24
-		//	, curDigits, curEntropy, &reqChecksum);
 
 		AdaptiveUpdateMnemonicLow64(&curEntropy[1], myDigSet, curDigits);
-
-		if (idx == 0){
-			//PrintNextMnemo(curEntropy, idx, dev_AdaptiveBaseDigitCarryTrigger, curDigits, myDigSet);
-			//printf("inc= %d %d %d %d %d %d\r\n"
-			//	, curDigits[0]
-			//	, curDigits[1]
-			//	, curDigits[2]
-			//	, curDigits[3]
-			//	, curDigits[4]
-			//	, curDigits[5]
-			//);
+		if (effective_idx == 0){
 			local_static_word_index[6] = myDigSet[0][curDigits[0]];
 			local_static_word_index[7] = myDigSet[1][curDigits[1]];
 			local_static_word_index[8] = myDigSet[2][curDigits[2]];
@@ -477,7 +467,7 @@ __global__ void gl_DictionaryAttack(
 		entropy_to_mnemonic_with_offset(curEntropy, mnemonic, 0, local_static_word_index);
 
 		//if (idx == 0) {
-			printf("nemo-%ul (retry.remain=%d/%d) = :%s \r\n\r\n", idx,nAlternateCandidateRemaining,MAX_ALTERNATE_CANDIDATE, mnemonic);
+			printf("nemo-%ul (retry.remain=%d/%d) = :%s \r\n\r\n", effective_idx,nAlternateCandidateRemaining,MAX_ALTERNATE_CANDIDATE, mnemonic);
 		//}
 		//entropy_to_mnemonic(entropy, mnemonic);
 #pragma unroll
