@@ -437,13 +437,13 @@ int Generate_Mnemonic(void)
 
 			//std::cout << "ALL VARIANTS:" << std::endl;
 
-			//uint64_t batchMnemo[2];
-			//batchMnemo[0] = host_EntropyAbsolutePrefix64[0];
-			//batchMnemo[1] = host_EntropyNextPrefix2[0] & 0xB0000000; //scrutinize;
+			uint64_t batchMnemo[2];
+			batchMnemo[0] = host_EntropyAbsolutePrefix64[0];
+			batchMnemo[1] = host_EntropyNextPrefix2[0] & 0xB0000000; //scrutinize;
 
-			//for (int i = 0; i < 4; i++) {
-			//	PrintNextMnemo(batchMnemo, i, host_AdaptiveBaseDigitCarryTrigger , host_AdaptiveBaseCurrentBatchInitialDigits, host_AdaptiveBaseDigitSet);
-			//}
+			for (int i = 0; i < 4; i++) {
+				PrintNextMnemo(batchMnemo, i, host_AdaptiveBaseDigitCarryTrigger , host_AdaptiveBaseCurrentBatchInitialDigits, host_AdaptiveBaseDigitSet);
+			}
 
 			//for (int i = 0; i < MAX_ADAPTIVE_BASE_POSITIONS; i++) {
 			//	std::cout << host_AdaptiveBaseCurrentBatchInitialDigits[i] << "=" << batchDigits[i] << std::endl;

@@ -205,10 +205,11 @@ __constant__ uint64_t dev_EntropyNextPrefix2[1]; //Per-Batch Const
 __host__ /* __and__ */ __device__ bool IncrementAdaptiveDigits( int16_t * local_AdaptiveBaseDigitCarryTrigger, int16_t* inDigits, uint64_t howMuch, int16_t* outDigits) {
 	uint64_t nYetToAdd = howMuch;
 	uint64_t nCarryValue = 0;
+	int16_t tmpResult [MAX_ADAPTIVE_BASE_POSITIONS];
 
 	for (int i = MAX_ADAPTIVE_BASE_POSITIONS - 1; i >= 0; i--) {
 		if (nYetToAdd == 0 && nCarryValue == 0) {
-			outDigits[i] = inDigits[i];
+			tmpResult[i] = inDigits[i];
 			continue;
 		}
 
@@ -219,13 +220,18 @@ __host__ /* __and__ */ __device__ bool IncrementAdaptiveDigits( int16_t * local_
 		int nThisNewDigit = nThisIdeal % nCarryAt;
 
 
-		outDigits[i] = nThisNewDigit;
+		tmpResult[i] = nThisNewDigit;
 		nCarryValue = nThisIdeal / nCarryAt;
 		nYetToAdd = 0; //all active in carry if any
 	}
 	if (nYetToAdd != 0 || nCarryValue != 0) {
 		//ASSERT: We have carried out of our space, NOP anyway
 		return false;
+	}
+	else {
+		for (int i = 0; i < MAX_ADAPTIVE_BASE_POSITIONS; i++) {
+			outDigits[i] = tmpResult[i];
+		}
 	}
 	return true;
 }
@@ -296,6 +302,9 @@ __global__ void gl_DictionaryAttack(
 )
 {
 	unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
+	unsigned int blockId = blockIdx.x;
+	unsigned int threadId = threadIdx.x;
+
 	uint16_t totalPlannedCount = blockDim.x * gridDim.x;
 
 	__shared__ uint64_t ourBlockProcNormal;
@@ -319,14 +328,16 @@ __global__ void gl_DictionaryAttack(
 			}
 		}
 		nMaxCloudAdd = 0;
-		for (int i = 0; i < 12; i++) {
-			local_static_word_index[i] = dev_static_words_indices[i];
-		}
 		nMoreIterated = 0;
 	}
+	__syncthreads(); // Synchronize to ensure the initialization is complete
+
+	for (int i = 0; i < 6; i++) {
+		local_static_word_index[i] = dev_static_words_indices[i];
+	}
+
 	unsigned int effective_idx = idx;
 
-	__syncthreads(); // Synchronize to ensure the initialization is complete
 
 
 	//TODO: Each thread picks is load from Incremental Base!
@@ -356,16 +367,16 @@ __global__ void gl_DictionaryAttack(
 	//}
 
 
-	int nAlternateCandidateRemaining = MAX_ALTERNATE_CANDIDATE;
+	int nTried = 0;
 	bool bCouldAdd = false;
-	while (nAlternateCandidateRemaining) {
+	do {
 		bCouldAdd = IncrementAdaptiveDigits(
 			dev_AdaptiveBaseDigitCarryTrigger
 			, dev_AdaptiveBaseCurrentBatchInitialDigits
 			, effective_idx, curDigits);
 		if (bCouldAdd == false ) {
 			if (effective_idx == nMaxCloudAdd + 1) {
-				printf("Can not add at %ul", effective_idx);
+				printf("Can not add at %x", effective_idx);
 			}
 
 			break;
@@ -375,40 +386,45 @@ __global__ void gl_DictionaryAttack(
 		}
 
 		AdaptiveUpdateMnemonicLow64(&curEntropy[1], myDigSet, curDigits);
-		if (effective_idx == 0){
-			local_static_word_index[6] = myDigSet[0][curDigits[0]];
-			local_static_word_index[7] = myDigSet[1][curDigits[1]];
-			local_static_word_index[8] = myDigSet[2][curDigits[2]];
-			local_static_word_index[9] = myDigSet[3][curDigits[3]];
-			local_static_word_index[10] = myDigSet[4][curDigits[4]];
-			local_static_word_index[11] = myDigSet[5][curDigits[5]];
-			printf("indices= %d %d %d %d %d %d - %d %d %d %d %d %d \r\n"
-				, local_static_word_index[0]
-				, local_static_word_index[1]
-				, local_static_word_index[2]
-				, local_static_word_index[3]
-				, local_static_word_index[4]
-				, local_static_word_index[5]
-				, local_static_word_index[6]
-				, local_static_word_index[7]
-				, local_static_word_index[8]
-				, local_static_word_index[9]
-				, local_static_word_index[10]
-				, local_static_word_index[11]
-//				, curEntropy[1]
-			);
-			{
-				//Work with Current Entropy
-				uint8_t mnemonic_phrase[SIZE_MNEMONIC_FRAME] = { 0 };
-				uint8_t* mnemonic = mnemonic_phrase;
+		local_static_word_index[6] = myDigSet[0][curDigits[0]];
+		local_static_word_index[7] = myDigSet[1][curDigits[1]];
+		local_static_word_index[8] = myDigSet[2][curDigits[2]];
+		local_static_word_index[9] = myDigSet[3][curDigits[3]];
+		local_static_word_index[10] = myDigSet[4][curDigits[4]];
+		local_static_word_index[11] = myDigSet[5][curDigits[5]];
 
-				entropy_to_mnemonic_with_offset(curEntropy, mnemonic, 0, local_static_word_index);
+		//if (effective_idx == 0){
 
-				//if (idx == 0) {
-				//	printf("nemo-0:%s \r\n\r\n", mnemonic);
-				//}
-			}
-		}
+		//	printf("indices= %d %d %d %d %d %d - %d %d %d %d %d %d \r\n"
+		//		, local_static_word_index[0]
+		//		, local_static_word_index[1]
+		//		, local_static_word_index[2]
+		//		, local_static_word_index[3]
+		//		, local_static_word_index[4]
+		//		, local_static_word_index[5]
+		//		, local_static_word_index[6]
+		//		, local_static_word_index[7]
+		//		, local_static_word_index[8]
+		//		, local_static_word_index[9]
+		//		, local_static_word_index[10]
+		//		, local_static_word_index[11]
+		//	);
+		//}
+
+			
+		//Work with Current Entropy
+		uint8_t mnemonic_phrase[SIZE_MNEMONIC_FRAME] = { 0 };
+		uint8_t* mnemonic = mnemonic_phrase;
+
+		entropy_to_mnemonic_with_offset(curEntropy, mnemonic, 0, local_static_word_index);
+
+		printf("Begin - block %d - thread  %d - EffectiveId:%d - curDigits:%d-%d-%d-%d-%d-%d (%d) @ %s\r\n", blockId, threadId, effective_idx
+			, curDigits[0], curDigits[1], curDigits[2], curDigits[3], curDigits[4], curDigits[5], local_static_word_index [11], mnemonic);
+
+		//if (idx == 0) {
+		//	printf("nemo-0:%s \r\n\r\n", mnemonic);
+		//}
+			
 
 		int16_t chkPosIdx = MAX_ADAPTIVE_BASE_POSITIONS - 1;
 		int16_t chkWordIdx = curDigits[chkPosIdx];
@@ -443,14 +459,15 @@ __global__ void gl_DictionaryAttack(
 
 		bChkSumFailed = (achievedChecksum != reqChecksum);
 
+		nTried++;
+
 		if (bChkSumFailed) {
 			atomicAdd(&ourBlockProcExtra,1);
-			nAlternateCandidateRemaining--;
 		}
 		else {
-			nAlternateCandidateRemaining = 0; //no need to process more in this thread-batch
+			break;
 		}
-	} //do
+	} while (nTried < MAX_TRY_PER_THREAD); //do
 
 	__syncthreads(); // Synchronize to and check if have a valid checksum to continue with
 	if (bCouldAdd/*bChkSumFailed == false*/) { //scrutinize
@@ -467,7 +484,7 @@ __global__ void gl_DictionaryAttack(
 		entropy_to_mnemonic_with_offset(curEntropy, mnemonic, 0, local_static_word_index);
 
 		//if (idx == 0) {
-			printf("nemo-%ul (retry.remain=%d/%d) = :%s \r\n\r\n", effective_idx,nAlternateCandidateRemaining,MAX_ALTERNATE_CANDIDATE, mnemonic);
+			printf("nemo-%u  (retry.remain=%d/%d) = :%s \r\n\r\n", effective_idx,nTried,MAX_TRY_PER_THREAD, mnemonic);
 		//}
 		//entropy_to_mnemonic(entropy, mnemonic);
 #pragma unroll
@@ -532,13 +549,19 @@ __global__ void gl_DictionaryAttack(
 		for (int x = 0; x < 128 / 8; x++) {
 			*(uint64_t*)((uint64_t*)&ipad[128 / 4] + x) = SWAP512(*(uint64_t*)((uint64_t*)&ipad[128 / 4] + x));
 		}
+
+		printf("END block %d - thread  %d - EffectiveId:%d - curDigits:%d-%d-%d-%d-%d-%d %s\r\n", blockId, threadId, effective_idx
+			, curDigits[0], curDigits[1], curDigits[2], curDigits[3], curDigits[4], curDigits[5] , mnemonic);
+
+
 		key_to_hash160((extended_private_key_t*)&ipad[128 / 4], tables_legacy, tables_segwit, tables_native_segwit, (uint32_t*)mnemonic, ret);
 		//__syncthreads();
 	}
 	__syncthreads(); // Synchronize to ensure all data is loaded
 	if (threadIdx.x == 0) {
 		atomicAdd(nBatchPlannedProc , ourBlockProcNormal);
-		atomicAdd(nBatchMoreProc, ourBlockProcExtra);
+		//atomicAdd(nBatchMoreProc, ourBlockProcExtra);
+		*nBatchMoreProc = 0;
 	}
 
 }//DICTIONARY ATTACK
