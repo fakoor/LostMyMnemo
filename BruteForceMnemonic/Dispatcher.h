@@ -19,5 +19,5 @@ int Generate_Mnemonic(void);
 //	, int16_t digitSet[MAX_ADAPTIVE_BASE_POSITIONS][MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION]
 //	, int16_t curDigits[MAX_ADAPTIVE_BASE_POSITIONS]);
 
-bool NewTrunkPrefix();
+bool SyncWorldWideJobVariables();
 

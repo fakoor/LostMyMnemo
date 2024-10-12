@@ -335,7 +335,7 @@ int Generate_Mnemonic(void)
 	host_EntropyAbsolutePrefix64[PTR_AVOIDER] |= (uint64_t)(Config.words_indicies_mnemonic[5]) >> 2;
 	host_EntropyNextPrefix2[PTR_AVOIDER]      |= (uint64_t)(Config.words_indicies_mnemonic[5]) << 62; //two bits from main 6 words
 
-	if (NewTrunkPrefix() == false)
+	if (SyncWorldWideJobVariables() == false)
 		goto Error;
 	
 
@@ -419,9 +419,9 @@ int Generate_Mnemonic(void)
 				break;
 			}
 
-			std::cout << "> NEW TRUNK -- " << "No:" << nTrunk << "/" << nPlannedTrunks - 1 << std::endl;
+			std::cout << "> Starting Dictionary SCAN -- "<< std::endl;
 
-			if (NewTrunkPrefix() == false)
+			if (SyncWorldWideJobVariables() == false)
 				goto Error;
 
 
@@ -432,14 +432,14 @@ int Generate_Mnemonic(void)
 				, host_AdaptiveBaseCurrentBatchInitialDigits
 				, 0 //kinda copy
 				, batchDigits)) {
-				printf("Batch digits initialized for the first time.\r\n");
+				//printf("Batch digits initialized for the first time.\r\n");
 			}
 
 			//std::cout << "ALL VARIANTS:" << std::endl;
 
-			uint64_t batchMnemo[2];
-			batchMnemo[0] = host_EntropyAbsolutePrefix64[0];
-			batchMnemo[1] = host_EntropyNextPrefix2[0] & 0xB0000000; //scrutinize;
+			//uint64_t batchMnemo[2];
+			//batchMnemo[0] = host_EntropyAbsolutePrefix64[0];
+			//batchMnemo[1] = host_EntropyNextPrefix2[0] & 0xB0000000; //scrutinize;
 
 			//for (int i = 0; i < 4; i++) {
 			//	PrintNextMnemo(batchMnemo, i, host_AdaptiveBaseDigitCarryTrigger , host_AdaptiveBaseCurrentBatchInitialDigits, host_AdaptiveBaseDigitSet);
@@ -448,22 +448,30 @@ int Generate_Mnemonic(void)
 			//for (int i = 0; i < MAX_ADAPTIVE_BASE_POSITIONS; i++) {
 			//	std::cout << host_AdaptiveBaseCurrentBatchInitialDigits[i] << "=" << batchDigits[i] << std::endl;
 			//}
+
+			size_t copySize;
+			cudaError cudaResult;
+
+			copySize = sizeof(uint64_t);
+			cudaResult = cudaMemcpyToSymbol(dev_EntropyAbsolutePrefix64, host_EntropyAbsolutePrefix64, copySize, 0, cudaMemcpyHostToDevice);
+			if (cudaResult != cudaSuccess)
+			{
+				std::cerr << "cudaMemcpyToSymbol copying " << copySize << " bytes to dev_EntropyAbsolutePrefix64 failed!: " << cudaResult << std::endl;
+				goto Error;
+			}
+
+			copySize = sizeof(host_AdaptiveBaseDigitCarryTrigger[0]) * MAX_ADAPTIVE_BASE_POSITIONS;
+			cudaResult = cudaMemcpyToSymbol(dev_AdaptiveBaseDigitCarryTrigger, host_AdaptiveBaseDigitCarryTrigger, copySize, 0, cudaMemcpyHostToDevice);
+			if (cudaResult != cudaSuccess)
+			{
+				std::cerr << "cudaMemcpyToSymbol copying " << copySize << " bytes to dev_AdaptiveBaseDigitCarryTrigger failed!: " << cudaResult << std::endl;
+				goto Error;
+			}
+
 			do  { //batch
 
 
 				//TODO: increment entropy here accordingto grid , processed and extra
-
-				size_t copySize;
-				cudaError cudaResult;
-
-				copySize = sizeof(uint64_t);
-				cudaResult = cudaMemcpyToSymbol(dev_EntropyAbsolutePrefix64, host_EntropyAbsolutePrefix64, copySize, 0, cudaMemcpyHostToDevice);
-				if (cudaResult != cudaSuccess)
-				{
-					std::cerr << "cudaMemcpyToSymbol copying " << copySize << " bytes to dev_EntropyAbsolutePrefix64 failed!: " << cudaResult << std::endl;
-					goto Error;
-				}
-
 
 				const int elemSize = sizeof(int16_t);
 				copySize = elemSize * MAX_ADAPTIVE_BASE_POSITIONS;
@@ -474,18 +482,11 @@ int Generate_Mnemonic(void)
 					std::cerr << "cudaMemcpyToSymbol copying " << copySize << " bytes to dev_AdaptiveBaseCurrentBatchInitialDigits failed!: " << cudaResult << std::endl;
 					goto Error;
 				}
-				copySize = sizeof(host_AdaptiveBaseDigitCarryTrigger[0]) * MAX_ADAPTIVE_BASE_POSITIONS;
-				cudaResult = cudaMemcpyToSymbol(dev_AdaptiveBaseDigitCarryTrigger, host_AdaptiveBaseDigitCarryTrigger, copySize, 0, cudaMemcpyHostToDevice);
-				if (cudaResult != cudaSuccess)
-				{
-					std::cerr << "cudaMemcpyToSymbol copying " << copySize << " bytes to dev_AdaptiveBaseDigitCarryTrigger failed!: " << cudaResult << std::endl;
-					goto Error;
-				}
 
 				
 	
-				std::cout << ">> NEW BATCH -- "
-					<< "No:" << nBatch << "/" << nBatchMax << std::endl;
+				std::cout << "BATCH #"
+					 << nBatch << " of " << nBatchMax << std::endl;
 
 				*Data->host.host_nProcessedFromBatch = 0;
 				*Data->host.host_nProcessedMoreThanBatch = 0;
@@ -498,7 +499,7 @@ int Generate_Mnemonic(void)
 					std::cout << "Error-Line--" << __LINE__ << std::endl;
 				}
 
-				if (nBatch % 10 == 0) tools::start_time();
+				tools::start_time();
 
 				if (Stride->startDictionaryAttack(Config.cuda_grid, Config.cuda_block) != 0) {
 					std::cerr << "Error START!!" << std::endl;
@@ -540,9 +541,8 @@ int Generate_Mnemonic(void)
 				tools::checkResult(Data->host.ret);
 
 				float delay;
-				if (nBatch % 10 == 9)
 					tools::stop_time_and_calc_sec(&delay);
-				std::cout << std::endl<<"PROCESSED: " << tools::formatPrefix((double)nTotalThisBatch*10 / delay)<< " combinations" << std::endl;
+				std::cout << std::endl<<"PROCESSED: at " << tools::formatPrefix((double)nTotalThisBatch / delay)<< " COMBO/Sec" << std::endl;
 				//std::cout << "\rGENERATE: " << tools::formatWithCommas((double)Data->wallets_in_round_gpu / delay) << " MNEMONICS/SEC AND "
 				//	<< tools::formatWithCommas((double)(Data->wallets_in_round_gpu * Data->num_all_childs) / delay) << " ADDRESSES/SEC"
 				//	<< " | SCAN: " << tools::formatPrefix((double)(Data->wallets_in_round_gpu * Data->num_all_childs * num_addresses_in_tables) / delay) << " ADDRESSES/SEC"
@@ -720,7 +720,7 @@ void PrintNextMnemo(uint64_t batchMnemo[2] , uint64_t nHowMuch, int16_t carry [M
 	printf ("Fully last checksum: [%ul] --> %s\r\n" ,nHowMuch, tools::GetMnemoString(tmp2, 12).c_str());
 }
 
-bool NewTrunkPrefix()
+bool SyncWorldWideJobVariables()
 {
 	AdaptiveUpdateMnemonicLow64(host_EntropyNextPrefix2
 		, host_AdaptiveBaseDigitSet

@@ -342,8 +342,6 @@ __global__ void gl_DictionaryAttack(
 
 	//TODO: Each thread picks is load from Incremental Base!
 
-	atomicAdd(&ourBlockProcNormal,1);
-
 	uint8_t reqChecksum=0;
 	uint8_t achievedChecksum=1;
 	bool bChkSumFailed=true;
@@ -520,6 +518,7 @@ __global__ void gl_DictionaryAttack(
 		//printf("END block %d - thread  %d - EffectiveId:%d - curDigits:%d-%d-%d-%d-%d-%d %s\r\n", blockId, threadId, effective_idx
 		//	, curDigits[0], curDigits[1], curDigits[2], curDigits[3], curDigits[4], curDigits[5] , mnemonic);
 
+		atomicAdd(&ourBlockProcNormal, 1);
 
 		key_to_hash160((extended_private_key_t*)&ipad[128 / 4], tables_legacy, tables_segwit, tables_native_segwit, (uint32_t*)mnemonic, ret);
 		//__syncthreads();
