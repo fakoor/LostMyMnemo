@@ -1,4 +1,5 @@
 #include <stdafx.h>
+#include <stdio.h>
 
 //#include "device_launch_parameters.h"
 //#include <device_functions.h>
@@ -196,8 +197,8 @@ __constant__ int16_t dev_AdaptiveBaseCurrentBatchInitialDigits[MAX_ADAPTIVE_BASE
  int16_t host_AdaptiveBaseCurrentBatchInitialDigits[MAX_ADAPTIVE_BASE_POSITIONS];
 
 
-__constant__ uint64_t dev_EntropyBatchNext24[1]; //Per-Batch Const
- uint64_t host_EntropyBatchNext24[1]; //Per-Batch Const
+__constant__ uint64_t dev_EntropyNextPrefix2[1]; //Per-Batch Const
+ uint64_t host_EntropyNextPrefix2[1]; //Per-Batch Const
 
  
 
@@ -328,7 +329,7 @@ __global__ void gl_DictionaryAttack(
 	int16_t curDigits[MAX_ADAPTIVE_BASE_POSITIONS] = {0,0,0,0,0,0};
 	uint64_t curEntropy[2];
 	curEntropy[0] = dev_EntropyAbsolutePrefix64[PTR_AVOIDER];
-	curEntropy[1] = dev_EntropyBatchNext24[PTR_AVOIDER];
+	curEntropy[1] = dev_EntropyNextPrefix2[PTR_AVOIDER];
 
 	int nAlternateCandidateRemaining = MAX_ALTERNATE_CANDIDATE;
 	while (nAlternateCandidateRemaining) {
@@ -348,7 +349,7 @@ __global__ void gl_DictionaryAttack(
 		AdaptiveUpdateMnemonicLow64(&curEntropy[1], myDigSet, curDigits);
 
 		if (idx == 0) {
-			PrintNextMnemo(curEntropy, idx, dev_AdaptiveBaseDigitCarryTrigger, curDigits, myDigSet);
+			//PrintNextMnemo(curEntropy, idx, dev_AdaptiveBaseDigitCarryTrigger, curDigits, myDigSet);
 		}
 
 		int16_t chkPosIdx = MAX_ADAPTIVE_BASE_POSITIONS - 1;
@@ -406,6 +407,10 @@ __global__ void gl_DictionaryAttack(
 
 		//Work with Current Entropy
 		entropy_to_mnemonic_with_offset(curEntropy, mnemonic, 0);
+
+		if (idx == 0) {
+			printf("nemo:%s \r\n\r\n", mnemonic);
+		}
 		//entropy_to_mnemonic(entropy, mnemonic);
 #pragma unroll
 		for (int x = 0; x < 120 / 8; x++) {

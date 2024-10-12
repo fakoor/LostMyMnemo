@@ -82,48 +82,48 @@ int Generate_Mnemonic(void)
 			int16_t thisPosBipStarting;
 			std::string thisPosStartFromWord = startFrom[nemoIter];
 			tools::GetSingleWordIndex(thisPosStartFromWord, &thisPosBipStarting);
-			int16_t thisPosDicStarting = -1;
+			//int16_t thisPosDicStarting = -1;
 
 
 
-			std::vector<std::string> thisPos = tools::SplitWords(Config.dynamic_words[nemoIter]);
-			int thisPosDictCount = thisPos.size();
+			std::vector<std::string> thisMnemoPosDictionaryLine = tools::SplitWords(Config.dynamic_words[nemoIter]);
+			int thisPosLineWordCount = thisMnemoPosDictionaryLine.size();
 
-			if (thisPosDictCount > MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION) {
+			if (thisPosLineWordCount > MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION) {
 				std::cout << "ERROR: Maximum Allowed word count per line is " << MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION <<std::endl;
 				goto Error;
 
 			}
 
-			int64_t adaptivePortionIdx = nemoIter - MAX_ADAPTIVE_BASE_POSITIONS;
+			int64_t adaptivePositionIdx = nemoIter - MAX_ADAPTIVE_BASE_POSITIONS;
 
-			if (thisPosDictCount == 1) { //find consequtive count of single-word dictionaries
+			if (thisPosLineWordCount == 1) { //find consequtive count of single-word dictionaries
 				int prev = nemoIter - 1;
 				if (prev == nLastKnownPos)
 					nLastKnownPos = nemoIter;
 			}
 
 
-			for (int16_t thisDicIdx = 0; thisDicIdx < thisPosDictCount; thisDicIdx++) {
+			for (int16_t thisPosDictTraverseIdx = 0; thisPosDictTraverseIdx < thisPosLineWordCount; thisPosDictTraverseIdx++) {
 				
-				std::string thisWord = thisPos[thisDicIdx];
+				std::string thisWord = thisMnemoPosDictionaryLine[thisPosDictTraverseIdx];
 
 
 				//Fill the digit-space for each adaptive base position (last 6 in our case)
 				int16_t thisBipIdx;
 				tools::GetSingleWordIndex(thisWord, &thisBipIdx);
 
-				if (thisDicIdx == 0) {//leave old algorithm working for now with separated positions					
-					Config.words_indicies_mnemonic[nemoIter] = thisBipIdx;
+				if (thisPosDictTraverseIdx == 0) {//leave old algorithm working for now with separated positions					
+					Config.words_indicies_mnemonic[nemoIter] = thisBipIdx; //or even -1 when ? 
 				}
 
-				if (adaptivePortionIdx < 0)
+				if (adaptivePositionIdx < 0)
 					break;
 
 				//FROM now on, we are on the second 6 words
 
-				host_AdaptiveBaseDigitSet[adaptivePortionIdx][thisDicIdx] = thisBipIdx;
-				host_AdaptiveBaseDigitCarryTrigger[adaptivePortionIdx] = thisPosDictCount; //TODO: scrutinize (minus one needed?)
+				host_AdaptiveBaseDigitSet[adaptivePositionIdx][thisPosDictTraverseIdx] = thisBipIdx; //scrutinize what we do with -1 instances
+				host_AdaptiveBaseDigitCarryTrigger[adaptivePositionIdx] = thisPosLineWordCount; //TODO: scrutinize (minus one needed?)
 
 				//Check if we are going to start from this word, make adjustments and print info messages
 				bool bStartsFromThisWord = (0 == strcmp(thisWord.c_str(), thisPosStartFromWord.c_str()));
@@ -136,24 +136,24 @@ int Generate_Mnemonic(void)
 
 				isAdaptiveStr.str("");
 
-				host_AdaptiveBaseCurrentBatchInitialDigits[adaptivePortionIdx] = thisDicIdx;
+				host_AdaptiveBaseCurrentBatchInitialDigits[adaptivePositionIdx] = thisPosDictTraverseIdx;
 
-				std::cout << "SETTING " << adaptivePortionIdx << " @" << thisDicIdx << std::endl;
+				//std::cout << "SETTING " << adaptivePositionIdx << " @" << thisPosDictTraverseIdx << std::endl;
 
-				if (adaptivePortionIdx >= 0) {
-					isAdaptiveStr << "[Dynamic:" << thisPosDictCount << "]";
+				if (adaptivePositionIdx >= 0) {
+					isAdaptiveStr << "[Dynamic:" << thisPosLineWordCount << "]";
 				}
-				else if (thisPosDictCount == 1) {
+				else if (thisPosLineWordCount == 1) {
 					isAdaptiveStr.str("[STATIC]");
 				}
 
-				std::cout << "Postition " << nemoIter << isAdaptiveStr.str() << " starts from word: " << thisWord << " at PosDictionary: " << thisDicIdx << " BIP: " << thisBipIdx << std::endl;
+				std::cout << "Postition " << nemoIter << isAdaptiveStr.str() << " starts from word: " << thisWord << " at PosDictionary: " << thisPosDictTraverseIdx << " BIP: "  << thisBipIdx << " and carries at:" << host_AdaptiveBaseDigitCarryTrigger[nemoIter] << std::endl;
 
 			}//single dictionary in each position
 		} //nemo positions
 
 		if (nLastKnownPos >= 0)
-			std::cout << "Words up to position " << nLastKnownPos << " are known" << std::endl;
+			std::cout << "Words up to position " << nLastKnownPos << " (out of 0 to 11) are known" << std::endl;
 		else
 			std::cout << "All words are dynamic" << std::endl;
 
@@ -213,18 +213,6 @@ int Generate_Mnemonic(void)
 	stride_class* Stride = new stride_class(Data);
 	size_t num_addresses_in_tables = 0;
 
-	{//TODO: allocate batch memory
-		//if (cudaMalloc((uint8_t**)&dev_nProcessedFromBatch, sizeof(uint64_t)) != cudaSuccess) return -1;
-		//if (cudaMalloc((uint8_t**)&dev_nProcessedMoreThanBatch, sizeof(uint64_t)) != cudaSuccess) return -1;
-
-		//if (cudaMallocHost((void**)&host_nProcessedFromBatch, sizeof(uint64_t)) != cudaSuccess) return -1;
-		//if (cudaMallocHost((void**)&host_nProcessedMoreThanBatch, sizeof(uint64_t)) != cudaSuccess) return -1;
-		//std::cout << "Batch memory initied to " << dev_nProcessedFromBatch <<"," << dev_nProcessedMoreThanBatch<<"," << host_nProcessedFromBatch<<"," << host_nProcessedMoreThanBatch<<"." << std::endl;
-		//*host_nProcessedFromBatch = 0;
-		//*host_nProcessedMoreThanBatch = 0;
-	}
-
-
 	std::cout << "READ TABLES! WAIT..." << std::endl;
 	tools::clearFiles();
 	if((Config.generate_path[0] != 0) || (Config.generate_path[1] != 0) || (Config.generate_path[2] != 0) || (Config.generate_path[3] != 0) || (Config.generate_path[4] != 0)
@@ -242,7 +230,7 @@ int Generate_Mnemonic(void)
 	bool bCfgUseOldMethod = (Config.use_old_random_method == "yes")?true:false;
 
 
-	if (bCfgUseOldMethod) {
+	//if (bCfgUseOldMethod) {
 		if ((Config.generate_path[6] != 0) || (Config.generate_path[7] != 0))
 		{
 			std::cout << "READ TABLES SEGWIT(BIP49)..." << std::endl;
@@ -267,7 +255,7 @@ int Generate_Mnemonic(void)
 			std::cerr << "ERROR READ TABLES!! NO ADDRESSES IN FILES!!" << std::endl;
 			goto Error;
 		}
-	}
+//	}
 
 	if (Data->malloc(Config.cuda_grid, Config.cuda_block, Config.num_paths, Config.num_child_addresses, bCfgSaveResultsIntoFile) != 0) {
 		std::cerr << "Error Data->malloc()!" << std::endl;
@@ -284,21 +272,21 @@ int Generate_Mnemonic(void)
 	std::cout << "START GENERATE ADDRESSES!" << std::endl;
 	std::cout << "PATH: " << std::endl;
 
-	if (bCfgUseOldMethod) {
+	//if (bCfgUseOldMethod) {
 		if (Config.generate_path[0] != 0) std::cout << "m/0/0.." << (Config.num_child_addresses - 1) << std::endl;
 		if (Config.generate_path[1] != 0) std::cout << "m/1/0.." << (Config.num_child_addresses - 1) << std::endl;
 		if (Config.generate_path[2] != 0) std::cout << "m/0/0/0.." << (Config.num_child_addresses - 1) << std::endl;
 		if (Config.generate_path[3] != 0) std::cout << "m/0/1/0.." << (Config.num_child_addresses - 1) << std::endl;
-	}
+//	}
 	if (Config.generate_path[4] != 0) std::cout << "m/44'/0'/0'/0/0.." << (Config.num_child_addresses - 1) << std::endl;
 
-	if (bCfgUseOldMethod) {
+//	if (bCfgUseOldMethod) {
 		if (Config.generate_path[5] != 0) std::cout << "m/44'/0'/0'/1/0.." << (Config.num_child_addresses - 1) << std::endl;
 		if (Config.generate_path[6] != 0) std::cout << "m/49'/0'/0'/0/0.." << (Config.num_child_addresses - 1) << std::endl;
 		if (Config.generate_path[7] != 0) std::cout << "m/49'/0'/0'/1/0.." << (Config.num_child_addresses - 1) << std::endl;
 		if (Config.generate_path[8] != 0) std::cout << "m/84'/0'/0'/0/0.." << (Config.num_child_addresses - 1) << std::endl;
 		if (Config.generate_path[9] != 0) std::cout << "m/84'/0'/0'/1/0.." << (Config.num_child_addresses - 1) << std::endl;
-	}
+//	}
 	std::cout << "\nGENERATE " << tools::formatWithCommas(Config.number_of_generated_mnemonics) << " MNEMONICS. " << tools::formatWithCommas(Config.number_of_generated_mnemonics * Data->num_all_childs) << " ADDRESSES. MNEMONICS IN ROUNDS " << tools::formatWithCommas(Data->wallets_in_round_gpu) << ". WAIT...\n\n";
 
 	//TODO: Here we should create incremental task: /or here
@@ -329,6 +317,7 @@ int Generate_Mnemonic(void)
 		goto Error;
 	}
 
+	if (bCfgUseOldMethod == false) {
 
 	int16_t curDigits[MAX_ADAPTIVE_BASE_POSITIONS];
 	uint64_t trunkInitEntropy[2];
@@ -336,7 +325,7 @@ int Generate_Mnemonic(void)
 
 	//TODO: fill host_EntropyAbsolutePrefix64 and host_EntropyBatchNext24
 	host_EntropyAbsolutePrefix64[PTR_AVOIDER] = 0;
-	host_EntropyBatchNext24[PTR_AVOIDER] = 0;
+	host_EntropyNextPrefix2[PTR_AVOIDER] = 0;
 
 	host_EntropyAbsolutePrefix64[PTR_AVOIDER] |= (uint64_t)(Config.words_indicies_mnemonic[0]) << 53;
 	host_EntropyAbsolutePrefix64[PTR_AVOIDER] |= (uint64_t)(Config.words_indicies_mnemonic[1]) << 42;
@@ -345,7 +334,7 @@ int Generate_Mnemonic(void)
 	host_EntropyAbsolutePrefix64[PTR_AVOIDER] |= (uint64_t)(Config.words_indicies_mnemonic[4]) << 9;
 								 
 	host_EntropyAbsolutePrefix64[PTR_AVOIDER] |= (uint64_t)(Config.words_indicies_mnemonic[5]) >> 2;
-	host_EntropyBatchNext24[PTR_AVOIDER]      |= (uint64_t)(Config.words_indicies_mnemonic[5]) << 62; //two bits from main 6 words
+	host_EntropyNextPrefix2[PTR_AVOIDER]      |= (uint64_t)(Config.words_indicies_mnemonic[5]) << 62; //two bits from main 6 words
 
 	if (NewTrunkPrefix() == false)
 		goto Error;
@@ -357,20 +346,20 @@ int Generate_Mnemonic(void)
 		, host_AdaptiveBaseDigitCarryTrigger
 		, host_AdaptiveBaseDigitSet
 		, host_EntropyAbsolutePrefix64
-		, host_EntropyBatchNext24
+		, host_EntropyNextPrefix2
 		, host_AdaptiveBaseCurrentBatchInitialDigits
 		, trunkInitEntropy, 
 		  &reqChecksum);
 
 	if (trunkInitEntropy[0] == host_EntropyAbsolutePrefix64[0]) {
 		std::cout << "Init Entropy Sucessfully initialized by higher bits "<< trunkInitEntropy[0] << std::endl;
-		if (host_EntropyBatchNext24[0] == trunkInitEntropy[1]) {
+		if (host_EntropyNextPrefix2[0] == trunkInitEntropy[1]) {
 			std::cout << "Init Entropy Sucessfully tested for lower bits " << trunkInitEntropy[1] << std::endl;
 
 		}
 	}
 
-	host_EntropyBatchNext24[0] &= 0xFFFFFF0000000000ULL; //test done, revert nack to only 24 msbs
+	host_EntropyNextPrefix2[0] &= 0xFFFFFF0000000000ULL; //test done, revert nack to only 24 msbs
 
 
 	size_t copySize = sizeof(int16_t) * MAX_ADAPTIVE_BASE_POSITIONS * MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION;
@@ -389,7 +378,6 @@ int Generate_Mnemonic(void)
 
 
 
-	if (bCfgUseOldMethod == false){
 		int nPlanned24BitTrunks = host_AdaptiveBaseDigitCarryTrigger[0] * host_AdaptiveBaseDigitCarryTrigger[1];
 
 		uint64_t nPrevBatchProcessed = 0;
@@ -432,11 +420,11 @@ int Generate_Mnemonic(void)
 
 			uint64_t batchMnemo[2];
 			batchMnemo[0] = host_EntropyAbsolutePrefix64[0];
-			batchMnemo[1] = host_EntropyBatchNext24[0] & 0xB0000000; //scrutinize;
+			batchMnemo[1] = host_EntropyNextPrefix2[0] & 0xB0000000; //scrutinize;
 
-			for (int i = 0; i < 64; i++) {
-				PrintNextMnemo(batchMnemo, i, host_AdaptiveBaseDigitCarryTrigger , host_AdaptiveBaseCurrentBatchInitialDigits, host_AdaptiveBaseDigitSet);
-			}
+			//for (int i = 0; i < 64; i++) {
+			//	PrintNextMnemo(batchMnemo, i, host_AdaptiveBaseDigitCarryTrigger , host_AdaptiveBaseCurrentBatchInitialDigits, host_AdaptiveBaseDigitSet);
+			//}
 
 			//for (int i = 0; i < MAX_ADAPTIVE_BASE_POSITIONS; i++) {
 			//	std::cout << host_AdaptiveBaseCurrentBatchInitialDigits[i] << "=" << batchDigits[i] << std::endl;
@@ -543,7 +531,7 @@ int Generate_Mnemonic(void)
 			nCumulativeCombosProcessedInTrunk = 0;
 
 		}//trunk
-	}
+	}//NEW METHOD
 	else {
 		for (uint64_t step = 0; step < Config.number_of_generated_mnemonics / (Data->wallets_in_round_gpu); step++)
 		{
@@ -690,18 +678,27 @@ void PrintNextMnemo(uint64_t batchMnemo[2] , uint64_t nHowMuch, int16_t carry [M
 
 bool NewTrunkPrefix()
 {
-	AdaptiveUpdateMnemonicLow64(host_EntropyBatchNext24
+	AdaptiveUpdateMnemonicLow64(host_EntropyNextPrefix2
 		, host_AdaptiveBaseDigitSet
 		, host_AdaptiveBaseCurrentBatchInitialDigits);
 
-	host_EntropyBatchNext24[0] &= 0xFFFFFF00000000;
+	host_EntropyNextPrefix2[0] &= 0xFFFFFF00000000;
 	size_t copySize = sizeof(uint64_t);
-	cudaError_t cudaResult = cudaMemcpyToSymbol(dev_EntropyBatchNext24, host_EntropyBatchNext24, copySize, 0, cudaMemcpyHostToDevice);
+	cudaError_t cudaResult = cudaMemcpyToSymbol(dev_EntropyNextPrefix2, host_EntropyNextPrefix2, copySize, 0, cudaMemcpyHostToDevice);
 	if (cudaResult != cudaSuccess)
 	{
 		std::cerr << "cudaMemcpyToSymbol copying " << copySize << " bytes to dev_EntropyBatchNext24 failed!: " << cudaResult << std::endl;
 		return false;
 	}
+
+	copySize = sizeof(int16_t) * MAX_ADAPTIVE_BASE_POSITIONS;
+	cudaResult = cudaMemcpyToSymbol(dev_AdaptiveBaseCurrentBatchInitialDigits, host_AdaptiveBaseCurrentBatchInitialDigits, copySize, 0, cudaMemcpyHostToDevice);
+	if (cudaResult != cudaSuccess)
+	{
+		std::cerr << "cudaMemcpyToSymbol copying " << copySize << " bytes to dev_AdaptiveBaseCurrentBatchInitialDigits failed!: " << cudaResult << std::endl;
+		return false;
+	}
+
 	return true;
 }
 
