@@ -8,11 +8,17 @@
   ******************************************************************************
   */
 
-
 #pragma once
+#ifndef __DISPATCHER_H__
+#define __DISPATCHER_H__
+
 #include "consts.h"
+#include "../config/Config.hpp"
+
 int Generate_Mnemonic(void);
 
+bool ApplyConfig(ConfigClass& Config);
 
 
+#endif /* __DISPATCHER_H__ */
 

@@ -1,18 +1,15 @@
 #include <stdafx.h>
 #include <stdio.h>
 
-//#include "device_launch_parameters.h"
-//#include <device_functions.h>
 
 #include <cuda.h>
 #include "cuda_runtime.h"
+
 #include <GPU.h>
 #include "AdaptiveBase.h"
 
 
 
-//#include <cooperative_groups.h>
-//#include <sm_60_atomic_functions.h>
 /*
 * We onsider Mnemonics a Base - 2048 twelve-digit unsigned integer,
 * if we have some information about any of digits, so that we can
@@ -24,7 +21,8 @@
 * DUE to less memory usage in constant-memory, we limit such mechanism
 * to the 6 least significant mnemonic words in a 262 guessed space
 * Hence the dictionary for positions 6 to 12 outght not to include
-* more than 262 words. The other structure provides reverse lookup for a value of a digit
+* more than 262 words. The other structure provides reverse lookup 
+* for a value of a digit
 */
 
 
@@ -61,15 +59,6 @@ __device__ int dev_checkResult(retStruct* ret) {
 	{
 		for (uint32_t i = 0; i < ret->f[0].count_found; i++)
 		{
-			//foundInfoStruct* info = &ret->f[0].found_info[i];
-			//std::string mnemonic_str = (const char*)info->mnemonic;
-			//std::string addr;
-			//std::string path = getPath(info->path, info->child);
-			//tools::encodeAddressBase58((const uint8_t*)info->hash160, addr);
-			//tools::addFoundMnemonicInFile(path, mnemonic_str, addr);
-			//std::cout << "!!!FOUND!!!\n!!!FOUND!!!\n!!!FOUND!!!\n!!!FOUND!!!\n";
-			//std::cout << "!!!FOUND ADDRESS (" << path << "): " << mnemonic_str << ", " << addr << std::endl;
-			//std::cout << "!!!FOUND!!!\n!!!FOUND!!!\n!!!FOUND!!!\n!!!FOUND!!!\n";
 			return 1;
 		}
 	}
@@ -77,15 +66,6 @@ __device__ int dev_checkResult(retStruct* ret) {
 	{
 		for (uint32_t i = 0; i < ret->f[1].count_found; i++)
 		{
-			//foundInfoStruct* info = &ret->f[1].found_info[i];
-			//std::string mnemonic_str = (const char*)info->mnemonic;
-			//std::string addr;
-			//std::string path = getPath(info->path, info->child);
-			//tools::encodeAddressBIP49((const uint8_t*)info->hash160, addr);
-			//tools::addFoundMnemonicInFile(path, mnemonic_str, addr);
-			//std::cout << "!!!FOUND!!!\n!!!FOUND!!!\n!!!FOUND!!!\n!!!FOUND!!!\n";
-			//std::cout << "!!!FOUND ADDRESS (" << path << "): " << mnemonic_str << ", " << addr << std::endl;
-			//std::cout << "!!!FOUND!!!\n!!!FOUND!!!\n!!!FOUND!!!\n!!!FOUND!!!\n
 			return 1;
 		}
 	}
@@ -93,91 +73,10 @@ __device__ int dev_checkResult(retStruct* ret) {
 	{
 		for (uint32_t i = 0; i < ret->f[2].count_found; i++)
 		{
-			//foundInfoStruct* info = &ret->f[2].found_info[i];
-			//std::string mnemonic_str = (const char*)info->mnemonic;
-			//std::string addr;
-			//std::string path = getPath(info->path, info->child);
-			//tools::encodeAddressBase32((const uint8_t*)info->hash160, addr);
-			//tools::addFoundMnemonicInFile(path, mnemonic_str, addr);
-			//std::cout << "!!!FOUND!!!\n!!!FOUND!!!\n!!!FOUND!!!\n!!!FOUND!!!\n";
-			//std::cout << "!!!FOUND ADDRESS (" << path << "): " << mnemonic_str << ", " << addr << std::endl;
-			//std::cout << "!!!FOUND!!!\n!!!FOUND!!!\n!!!FOUND!!!\n!!!FOUND!!!\n";
 			return 1;
 		}
 	}
 
-	//if (ret->f[0].count_found_bytes != 0)
-	//{
-	//	for (uint32_t i = 0; i < ret->f[0].count_found_bytes; i++)
-	//	{
-	//		foundBytesInfoStruct* info = &ret->f[0].found_bytes_info[i];
-	//		int num_bytes = 0;
-	//		for (int i = 0; i < 20; i++)
-	//		{
-	//			if (*(uint8_t*)((uint8_t*)info->hash160 + i) != *(uint8_t*)((uint8_t*)info->hash160_from_table + i)) break;
-	//			num_bytes++;
-	//		}
-
-	//		std::string mnemonic_str = (const char*)info->mnemonic;
-	//		std::string hash160 = tools::bytesToHexString((const uint8_t*)info->hash160, 20);
-	//		std::string hash160_in_table = tools::bytesToHexString((const uint8_t*)info->hash160_from_table, 20);
-	//		std::string addr;
-	//		std::string addr_in_table;
-	//		std::string path = getPath(info->path, info->child);
-	//		tools::encodeAddressBase58((const uint8_t*)info->hash160, addr);
-	//		tools::encodeAddressBase58((const uint8_t*)info->hash160_from_table, addr_in_table);
-	//		std::cout << "\n!!!FOUND IN ADDRESS(HASH160) (" << path << ") EQUAL " << num_bytes << " BYTES: " << mnemonic_str << "," << addr << "," << addr_in_table << "," << hash160 << "," << hash160_in_table << " \n";
-	//		tools::addInFileTest(num_bytes, path, mnemonic_str, hash160, hash160_in_table, addr, addr_in_table);
-	//	}
-	//}
-	//if (ret->f[1].count_found_bytes != 0)
-	//{
-	//	for (uint32_t i = 0; i < ret->f[1].count_found_bytes; i++)
-	//	{
-	//		foundBytesInfoStruct* info = &ret->f[1].found_bytes_info[i];
-	//		int num_bytes = 0;
-	//		for (int i = 0; i < 20; i++)
-	//		{
-	//			if (*(uint8_t*)((uint8_t*)info->hash160 + i) != *(uint8_t*)((uint8_t*)info->hash160_from_table + i)) break;
-	//			num_bytes++;
-	//		}
-
-	//		std::string mnemonic_str = (const char*)info->mnemonic;
-	//		std::string hash160 = tools::bytesToHexString((const uint8_t*)info->hash160, 20);
-	//		std::string hash160_in_table = tools::bytesToHexString((const uint8_t*)info->hash160_from_table, 20);
-	//		std::string addr;
-	//		std::string addr_in_table;
-	//		std::string path = getPath(info->path, info->child);
-	//		tools::encodeAddressBIP49((const uint8_t*)info->hash160, addr);
-	//		tools::encodeAddressBIP49((const uint8_t*)info->hash160_from_table, addr_in_table);
-	//		std::cout << "\n!!!FOUND IN ADDRESS(HASH160) (" << path << ") EQUAL " << num_bytes << " BYTES: " << mnemonic_str << "," << addr << "," << addr_in_table << "," << hash160 << "," << hash160_in_table << " \n";
-	//		tools::addInFileTest(num_bytes, path, mnemonic_str, hash160, hash160_in_table, addr, addr_in_table);
-	//	}
-	//}
-	//if (ret->f[2].count_found_bytes != 0)
-	//{
-	//	for (uint32_t i = 0; i < ret->f[2].count_found_bytes; i++)
-	//	{
-	//		foundBytesInfoStruct* info = &ret->f[2].found_bytes_info[i];
-	//		int num_bytes = 0;
-	//		for (int i = 0; i < 20; i++)
-	//		{
-	//			if (*(uint8_t*)((uint8_t*)info->hash160 + i) != *(uint8_t*)((uint8_t*)info->hash160_from_table + i)) break;
-	//			num_bytes++;
-	//		}
-
-	//		std::string mnemonic_str = (const char*)info->mnemonic;
-	//		std::string hash160 = tools::bytesToHexString((const uint8_t*)info->hash160, 20);
-	//		std::string hash160_in_table = tools::bytesToHexString((const uint8_t*)info->hash160_from_table, 20);
-	//		std::string addr;
-	//		std::string addr_in_table;
-	//		std::string path = getPath(info->path, info->child);
-	//		tools::encodeAddressBase32((const uint8_t*)info->hash160, addr);
-	//		tools::encodeAddressBase32((const uint8_t*)info->hash160_from_table, addr_in_table);
-	//		std::cout << "\n!!!FOUND IN ADDRESS(HASH160) (" << path << ") EQUAL " << num_bytes << " BYTES: " << mnemonic_str << "," << addr << "," << addr_in_table << "," << hash160 << "," << hash160_in_table << " \n";
-	//		tools::addInFileTest(num_bytes, path, mnemonic_str, hash160, hash160_in_table, addr, addr_in_table);
-	//	}
-	//}
 	return 0;
 }
 
