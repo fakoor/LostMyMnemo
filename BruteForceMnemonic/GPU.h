@@ -14,9 +14,6 @@
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 
-//use to avoid using pointer and simple use array names as pointer to first and only member
-#define PTR_AVOID_ELEMENTS	1
-#define PTR_AVOIDER			0
 
 extern __constant__ uint8_t salt_swap[16];
 extern __constant__ uint8_t key_swap[16];
