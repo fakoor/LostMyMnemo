@@ -49,7 +49,7 @@ static std::thread save_thread;
 
 int Generate_Mnemonic(void)
 {
-	std::cout << "Compile on Date *** : " << __DATE__ << ", Time:" << __TIME__ << std::endl;
+	std::cout << "Compile on Date ** : " << __DATE__ << ", Time:" << __TIME__ << std::endl;
 
 	ConfigClass Config;
 	cudaError_t cudaStatus = cudaSuccess;

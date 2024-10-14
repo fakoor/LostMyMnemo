@@ -34,7 +34,7 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 	host_EntropyAbsolutePrefix64[PTR_AVOIDER] |= (uint64_t)(Config->words_indicies_mnemonic[5]) >> 2;
 	host_EntropyNextPrefix2[PTR_AVOIDER] |= (uint64_t)(Config->words_indicies_mnemonic[5]) << 62; //two bits from main 6 words
 
-	if (SyncWorldWideJobVariables() == false)
+	if (SyncTrunkVariables() == false)
 		return false;
 
 
@@ -68,25 +68,18 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 		return false;
 	}
 
-
-	//Initial zeroing
-	//host_nProcessedFromBatch[0] = 0;
-	//host_nProcessedMoreThanBatch[0] = 0;
-
-
-
-
 	int nPlannedTrunks = 1;//host_AdaptiveBaseDigitCarryTrigger[0] * host_AdaptiveBaseDigitCarryTrigger[1];
 
 	uint64_t nPrevBatchProcessed = 0;
 
-	uint64_t nPlanned44BitCombos = host_AdaptiveBaseDigitCarryTrigger[2]
+	uint64_t nPlanned44BitCombos = 
+		(uint64_t) host_AdaptiveBaseDigitCarryTrigger[2]
 		* host_AdaptiveBaseDigitCarryTrigger[3]
 		* host_AdaptiveBaseDigitCarryTrigger[4]
 		* host_AdaptiveBaseDigitCarryTrigger[5];
 
 	uint64_t nUniversalMax =
-		host_AdaptiveBaseDigitCarryTrigger[0]
+		(uint64_t)host_AdaptiveBaseDigitCarryTrigger[0]
 		* host_AdaptiveBaseDigitCarryTrigger[1]
 		* host_AdaptiveBaseDigitCarryTrigger[2]
 		* host_AdaptiveBaseDigitCarryTrigger[3]
@@ -118,7 +111,7 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 
 		std::cout << "> Starting Dictionary SCAN -- " << std::endl;
 
-		if (SyncWorldWideJobVariables() == false)
+		if (SyncTrunkVariables() == false)
 			return false;
 
 
@@ -149,21 +142,6 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 		size_t copySize;
 		cudaError cudaResult;
 
-		copySize = sizeof(uint64_t);
-		cudaResult = cudaMemcpyToSymbol(dev_EntropyAbsolutePrefix64, host_EntropyAbsolutePrefix64, copySize, 0, cudaMemcpyHostToDevice);
-		if (cudaResult != cudaSuccess)
-		{
-			std::cerr << "cudaMemcpyToSymbol copying " << copySize << " bytes to dev_EntropyAbsolutePrefix64 failed!: " << cudaResult << std::endl;
-			return false;
-		}
-
-		copySize = sizeof(host_AdaptiveBaseDigitCarryTrigger[0]) * MAX_ADAPTIVE_BASE_POSITIONS;
-		cudaResult = cudaMemcpyToSymbol(dev_AdaptiveBaseDigitCarryTrigger, host_AdaptiveBaseDigitCarryTrigger, copySize, 0, cudaMemcpyHostToDevice);
-		if (cudaResult != cudaSuccess)
-		{
-			std::cerr << "cudaMemcpyToSymbol copying " << copySize << " bytes to dev_AdaptiveBaseDigitCarryTrigger failed!: " << cudaResult << std::endl;
-			return false;
-		}
 
 		do { //batch
 
@@ -272,7 +250,7 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 }
 
 
-bool SyncWorldWideJobVariables()
+bool SyncTrunkVariables()
 {
 	AdaptiveUpdateMnemonicLow64(host_EntropyNextPrefix2
 		, host_AdaptiveBaseDigitSet
@@ -292,6 +270,22 @@ bool SyncWorldWideJobVariables()
 	if (cudaResult != cudaSuccess)
 	{
 		std::cerr << "cudaMemcpyToSymbol copying " << copySize << " bytes to dev_AdaptiveBaseCurrentBatchInitialDigits failed!: " << cudaResult << std::endl;
+		return false;
+	}
+
+	copySize = sizeof(uint64_t);
+	cudaResult = cudaMemcpyToSymbol(dev_EntropyAbsolutePrefix64, host_EntropyAbsolutePrefix64, copySize, 0, cudaMemcpyHostToDevice);
+	if (cudaResult != cudaSuccess)
+	{
+		std::cerr << "cudaMemcpyToSymbol copying " << copySize << " bytes to dev_EntropyAbsolutePrefix64 failed!: " << cudaResult << std::endl;
+		return false;
+	}
+
+	copySize = sizeof(host_AdaptiveBaseDigitCarryTrigger[0]) * MAX_ADAPTIVE_BASE_POSITIONS;
+	cudaResult = cudaMemcpyToSymbol(dev_AdaptiveBaseDigitCarryTrigger, host_AdaptiveBaseDigitCarryTrigger, copySize, 0, cudaMemcpyHostToDevice);
+	if (cudaResult != cudaSuccess)
+	{
+		std::cerr << "cudaMemcpyToSymbol copying " << copySize << " bytes to dev_AdaptiveBaseDigitCarryTrigger failed!: " << cudaResult << std::endl;
 		return false;
 	}
 

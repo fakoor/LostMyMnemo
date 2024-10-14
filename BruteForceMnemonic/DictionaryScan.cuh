@@ -8,7 +8,7 @@
 #include "KernelStride.hpp"
 
 
-bool SyncWorldWideJobVariables();
+bool SyncTrunkVariables();
 bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class* Stride);
 
 #endif /*__DICTIONARY_SCAN_H__*/

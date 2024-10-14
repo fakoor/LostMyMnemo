@@ -144,7 +144,7 @@ int stride_class::init()
 
 int stride_class::startDictionaryAttack(uint64_t grid, uint64_t block)
 {
-	if (memsetGlobalMnemonic() != 0) return -1;
+	//if (memsetGlobalMnemonic() != 0) return -1;
 	if (DictionaryAttack(grid, block) != 0) return -1;
 
 	return 0;
