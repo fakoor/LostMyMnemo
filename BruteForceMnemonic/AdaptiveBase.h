@@ -54,12 +54,5 @@ __host__ /* __and__ */ __device__ void AdaptiveDigitsToEntropy(
 	uint64_t* local_EntropyBatchNext24,
 	int16_t* inDigits, uint64_t* outEntropy, uint8_t* checkSum);
 
-__global__ void gl_DictionaryAttack(
-	 uint64_t*  nBatchPlannedProc,
-	 uint64_t*  nBatchMoreProc,
-	const tableStruct* __restrict__ tables_legacy,
-	const tableStruct* __restrict__ tables_segwit,
-	const tableStruct* __restrict__ tables_native_segwit,
-	retStruct* __restrict__ ret
-);
+
 

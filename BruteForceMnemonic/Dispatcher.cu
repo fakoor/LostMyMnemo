@@ -40,7 +40,7 @@
 #include "../config/Config.hpp"
 #include "../Tools/segwit_addr.h"
 
-#include "DictionaryScan.cuh"
+#include "DispatchDictionaryScan.cuh"
 
 
 
@@ -49,7 +49,7 @@ static std::thread save_thread;
 
 int Generate_Mnemonic(void)
 {
-	std::cout << "Compile on Date ** : " << __DATE__ << ", Time:" << __TIME__ << std::endl;
+	std::cout << "Compiled on Date *** : " << __DATE__ << ", Time:" << __TIME__ << std::endl;
 
 	ConfigClass Config;
 	cudaError_t cudaStatus = cudaSuccess;
@@ -418,10 +418,10 @@ void PrintNextMnemo(uint64_t batchMnemo[2] , uint64_t nHowMuch, int16_t carry [M
 	//uint64_t batchMnemo[2];
 	//batchMnemo[0] = host_EntropyAbsolutePrefix64[0];
 	//batchMnemo[1] = host_EntropyBatchNext24[0] & 0xB0000000; //scrutinize;
-	printf("before->after::[%ul] == \n", nHowMuch  );
+	printf("before->after::[%llu] == \n", nHowMuch  );
 
 	if (IncrementAdaptiveDigits(carry, initDigits, nHowMuch, batchDigits) == false) {
-		printf("Not able to add %ul\r\n", nHowMuch);
+		printf("Not able to add %llu\r\n", nHowMuch);
 	}
 
 	for (int i = 0; i < MAX_ADAPTIVE_BASE_POSITIONS; i++)
@@ -455,8 +455,8 @@ void PrintNextMnemo(uint64_t batchMnemo[2] , uint64_t nHowMuch, int16_t carry [M
 		,	digitSet[3][batchDigits[3]]
 		,	digitSet[4][batchDigits[4]]
 		,	digitSet[5][batchDigits[5]] };
-	printf ("Stars from 2nd half [%ul] --> %s\r\n", nHowMuch , tools::GetMnemoString(temArr, 6).c_str() );
-	printf ("Fully last checksum: [%ul] --> %s\r\n" ,nHowMuch, tools::GetMnemoString(tmp2, 12).c_str());
+	printf ("Stars from 2nd half [%llu] --> %s\r\n", nHowMuch , tools::GetMnemoString(temArr, 6).c_str() );
+	printf ("Fully last checksum: [%llu] --> %s\r\n" ,nHowMuch, tools::GetMnemoString(tmp2, 12).c_str());
 }
 
 

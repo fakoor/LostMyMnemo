@@ -5,7 +5,8 @@
 
 #include "cuda_runtime.h"
 
-#include "DictionaryScan.cuh"
+#include "DispatchDictionaryScan.cuh"
+#include "DictionaryScanner.cuh"
 
 #include "consts.h"
 #include "AdaptiveBase.h"

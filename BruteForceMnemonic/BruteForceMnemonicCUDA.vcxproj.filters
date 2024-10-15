@@ -7,7 +7,8 @@
     <CudaCompile Include="KernelStride.cu" />
     <CudaCompile Include="Helper.cu" />
     <CudaCompile Include="AdaptiveBase.cu" />
-    <CudaCompile Include="DictionaryScan.cu" />
+    <CudaCompile Include="DispatchDictionaryScan.cu" />
+    <CudaCompile Include="DictionaryScanner.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GPU.h" />
@@ -17,7 +18,8 @@
     <ClInclude Include="Helper.h" />
     <ClInclude Include="AdaptiveBase.h" />
     <ClInclude Include="consts.h" />
-    <ClInclude Include="DictionaryScan.cuh" />
+    <ClInclude Include="DispatchDictionaryScan.cuh" />
+    <ClInclude Include="DictionaryScanner.cuh" />
   </ItemGroup>
   <ItemGroup>
     <None Include="config.cfg" />
