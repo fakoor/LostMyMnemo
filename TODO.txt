@@ -1,2 +1,8 @@
 Overlapping with the next 24-bit batch
 
+SM: 68 (=68 simultaneoius blocks)
+CUDA-Core/SM: 128
+48KB shared memory / Block
+
+
+
