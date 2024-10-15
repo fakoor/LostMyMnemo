@@ -211,7 +211,7 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 			}
 			nTotalThisBatch = v1 + v2;
 
-			printf("checking results of %ul + %ul = %ul checkups\r\n", v1, v2, nTotalThisBatch);
+			printf("checking results of %llu + %llu = %ul checkups\r\n", v1, v2, nTotalThisBatch);
 			tools::checkResult(Data->host.ret);
 
 			float delay;

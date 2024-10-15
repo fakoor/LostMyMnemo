@@ -18,9 +18,7 @@ __global__ void gl_DictionaryScanner(
 	retStruct* __restrict__ ret
 )
 {
-	unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
-	unsigned int blockId = blockIdx.x;
-	unsigned int threadId = threadIdx.x;
+	unsigned int effective_idx = blockIdx.x * blockDim.x + threadIdx.x;
 
 	uint16_t totalPlannedCount = blockDim.x * gridDim.x;
 
@@ -28,7 +26,6 @@ __global__ void gl_DictionaryScanner(
 	__shared__ uint64_t ourBlockProcExtra;
 	__shared__ uint64_t ourBlockBadChkSum;
 	__shared__ uint64_t ourBlockGoodChkSum;
-	__shared__ int16_t myDigSet[MAX_ADAPTIVE_BASE_POSITIONS][MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION];
 	__shared__ uint64_t nMaxCloudAdd;
 	__shared__ unsigned int nMoreIterated;
 	int16_t local_static_word_index[12];
@@ -39,11 +36,7 @@ __global__ void gl_DictionaryScanner(
 		ourBlockProcExtra = 0;
 		ourBlockBadChkSum = 0;
 		ourBlockGoodChkSum = 0;
-		for (int i = 0; i < MAX_ADAPTIVE_BASE_POSITIONS; i++) {
-			for (int j = 0; j < MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION; j++) {
-				myDigSet[i][j] = dev_AdaptiveBaseDigitSet[i][j];
-			}
-		}
+
 		nMaxCloudAdd = 0;
 		nMoreIterated = 0;
 	}
@@ -53,21 +46,19 @@ __global__ void gl_DictionaryScanner(
 		local_static_word_index[i] = dev_static_words_indices[i];
 	}
 
-	unsigned int effective_idx = idx;
 
+	uint64_t curEntropy[2];
+	curEntropy[0] = dev_EntropyAbsolutePrefix64[PTR_AVOIDER];
+	curEntropy[1] = dev_EntropyNextPrefix2[PTR_AVOIDER];
 
-
-	//TODO: Each thread picks is load from Incremental Base!
 
 	uint8_t reqChecksum = 0;
 	uint8_t achievedChecksum = 1;
 	bool bChkSumFailed = true;
 
 	int16_t curDigits[MAX_ADAPTIVE_BASE_POSITIONS] = { 0,0,0,0,0,0 };
-	uint64_t curEntropy[2];
-	curEntropy[0] = dev_EntropyAbsolutePrefix64[PTR_AVOIDER];
-	curEntropy[1] = dev_EntropyNextPrefix2[PTR_AVOIDER];
 
+	//TODO block: prefix is based on  words 9 and 10 while the last word 11 is iterated inside the thread
 
 	int nTried = 0;
 	bool bCouldAdd = false;
@@ -87,13 +78,13 @@ __global__ void gl_DictionaryScanner(
 			atomicMax(&nMaxCloudAdd, effective_idx);
 		}
 
-		AdaptiveUpdateMnemonicLow64(&curEntropy[1], myDigSet, curDigits);
-		local_static_word_index[6] = myDigSet[0][curDigits[0]];
-		local_static_word_index[7] = myDigSet[1][curDigits[1]];
-		local_static_word_index[8] = myDigSet[2][curDigits[2]];
-		local_static_word_index[9] = myDigSet[3][curDigits[3]];
-		local_static_word_index[10] = myDigSet[4][curDigits[4]];
-		local_static_word_index[11] = myDigSet[5][curDigits[5]];
+		AdaptiveUpdateMnemonicLow64(&curEntropy[1], dev_AdaptiveBaseDigitSet, curDigits);
+		local_static_word_index[6] = dev_AdaptiveBaseDigitSet[0][curDigits[0]];
+		local_static_word_index[7] = dev_AdaptiveBaseDigitSet[1][curDigits[1]];
+		local_static_word_index[8] = dev_AdaptiveBaseDigitSet[2][curDigits[2]];
+		local_static_word_index[9] = dev_AdaptiveBaseDigitSet[3][curDigits[3]];
+		local_static_word_index[10] = dev_AdaptiveBaseDigitSet[4][curDigits[4]];
+		local_static_word_index[11] = dev_AdaptiveBaseDigitSet[5][curDigits[5]];
 
 
 
@@ -103,14 +94,11 @@ __global__ void gl_DictionaryScanner(
 
 		entropy_to_mnemonic_with_offset(curEntropy, mnemonic, 0, local_static_word_index);
 
-		//printf("Begin - block %d - thread  %d - EffectiveId:%d - curDigits:%d-%d-%d-%d-%d-%d (%d) @ %s\r\n", blockId, threadId, effective_idx
-		//	, curDigits[0], curDigits[1], curDigits[2], curDigits[3], curDigits[4], curDigits[5], local_static_word_index [11], mnemonic);
-
 
 
 		int16_t chkPosIdx = MAX_ADAPTIVE_BASE_POSITIONS - 1;
 		int16_t chkWordIdx = curDigits[chkPosIdx];
-		uint16_t thisVal = (myDigSet[chkPosIdx][chkWordIdx]);
+		uint16_t thisVal = (dev_AdaptiveBaseDigitSet[chkPosIdx][chkWordIdx]);
 		uint8_t tmp = (uint8_t)(thisVal & 0x0F);
 		reqChecksum = tmp;
 

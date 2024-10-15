@@ -38,7 +38,39 @@ void AdaptiveUpdateMnemonicLow64(uint64_t* low64
 );
 
 
-__host__ /* __and__ */ __device__  bool IncrementAdaptiveDigits(int16_t* local_AdaptiveBaseDigitCarryTrigger, int16_t* inDigits, uint64_t howMuch, int16_t* outDigits);
+inline __host__ /* __and__ */ __device__   bool IncrementAdaptiveDigits(int16_t* local_AdaptiveBaseDigitCarryTrigger, int16_t* inDigits, uint64_t howMuch, int16_t* outDigits) {
+	uint64_t nYetToAdd = howMuch;
+	uint64_t nCarryValue = 0;
+	int16_t tmpResult[MAX_ADAPTIVE_BASE_POSITIONS];
+
+	for (char i = MAX_ADAPTIVE_BASE_POSITIONS - 1; i >= 0; i--) {
+		if (nYetToAdd == 0 && nCarryValue == 0) {
+			tmpResult[i] = inDigits[i];
+			continue;
+		}
+
+		int16_t beforeIncDigit = inDigits[i];
+		int nCarryAt = local_AdaptiveBaseDigitCarryTrigger[i];
+
+		int nThisIdeal = nYetToAdd + beforeIncDigit + nCarryValue;
+		int nThisNewDigit = nThisIdeal % nCarryAt;
+
+
+		tmpResult[i] = nThisNewDigit;
+		nCarryValue = nThisIdeal / nCarryAt;
+		nYetToAdd = 0; //all active in carry if any
+	}
+	if (nYetToAdd != 0 || nCarryValue != 0) {
+		//ASSERT: We have carried out of our space, NOP anyway
+		return false;
+	}
+	else {
+		for (char i = 0; i < MAX_ADAPTIVE_BASE_POSITIONS; i++) {
+			outDigits[i] = tmpResult[i];
+		}
+	}
+	return true;
+}
 
 __host__ /* __and__ */ __device__ void GetBipForAdaptiveDigit(
 	int16_t* local_AdaptiveBaseCurrentBatchInitialDigits
