@@ -15,6 +15,7 @@
 #include "device_launch_parameters.h"
 #include <GPU.h>
 #include <cuda.h>
+#include "EntropyTools.cuh"
 
 
 

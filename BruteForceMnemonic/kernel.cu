@@ -17,6 +17,7 @@
 
 #include <Dispatcher.h>
 #include <thread>
+#include "EntropyTools.cuh"
 
 int main()
 {

@@ -7,6 +7,7 @@
 
 #include <GPU.h>
 #include "AdaptiveBase.h"
+#include "EntropyTools.cuh"
 
 
 
@@ -172,7 +173,7 @@ void AdaptiveUpdateMnemonicLow64(uint64_t* low64
 
 	for (int i = 0; i < MAX_ADAPTIVE_BASE_POSITIONS - 1; i++) {
 		tmpAns = tmpAns << 11;
-		tmpAns & 0xFFFFFFFFFFFFF7F;
+		tmpAns &= 0xFFFFFFFFFFFFF80;
 		tmpAns |= (uint64_t)(digitSet[i][curDigits[i]]);
 	}
 	tmpAns = tmpAns << 7;

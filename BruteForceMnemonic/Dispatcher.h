@@ -14,6 +14,7 @@
 
 #include "consts.h"
 #include "../config/Config.hpp"
+#include "EntropyTools.cuh"
 
 int Generate_Mnemonic(void);
 

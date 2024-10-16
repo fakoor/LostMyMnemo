@@ -6,6 +6,7 @@
 #include "../config/Config.hpp"
 
 #include "KernelStride.hpp"
+#include "EntropyTools.cuh"
 
 
 bool SyncTrunkVariables();

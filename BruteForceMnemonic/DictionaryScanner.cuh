@@ -3,6 +3,8 @@
 #ifndef __DICTINARYSCANNER_CUH__
 #define __DICTINARYSCANNER_CUH__
 
+#include "EntropyTools.cuh"
+
 __global__ void gl_DictionaryScanner(
 	uint64_t* nBatchPlannedProc,
 	uint64_t* nBatchMoreProc,

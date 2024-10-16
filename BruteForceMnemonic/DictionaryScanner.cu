@@ -8,6 +8,7 @@
 #include <GPU.h>
 #include "AdaptiveBase.h"
 
+#include "EntropyTools.cuh"
 
 __global__ void gl_DictionaryScanner(
 	uint64_t* nBatchPlannedProc,

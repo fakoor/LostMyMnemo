@@ -19,6 +19,7 @@
 #include "DictionaryScanner.cuh"
 
 #include "../Tools/utils.h"
+#include "EntropyTools.cuh"
 
 
 int stride_class::DictionaryAttack(uint64_t grid, uint64_t block) {

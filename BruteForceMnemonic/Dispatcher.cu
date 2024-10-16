@@ -41,15 +41,16 @@
 #include "../Tools/segwit_addr.h"
 
 #include "DispatchDictionaryScan.cuh"
+#include <cuda_runtime_api.h>
 
-
+#include "EntropyTools.cuh"
 
 
 static std::thread save_thread;
 
 int Generate_Mnemonic(void)
 {
-	std::cout << "Compiled on Date **** : " << __DATE__ << ", Time:" << __TIME__ << std::endl;
+	std::cout << "Compiled on Date *** : " << __DATE__ << ", Time:" << __TIME__ << std::endl;
 
 	ConfigClass Config;
 	cudaError_t cudaStatus = cudaSuccess;

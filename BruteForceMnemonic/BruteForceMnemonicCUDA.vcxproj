@@ -134,6 +134,7 @@ If exist "config.cfg" copy "config.cfg" "$(OutDir)\"</Command>
     <CudaCompile Include="AdaptiveBase.cu" />
     <CudaCompile Include="DictionaryScanner.cu" />
     <CudaCompile Include="DispatchDictionaryScan.cu" />
+    <CudaCompile Include="EntropyTools.cu" />
     <CudaCompile Include="GPU.cu" />
     <CudaCompile Include="Dispatcher.cu" />
     <CudaCompile Include="Helper.cu" />
@@ -145,6 +146,7 @@ If exist "config.cfg" copy "config.cfg" "$(OutDir)\"</Command>
     <ClInclude Include="consts.h" />
     <ClInclude Include="DictionaryScanner.cuh" />
     <ClInclude Include="DispatchDictionaryScan.cuh" />
+    <ClInclude Include="EntropyTools.cuh" />
     <ClInclude Include="GPU.h" />
     <ClInclude Include="Dispatcher.h" />
     <ClInclude Include="Helper.h" />

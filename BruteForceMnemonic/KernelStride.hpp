@@ -13,6 +13,7 @@
 
 
 #include "Helper.h"
+#include "EntropyTools.cuh"
 
 
 class stride_class

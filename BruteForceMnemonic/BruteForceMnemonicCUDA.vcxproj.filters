@@ -9,6 +9,7 @@
     <CudaCompile Include="AdaptiveBase.cu" />
     <CudaCompile Include="DispatchDictionaryScan.cu" />
     <CudaCompile Include="DictionaryScanner.cu" />
+    <CudaCompile Include="EntropyTools.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GPU.h" />
@@ -20,6 +21,7 @@
     <ClInclude Include="consts.h" />
     <ClInclude Include="DispatchDictionaryScan.cuh" />
     <ClInclude Include="DictionaryScanner.cuh" />
+    <ClInclude Include="EntropyTools.cuh" />
   </ItemGroup>
   <ItemGroup>
     <None Include="config.cfg" />

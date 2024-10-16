@@ -1,5 +1,9 @@
 #pragma once
+#ifndef __ADAPTIVEBASE_H__
+#define __ADAPTIVEBASE_H__
+#include "cuda_runtime.h"
 #include "consts.h"
+#include "EntropyTools.cuh"
 
 
 extern __constant__ uint64_t dev_EntropyAbsolutePrefix64[1];
@@ -88,3 +92,4 @@ __host__ /* __and__ */ __device__ void AdaptiveDigitsToEntropy(
 
 
 
+#endif /* __ADAPTIVEBASE_H__ */

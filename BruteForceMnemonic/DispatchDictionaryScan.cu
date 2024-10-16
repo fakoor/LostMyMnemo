@@ -15,6 +15,7 @@
 #include "../Tools/tools.h"
 #include "../Tools/utils.h"
 #include "Helper.h"
+#include "EntropyTools.cuh"
 
 bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class* Stride) {
 
