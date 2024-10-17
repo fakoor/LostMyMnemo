@@ -26,7 +26,6 @@
 
 
 
-
 namespace tools {
 
 
@@ -450,9 +449,6 @@ namespace tools {
 		if (path == 9) ss << "m/84'/0'/0'/1/" << child;
 		return ss.str();
 	}
-
-
-
 
 	int checkResult(retStruct* ret) {
 

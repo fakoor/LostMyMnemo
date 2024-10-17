@@ -1,6 +1,7 @@
 Print Batch mnemo
 Beep
 Read Addresss
+winmm.lib
 
 Move words to device memory
 

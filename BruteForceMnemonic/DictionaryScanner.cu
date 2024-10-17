@@ -9,6 +9,8 @@
 #include "AdaptiveBase.h"
 
 #include "EntropyTools.cuh"
+#include "DictionaryScanner.cuh"
+
 
 __global__ void gl_DictionaryScanner(
 	const uint64_t* __restrict__ nProcessedIterations,
@@ -25,7 +27,8 @@ __global__ void gl_DictionaryScanner(
 
 	__shared__ uint64_t ourBlockProcNormal;
 	__shared__ unsigned int nMoreIterated;
-	__shared__ uint64_t bBulkJobeDoneAt;
+	__shared__ uint64_t nGridJobCap;
+	__shared__ int bDone;
 
 	int16_t local_static_word_index[12];
 
@@ -34,7 +37,8 @@ __global__ void gl_DictionaryScanner(
 		ourBlockProcNormal = 0; // Only the first thread initializes it
 
 		nMoreIterated = 0;
-		bBulkJobeDoneAt = 0xFFFFFFFFFFFFFFFFull;
+		nGridJobCap = ULLONG_MAX;//0xFFFFFFFFFFFFFFFFull;
+		bDone = 0;
 	}
 	__syncthreads(); // Synchronize to ensure the initialization is complete
 
@@ -80,7 +84,7 @@ __global__ void gl_DictionaryScanner(
 		//break on nTried < MAX_TRY_PER_THREAD
 		uint64_t nInstanceOffset = nLoopMasterOffset + nWordElevenOffset;
 
-		if (nInstanceOffset > bBulkJobeDoneAt) {
+		if (nInstanceOffset > nGridJobCap) {
 			//if (blockIdx.x == 0) {
 			//	printf("\r\nBlock Job done at:%llu\r\n", nInstanceOffset);
 			//}
@@ -92,12 +96,15 @@ __global__ void gl_DictionaryScanner(
 			, dev_AdaptiveBaseCurrentBatchInitialDigits
 			, nInstanceOffset, curDigits);
 
+		if (bDone)
+			break;
+
 		if (bCouldAdd == false /*&& lastPosCarryTrig == nWordElevenOffset*/) {
 			//if (effective_idx == nMaxCloudAdd + 1) {
 			//	printf("Can not add bulk at %x", lastPosCarryTrig);
 			//}
 
-			atomicExch(&bBulkJobeDoneAt, nInstanceOffset);
+			atomicMin(&nGridJobCap, nInstanceOffset);
 			break;
 		}
 		atomicAdd(&ourBlockProcNormal, 1);
@@ -171,94 +178,105 @@ __global__ void gl_DictionaryScanner(
 			continue;
 		}
 #endif
+		//NOTE : If we reach here the checksum is already matching, just need to check the address
 		//__syncthreads(); // Synchronize to and check if have a valid checksum to continue with
-		if (bChkMatched) { //scrutinize : bCouldAdd
+		//if (bChkMatched) { //scrutinize : bCouldAdd
 
-			uint8_t mnemonic_phrase[SIZE_MNEMONIC_FRAME] = { 0 };
-			uint8_t* mnemonic = mnemonic_phrase;
-			uint32_t ipad[256 / 4];
-			uint32_t opad[256 / 4];
-			uint32_t seed[64 / 4];
+		uint8_t mnemonic_phrase[SIZE_MNEMONIC_FRAME] = { 0 };
+		uint8_t* mnemonic = mnemonic_phrase;
+		uint32_t ipad[256 / 4];
+		uint32_t opad[256 / 4];
+		uint32_t seed[64 / 4];
 
 
-			//Work with Current Entropy
-			entropy_to_mnemonic_with_offset(curEntropy, mnemonic, 0, local_static_word_index);
+		//Work with Current Entropy
+		entropy_to_mnemonic_with_offset(curEntropy, mnemonic, 0, local_static_word_index);
 
-			//if (idx == 0) {
-	//			printf("nemo-%u  (retry.remain=%d/%d) = :%s \r\n\r\n", effective_idx,nTried,MAX_TRY_PER_THREAD, mnemonic);
-			//}
-			//entropy_to_mnemonic(entropy, mnemonic);
+		//if (idx == 0) {
+//			printf("nemo-%u  (retry.remain=%d/%d) = :%s \r\n\r\n", effective_idx,nTried,MAX_TRY_PER_THREAD, mnemonic);
+		//}
+		//entropy_to_mnemonic(entropy, mnemonic);
 #pragma unroll
-			for (int x = 0; x < 120 / 8; x++) {
-				*(uint64_t*)((uint64_t*)ipad + x) = 0x3636363636363636ULL ^ SWAP512(*(uint64_t*)((uint64_t*)mnemonic + x));
-			}
+		for (int x = 0; x < 120 / 8; x++) {
+			*(uint64_t*)((uint64_t*)ipad + x) = 0x3636363636363636ULL ^ SWAP512(*(uint64_t*)((uint64_t*)mnemonic + x));
+		}
 #pragma unroll
-			for (int x = 0; x < 120 / 8; x++) {
-				*(uint64_t*)((uint64_t*)opad + x) = 0x5C5C5C5C5C5C5C5CULL ^ SWAP512(*(uint64_t*)((uint64_t*)mnemonic + x));
-			}
+		for (int x = 0; x < 120 / 8; x++) {
+			*(uint64_t*)((uint64_t*)opad + x) = 0x5C5C5C5C5C5C5C5CULL ^ SWAP512(*(uint64_t*)((uint64_t*)mnemonic + x));
+		}
 #pragma unroll
-			for (int x = 120 / 4; x < 128 / 4; x++) {
-				ipad[x] = 0x36363636;
-			}
+		for (int x = 120 / 4; x < 128 / 4; x++) {
+			ipad[x] = 0x36363636;
+		}
 #pragma unroll
-			for (int x = 120 / 4; x < 128 / 4; x++) {
-				opad[x] = 0x5C5C5C5C;
-			}
+		for (int x = 120 / 4; x < 128 / 4; x++) {
+			opad[x] = 0x5C5C5C5C;
+		}
 #pragma unroll
-			for (int x = 0; x < 16 / 4; x++) {
-				ipad[x + 128 / 4] = *(uint32_t*)((uint32_t*)&salt_swap + x);
-			}
-			sha512_swap((uint64_t*)ipad, 140, (uint64_t*)&opad[128 / 4]);
-			sha512_swap((uint64_t*)opad, 192, (uint64_t*)&ipad[128 / 4]);
+		for (int x = 0; x < 16 / 4; x++) {
+			ipad[x + 128 / 4] = *(uint32_t*)((uint32_t*)&salt_swap + x);
+		}
+		sha512_swap((uint64_t*)ipad, 140, (uint64_t*)&opad[128 / 4]);
+		sha512_swap((uint64_t*)opad, 192, (uint64_t*)&ipad[128 / 4]);
 #pragma unroll
-			for (int x = 0; x < 64 / 4; x++) {
-				seed[x] = ipad[128 / 4 + x];
-			}
-			for (int x = 1; x < 2048; x++) {
-				sha512_swap((uint64_t*)ipad, 192, (uint64_t*)&opad[128 / 4]);
-				sha512_swap((uint64_t*)opad, 192, (uint64_t*)&ipad[128 / 4]);
-#pragma unroll
-				for (int x = 0; x < 64 / 4; x++) {
-					seed[x] = seed[x] ^ ipad[128 / 4 + x];
-				}
-			}
-#pragma unroll
-			for (int x = 0; x < 16 / 4; x++) {
-				ipad[x] = 0x36363636 ^ *(uint32_t*)((uint32_t*)&key_swap + x);
-			}
-#pragma unroll
-			for (int x = 0; x < 16 / 4; x++) {
-				opad[x] = 0x5C5C5C5C ^ *(uint32_t*)((uint32_t*)&key_swap + x);
-			}
-#pragma unroll
-			for (int x = 16 / 4; x < 128 / 4; x++) {
-				ipad[x] = 0x36363636;
-			}
-#pragma unroll
-			for (int x = 16 / 4; x < 128 / 4; x++) {
-				opad[x] = 0x5C5C5C5C;
-			}
-#pragma unroll
-			for (int x = 0; x < 64 / 4; x++) {
-				ipad[x + 128 / 4] = seed[x];
-			}
-			//ipad[192 / 4] = 0;
-			//opad[192 / 4] = 0;
+		for (int x = 0; x < 64 / 4; x++) {
+			seed[x] = ipad[128 / 4 + x];
+		}
+		for (int x = 1; x < 2048; x++) {
 			sha512_swap((uint64_t*)ipad, 192, (uint64_t*)&opad[128 / 4]);
 			sha512_swap((uint64_t*)opad, 192, (uint64_t*)&ipad[128 / 4]);
 #pragma unroll
-			for (int x = 0; x < 128 / 8; x++) {
-				*(uint64_t*)((uint64_t*)&ipad[128 / 4] + x) = SWAP512(*(uint64_t*)((uint64_t*)&ipad[128 / 4] + x));
+			for (int x = 0; x < 64 / 4; x++) {
+				seed[x] = seed[x] ^ ipad[128 / 4 + x];
 			}
-
-			//printf("END block %d - thread  %d - EffectiveId:%d - curDigits:%d-%d-%d-%d-%d-%d %s\r\n", blockId, threadId, effective_idx
-			//	, curDigits[0], curDigits[1], curDigits[2], curDigits[3], curDigits[4], curDigits[5] , mnemonic);
-
-
-			key_to_hash160((extended_private_key_t*)&ipad[128 / 4], tables_legacy, tables_segwit, tables_native_segwit, (uint32_t*)mnemonic, ret);
-			
 		}
-	} 
+#pragma unroll
+		for (int x = 0; x < 16 / 4; x++) {
+			ipad[x] = 0x36363636 ^ *(uint32_t*)((uint32_t*)&key_swap + x);
+		}
+#pragma unroll
+		for (int x = 0; x < 16 / 4; x++) {
+			opad[x] = 0x5C5C5C5C ^ *(uint32_t*)((uint32_t*)&key_swap + x);
+		}
+#pragma unroll
+		for (int x = 16 / 4; x < 128 / 4; x++) {
+			ipad[x] = 0x36363636;
+		}
+#pragma unroll
+		for (int x = 16 / 4; x < 128 / 4; x++) {
+			opad[x] = 0x5C5C5C5C;
+		}
+#pragma unroll
+		for (int x = 0; x < 64 / 4; x++) {
+			ipad[x + 128 / 4] = seed[x];
+		}
+		//ipad[192 / 4] = 0;
+		//opad[192 / 4] = 0;
+		sha512_swap((uint64_t*)ipad, 192, (uint64_t*)&opad[128 / 4]);
+		sha512_swap((uint64_t*)opad, 192, (uint64_t*)&ipad[128 / 4]);
+#pragma unroll
+		for (int x = 0; x < 128 / 8; x++) {
+			*(uint64_t*)((uint64_t*)&ipad[128 / 4] + x) = SWAP512(*(uint64_t*)((uint64_t*)&ipad[128 / 4] + x));
+		}
+
+		//printf("END block %d - thread  %d - EffectiveId:%d - curDigits:%d-%d-%d-%d-%d-%d %s\r\n", blockId, threadId, effective_idx
+		//	, curDigits[0], curDigits[1], curDigits[2], curDigits[3], curDigits[4], curDigits[5] , mnemonic);
+
+		if (bDone)
+			break;
+
+		key_to_hash160((extended_private_key_t*)&ipad[128 / 4], tables_legacy, tables_segwit, tables_native_segwit, (uint32_t*)mnemonic, ret);
+		
+		atomicMax(&bDone, DictionaryCheckFound(ret));
+		if (bDone ) {
+			atomicMin(&nGridJobCap, nInstanceOffset);
+			//if (nInstanceOffset == nGridJobCap) {
+			//	printf("\r\n\r\n\tBreaking operation at %llu Since Match is Found!\r\n\r\n", nInstanceOffset);
+			//}
+
+			break;
+		}
+	}//for 
 
 	__syncthreads(); // Synchronize to ensure all data is loaded
 	if (threadIdx.x == 0) {
