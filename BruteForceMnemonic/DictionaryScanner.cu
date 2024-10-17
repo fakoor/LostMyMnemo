@@ -25,6 +25,8 @@ __global__ void gl_DictionaryScanner(
 
 	__shared__ uint64_t ourBlockProcNormal;
 	__shared__ unsigned int nMoreIterated;
+	__shared__ uint64_t bBulkJobeDoneAt;
+
 	int16_t local_static_word_index[12];
 
 	// Initialize the shared variable
@@ -32,6 +34,7 @@ __global__ void gl_DictionaryScanner(
 		ourBlockProcNormal = 0; // Only the first thread initializes it
 
 		nMoreIterated = 0;
+		bBulkJobeDoneAt = 0xFFFFFFFFFFFFFFFFull;
 	}
 	__syncthreads(); // Synchronize to ensure the initialization is complete
 
@@ -73,15 +76,14 @@ __global__ void gl_DictionaryScanner(
 	uint8_t mnemonic_phrase[SIZE_MNEMONIC_FRAME] = { 0 };
 	uint8_t* mnemonic = mnemonic_phrase;
 	uint64_t nLoopMasterOffset = effective_idx * lastPosCarryTrig + *nProcessedIterations * nTotalThreads;
-	bool bBulkJobeDone = false;
 	for (int16_t nWordElevenOffset = 0; nWordElevenOffset < lastPosCarryTrig; nWordElevenOffset++) {
 		//break on nTried < MAX_TRY_PER_THREAD
 		uint64_t nInstanceOffset = nLoopMasterOffset + nWordElevenOffset;
 
-		if (bBulkJobeDone) {
-			if (blockIdx.x == 0) {
-				printf("Block Job done at:%llu", nInstanceOffset);
-			}
+		if (nInstanceOffset > bBulkJobeDoneAt) {
+			//if (blockIdx.x == 0) {
+			//	printf("\r\nBlock Job done at:%llu\r\n", nInstanceOffset);
+			//}
 			break;
 		}
 
@@ -90,12 +92,13 @@ __global__ void gl_DictionaryScanner(
 			, dev_AdaptiveBaseCurrentBatchInitialDigits
 			, nInstanceOffset, curDigits);
 
-		if (bCouldAdd == false && lastPosCarryTrig == nWordElevenOffset) {
+		if (bCouldAdd == false /*&& lastPosCarryTrig == nWordElevenOffset*/) {
 			//if (effective_idx == nMaxCloudAdd + 1) {
 			//	printf("Can not add bulk at %x", lastPosCarryTrig);
 			//}
 
-			bBulkJobeDone = true;
+			atomicExch(&bBulkJobeDoneAt, nInstanceOffset);
+			break;
 		}
 		atomicAdd(&ourBlockProcNormal, 1);
 		//else {
