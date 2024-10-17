@@ -4,5 +4,16 @@ SM: 68 (=68 simultaneoius blocks)
 CUDA-Core/SM: 128
 48KB shared memory / Block
 
+if checksum error go to next, but don't break if checksum ok
+go to next 
+fix back adddition fail glag
 
 
+[diff]
+    tool = bc
+[difftool "bc"]
+    cmd = \"C:\\Users\\%user%\\AppData\\Local\\Programs\\Beyond Compare 5\\BCompare.exe\" \"$LOCAL\" \"$REMOTE\"
+[merge]
+    tool = bc
+[mergetool "bc"]
+    cmd = \"C:\\Users\\%user%\\AppData\\Local\\Programs\\Beyond Compare 5\\BCompare.exe\" \"$REMOTE\" \"$LOCAL\" \"$BASE\" \"$MERGED\" 

@@ -35,11 +35,6 @@ void PrintNextMnemo(uint64_t entrop[2], uint64_t nHowMuch, int16_t carry[MAX_ADA
 );
 
 
-__host__ /*and */ __device__
-void AdaptiveUpdateMnemonicLow64(uint64_t* low64
-	, int16_t digitSet[MAX_ADAPTIVE_BASE_POSITIONS][MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION]
-	, int16_t curDigits[MAX_ADAPTIVE_BASE_POSITIONS]
-);
 
 
 inline __host__ /* __and__ */ __device__   bool IncrementAdaptiveDigits(int16_t* local_AdaptiveBaseDigitCarryTrigger, int16_t* inDigits, uint64_t howMuch, int16_t* outDigits) {
@@ -64,14 +59,16 @@ inline __host__ /* __and__ */ __device__   bool IncrementAdaptiveDigits(int16_t*
 		nCarryValue = nThisIdeal / nCarryAt;
 		nYetToAdd = 0; //all active in carry if any
 	}
-	if (nYetToAdd != 0 || nCarryValue != 0) {
-		//ASSERT: We have carried out of our space, NOP anyway
-		return false;
-	}
-	else {
+	{
+		if ((nYetToAdd != 0 || nCarryValue != 0)) {
+			//ASSERT: We have carried out of our space, NOP anyway
+			return false;
+		}
+
 		for (char i = 0; i < MAX_ADAPTIVE_BASE_POSITIONS; i++) {
 			outDigits[i] = tmpResult[i];
 		}
+		
 	}
 	return true;
 }

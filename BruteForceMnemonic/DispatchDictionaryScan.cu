@@ -34,32 +34,32 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 	host_EntropyAbsolutePrefix64[PTR_AVOIDER] |= (uint64_t)(Config->words_indicies_mnemonic[4]) << 9;
 
 	host_EntropyAbsolutePrefix64[PTR_AVOIDER] |= (uint64_t)(Config->words_indicies_mnemonic[5]) >> 2;
-	host_EntropyNextPrefix2[PTR_AVOIDER] |= (uint64_t)(Config->words_indicies_mnemonic[5]) << 62; //two bits from main 6 words
+	host_EntropyNextPrefix2[PTR_AVOIDER] = (uint64_t)(Config->words_indicies_mnemonic[5]) << 62; //two bits from main 6 words
 
 	if (SyncTrunkVariables() == false)
 		return false;
 
 
 
-	AdaptiveDigitsToEntropy(
-		host_AdaptiveBaseCurrentBatchInitialDigits
-		, host_AdaptiveBaseDigitCarryTrigger
-		, host_AdaptiveBaseDigitSet
-		, host_EntropyAbsolutePrefix64
-		, host_EntropyNextPrefix2
-		, host_AdaptiveBaseCurrentBatchInitialDigits
-		, trunkInitEntropy,
-		&reqChecksum);
+	//AdaptiveDigitsToEntropy(
+	//	host_AdaptiveBaseCurrentBatchInitialDigits
+	//	, host_AdaptiveBaseDigitCarryTrigger
+	//	, host_AdaptiveBaseDigitSet
+	//	, host_EntropyAbsolutePrefix64
+	//	, host_EntropyNextPrefix2
+	//	, host_AdaptiveBaseCurrentBatchInitialDigits
+	//	, trunkInitEntropy,
+	//	&reqChecksum);
 
-	if (trunkInitEntropy[0] == host_EntropyAbsolutePrefix64[0]) {
-		std::cout << "Init Entropy Sucessfully initialized by higher bits " << trunkInitEntropy[0] << std::endl;
-		if (host_EntropyNextPrefix2[0] == trunkInitEntropy[1]) {
-			std::cout << "Init Entropy Sucessfully tested for lower bits " << trunkInitEntropy[1] << std::endl;
+	//if (trunkInitEntropy[0] == host_EntropyAbsolutePrefix64[0]) {
+	//	std::cout << "Init Entropy Sucessfully initialized by higher bits " << trunkInitEntropy[0] << std::endl;
+	//	if (host_EntropyNextPrefix2[0] == trunkInitEntropy[1]) {
+	//		std::cout << "Init Entropy Sucessfully tested for lower bits " << trunkInitEntropy[1] << std::endl;
 
-		}
-	}
+	//	}
+	//}
 
-	host_EntropyNextPrefix2[0] &= 0xFFFFFF0000000000ULL; //test done, revert nack to only 24 msbs
+	//host_EntropyNextPrefix2[0] &= 0xCFFFFF0000000000ULL; //test done, revert back to only 2 msbs
 
 
 	size_t copySize = sizeof(int16_t) * MAX_ADAPTIVE_BASE_POSITIONS * MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION;
@@ -70,7 +70,8 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 		return false;
 	}
 
-	int nPlannedTrunks = 1;//host_AdaptiveBaseDigitCarryTrigger[0] * host_AdaptiveBaseDigitCarryTrigger[1];
+	int nPlannedTrunks = 1;
+	//host_AdaptiveBaseDigitCarryTrigger[0] * host_AdaptiveBaseDigitCarryTrigger[1];
 
 	uint64_t nPrevBatchProcessed = 0;
 
@@ -92,10 +93,11 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 
 	uint64_t nThreadsInBatch = Config->cuda_block * Config->cuda_grid;
 
-	uint64_t nBatchMax = nUniversalMax / nThreadsInBatch;
+	uint64_t nBatchMax = 1;
+	//nUniversalMax / nThreadsInBatch;
 
-	if (nBatchMax * nThreadsInBatch < nUniversalMax)
-		nBatchMax++;
+	//if (nBatchMax * nThreadsInBatch < nUniversalMax)
+	//	nBatchMax++;
 
 	int nBatch = 0;
 
@@ -113,8 +115,10 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 
 		std::cout << "> Starting Dictionary SCAN -- " << std::endl;
 
-		if (SyncTrunkVariables() == false)
-			return false;
+		//TODO: We have synced one, if you want to revert to old approach copy initial digits here
+
+		//if (SyncTrunkVariables() == false)
+		//	return false;
 
 
 		nBatch = 0;
@@ -131,7 +135,7 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 
 		//uint64_t batchMnemo[2];
 		//batchMnemo[0] = host_EntropyAbsolutePrefix64[0];
-		//batchMnemo[1] = host_EntropyNextPrefix2[0] & 0xB0000000; //scrutinize;
+		//batchMnemo[1] = host_EntropyNextPrefix2[0] & 0xC0000000; //scrutinize;
 
 		//for (int i = 0; i < 4; i++) {
 		//	PrintNextMnemo(batchMnemo, i, host_AdaptiveBaseDigitCarryTrigger , host_AdaptiveBaseCurrentBatchInitialDigits, host_AdaptiveBaseDigitSet);
@@ -149,7 +153,7 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 
 
 			//TODO: increment entropy here accordingto grid , processed and extra
-
+#if 0 //for now only one batch
 			const int elemSize = sizeof(int16_t);
 			copySize = elemSize * MAX_ADAPTIVE_BASE_POSITIONS;
 
@@ -160,7 +164,7 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 				return false;
 			}
 
-
+#endif
 
 			std::cout << "BATCH #"
 				<< nBatch << " of " << nBatchMax << std::endl;
@@ -212,7 +216,7 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 			}
 			nTotalThisBatch = v1 + v2;
 
-			printf("checking results of %llu + %llu = %ul checkups\r\n", v1, v2, nTotalThisBatch);
+			printf("checking results of %llu + %llu = %llu checkups\r\n", v1, v2, nTotalThisBatch);
 			tools::checkResult(Data->host.ret);
 
 			float delay;
@@ -227,7 +231,7 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 			//	+ Data->host.host_nProcessedMoreThanBatch[PTR_AVOIDER];
 			//std::cout << ">>>This batch (#" << nBatch << ") completed processing " << nPrevBatchProcessed << " combos." << std::endl;
 //				nCumulativeCombosProcessedInTrunk += nPrevBatchProcessed;
-
+#if 0 //for only one batch
 			if (IncrementAdaptiveDigits(host_AdaptiveBaseDigitCarryTrigger
 				, host_AdaptiveBaseCurrentBatchInitialDigits
 				, nTotalThisBatch
@@ -240,9 +244,9 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 			}
 
 			nUniversalProcessed += nTotalThisBatch;
-
+#endif 
 			nBatch++;
-		} while (nUniversalProcessed < nUniversalMax); //batch
+		} while (false);// (nUniversalProcessed < nUniversalMax); //batch
 
 		std::cout << ">>This Trunk (#" << nTrunk << ") completed processing " << nUniversalProcessed << "/" << nUniversalMax << "  combinations" << std::endl;
 		//nCumulativeCombosProcessedInTrunk = 0;
@@ -253,12 +257,12 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 
 
 bool SyncTrunkVariables()
-{
+{/*
 	AdaptiveUpdateMnemonicLow64(host_EntropyNextPrefix2
 		, host_AdaptiveBaseDigitSet
 		, host_AdaptiveBaseCurrentBatchInitialDigits);
 
-	host_EntropyNextPrefix2[0] &= 0xFFFFFF00000000;
+	host_EntropyNextPrefix2[0] &= 0xFFFFFF00000000;*/
 	size_t copySize = sizeof(uint64_t);
 	cudaError_t cudaResult = cudaMemcpyToSymbol(dev_EntropyNextPrefix2, host_EntropyNextPrefix2, copySize, 0, cudaMemcpyHostToDevice);
 	if (cudaResult != cudaSuccess)

@@ -3061,6 +3061,12 @@ __constant__ int16_t dev_static_words_indices[12];
 
 
 __device__
+void GetWordFromBipIndex(int16_t  index, uint8_t word[10]) {
+	word[9] = 0;
+	memcpy(word, words[index], 9);
+}
+
+__device__
 void entropy_to_mnemonic(const uint64_t* gl_entropy, uint8_t* mnemonic_phrase) {
 	uint32_t idx = blockIdx.x * blockDim.x + threadIdx.x;
 	entropy_to_mnemonic_with_offset(gl_entropy, mnemonic_phrase, idx, dev_static_words_indices);

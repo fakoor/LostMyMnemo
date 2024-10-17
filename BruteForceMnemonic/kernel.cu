@@ -21,13 +21,21 @@
 
 int main()
 {
-    Generate_Mnemonic();
+    printf("Compiled on Date ** : %s , time: %s \r\n", __DATE__, __TIME__);
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+
+    int ret = Generate_Mnemonic();
 
 
-    while (1) {
-        std::this_thread::sleep_for(std::chrono::seconds(100));
+    if (ret !=0) {
+        printf("Some errors ocurre during program execution, see hints in messages above, fix and re-run the program.\r\n");
+
+        std::this_thread::sleep_for(std::chrono::seconds(2));
     }
+    else {
 
+        printf("Program Completed Successfully.\r\n");
+    }
     return 0;
 }
 

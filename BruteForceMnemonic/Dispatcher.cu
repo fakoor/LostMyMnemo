@@ -50,7 +50,6 @@ static std::thread save_thread;
 
 int Generate_Mnemonic(void)
 {
-	std::cout << "Compiled on Date *** : " << __DATE__ << ", Time:" << __TIME__ << std::endl;
 
 	ConfigClass Config;
 	cudaError_t cudaStatus = cudaSuccess;
@@ -418,7 +417,7 @@ void PrintNextMnemo(uint64_t batchMnemo[2] , uint64_t nHowMuch, int16_t carry [M
 	int16_t  batchDigits[6];
 	//uint64_t batchMnemo[2];
 	//batchMnemo[0] = host_EntropyAbsolutePrefix64[0];
-	//batchMnemo[1] = host_EntropyBatchNext24[0] & 0xB0000000; //scrutinize;
+	//batchMnemo[1] = host_EntropyBatchNext24[0] & 0xC0000000; //scrutinize;
 	printf("before->after::[%llu] == \n", nHowMuch  );
 
 	if (IncrementAdaptiveDigits(carry, initDigits, nHowMuch, batchDigits) == false) {
