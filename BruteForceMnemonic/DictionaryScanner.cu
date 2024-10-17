@@ -11,8 +11,8 @@
 #include "EntropyTools.cuh"
 
 __global__ void gl_DictionaryScanner(
-	uint64_t* nBatchPlannedProc,
-	uint64_t* nBatchMoreProc,
+	const uint64_t* __restrict__ nProcessedIterations,
+	uint64_t* nProcessedInstances,
 	const tableStruct* __restrict__ tables_legacy,
 	const tableStruct* __restrict__ tables_segwit,
 	const tableStruct* __restrict__ tables_native_segwit,
@@ -21,24 +21,16 @@ __global__ void gl_DictionaryScanner(
 {
 	unsigned int effective_idx = blockIdx.x * blockDim.x + threadIdx.x;
 
-	uint32_t totalThreads = blockDim.x * gridDim.x;
+	uint32_t nTotalThreads = blockDim.x * gridDim.x;
 
 	__shared__ uint64_t ourBlockProcNormal;
-	__shared__ uint64_t ourBlockProcExtra;
-	__shared__ uint64_t ourBlockBadChkSum;
-	__shared__ uint64_t ourBlockGoodChkSum;
-	__shared__ uint64_t nMaxCloudAdd;
 	__shared__ unsigned int nMoreIterated;
 	int16_t local_static_word_index[12];
 
 	// Initialize the shared variable
 	if (threadIdx.x == 0) {
 		ourBlockProcNormal = 0; // Only the first thread initializes it
-		ourBlockProcExtra = 0;
-		ourBlockBadChkSum = 0;
-		ourBlockGoodChkSum = 0;
 
-		nMaxCloudAdd = 0;
 		nMoreIterated = 0;
 	}
 	__syncthreads(); // Synchronize to ensure the initialization is complete
@@ -80,7 +72,7 @@ __global__ void gl_DictionaryScanner(
 	//Work with Current Entropy
 	uint8_t mnemonic_phrase[SIZE_MNEMONIC_FRAME] = { 0 };
 	uint8_t* mnemonic = mnemonic_phrase;
-	uint64_t nLoopMasterOffset = effective_idx * lastPosCarryTrig;
+	uint64_t nLoopMasterOffset = effective_idx * lastPosCarryTrig + *nProcessedIterations * nTotalThreads;
 	bool bBulkJobeDone = false;
 	for (int16_t nWordElevenOffset = 0; nWordElevenOffset < lastPosCarryTrig; nWordElevenOffset++) {
 		//break on nTried < MAX_TRY_PER_THREAD
@@ -120,17 +112,9 @@ __global__ void gl_DictionaryScanner(
 		int16_t wordElevenBipVal = local_static_word_index[11];
 
 
-
+#if 0 //not required for checksum comparison here
 		entropy_to_mnemonic_with_offset(curEntropy, mnemonic, 0, local_static_word_index);
-
-
-		//printf("idx:%u - checking: %s\r\n", effective_idx, mnemonic);
-
-
-		//int16_t chkPosIdx = MAX_ADAPTIVE_BASE_POSITIONS - 1;
-		//int16_t chkWordIdx = curDigits[lastPos_adaptive];
-		//uint16_t thisVal = (dev_AdaptiveBaseDigitSet[lastPos_adaptive][chkWordIdx]);
-		//uint8_t tmp = (uint8_t)(thisVal & 0x0F);
+#endif
 		reqChecksum = wordElevenBipVal & 0x000F;
 
 		uint8_t entropy_hash[32];
@@ -161,7 +145,7 @@ __global__ void gl_DictionaryScanner(
 		bChkMatched = (achievedChecksum == reqChecksum);
 
 		nTried++;
-
+#if 0
 		if (effective_idx <= 2 || (effective_idx <= 242 && effective_idx >= 240)) {
 			uint8_t word_11_text[10];
 			GetWordFromBipIndex(wordElevenBipVal, word_11_text);
@@ -178,7 +162,7 @@ __global__ void gl_DictionaryScanner(
 				, achievedChecksum
 			);
 		}
-
+#endif
 #if 1
 		if (!bChkMatched) {
 			continue;
@@ -186,7 +170,6 @@ __global__ void gl_DictionaryScanner(
 #endif
 		//__syncthreads(); // Synchronize to and check if have a valid checksum to continue with
 		if (bChkMatched) { //scrutinize : bCouldAdd
-			atomicAdd(&ourBlockGoodChkSum, 1);
 
 			uint8_t mnemonic_phrase[SIZE_MNEMONIC_FRAME] = { 0 };
 			uint8_t* mnemonic = mnemonic_phrase;
@@ -270,15 +253,13 @@ __global__ void gl_DictionaryScanner(
 
 
 			key_to_hash160((extended_private_key_t*)&ipad[128 / 4], tables_legacy, tables_segwit, tables_native_segwit, (uint32_t*)mnemonic, ret);
-			//__syncthreads();
+			
 		}
-	} //for //while (nTried < MAX_TRY_PER_THREAD); //do
+	} 
 
 	__syncthreads(); // Synchronize to ensure all data is loaded
 	if (threadIdx.x == 0) {
-		atomicAdd(nBatchPlannedProc, ourBlockProcNormal);
-		//atomicAdd(nBatchMoreProc, ourBlockProcExtra);
-		*nBatchMoreProc = 0;
+		atomicAdd(nProcessedInstances, ourBlockProcNormal);
 	}
 
 }//DICTIONARY ATTACK

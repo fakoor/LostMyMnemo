@@ -9,7 +9,7 @@
 #include "EntropyTools.cuh"
 
 
-bool SyncTrunkVariables();
+bool InitalSync(ConfigClass* Config);
 bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class* Stride);
 
 #endif /*__DICTIONARY_SCAN_H__*/

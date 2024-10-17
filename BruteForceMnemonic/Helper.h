@@ -42,9 +42,9 @@ public:
 
 	retStruct* ret = NULL;
 
-	uint64_t* host_nProcessedFromBatch;
+	uint64_t* nProcessedInstances;
 
-	uint64_t* host_nProcessedMoreThanBatch;
+	uint64_t* nProcessedIterations;
 
 
 	uint64_t memory_size = 0;
@@ -75,8 +75,8 @@ public:
 		if (alignedMalloc((void**)&mnemonic, size_mnemonic_buf, &memory_size, "mnemonic") != 0) return -1;
 		if (alignedMalloc((void**)&hash160, size_hash160_buf, &memory_size, "hash160") != 0) return -1;
 		if (mallocHost((void**)&ret, sizeof(retStruct), &memory_size, "ret") != 0) return -1;
-		if (mallocHost((void**)&host_nProcessedFromBatch, 8, &memory_size, "BatchSched") != 0) return -1;
-		if (mallocHost((void**)&host_nProcessedMoreThanBatch, 8, &memory_size, "BatchMore") != 0) return -1;
+		if (mallocHost((void**)&nProcessedInstances, 8, &memory_size, "BatchSched") != 0) return -1;
+		if (mallocHost((void**)&nProcessedIterations, 8, &memory_size, "BatchMore") != 0) return -1;
 
 		std::cout << "MALLOC ALL RAM MEMORY SIZE (HOST): " << std::to_string((float)memory_size / (1024.0f * 1024.0f)) << " MB\n";
 		return 0;
@@ -110,8 +110,8 @@ public:
 		freeTableBuffers();
 		cudaFreeHost(entropy);
 		cudaFreeHost(ret);
-		cudaFreeHost(host_nProcessedFromBatch);
-		cudaFreeHost(host_nProcessedMoreThanBatch);
+		cudaFreeHost(nProcessedInstances);
+		cudaFreeHost(nProcessedIterations);
 
 		//for CPU
 		_aligned_free(hash160);
@@ -137,9 +137,9 @@ public:
 	uint8_t* mnemonic = NULL;
 	uint32_t* hash160 = NULL;
 	retStruct* ret = NULL;
-	/*__device__*/ uint64_t* dev_nProcessedFromBatch;
+	/*__device__*/ uint64_t* nProcessedInstances;
 
-	/*__device__*/ uint64_t* dev_nProcessedMoreThanBatch;
+	/*__device__*/ uint64_t* nProcessedIterations;
 
 
 	uint64_t memory_size = 0;
@@ -166,8 +166,8 @@ public:
 		if (cudaMallocDevice((uint8_t**)&dev_tables_segwit, sizeof(tableStruct) * 256, &memory_size, "dev_tables_segwit") != 0) return -1;
 		if (cudaMallocDevice((uint8_t**)&dev_tables_native_segwit, sizeof(tableStruct) * 256, &memory_size, "dev_tables_native_segwit") != 0) return -1;
 		if (cudaMallocDevice((uint8_t**)&ret, sizeof(retStruct), &memory_size, "ret") != 0) return -1;
-		if (cudaMallocDevice((uint8_t**)&dev_nProcessedFromBatch, 8, &memory_size, "BatchSched") != 0) return -1;
-		if (cudaMallocDevice((uint8_t**)&dev_nProcessedMoreThanBatch, 8, &memory_size, "BatchMore") != 0) return -1;
+		if (cudaMallocDevice((uint8_t**)&nProcessedInstances, 8, &memory_size, "BatchSched") != 0) return -1;
+		if (cudaMallocDevice((uint8_t**)&nProcessedIterations, 8, &memory_size, "BatchMore") != 0) return -1;
 
 		std::cout << "MALLOC ALL MEMORY SIZE (GPU): " << std::to_string((float)(memory_size) / (1024.0f * 1024.0f)) << " MB\n";
 		return 0;
@@ -198,8 +198,8 @@ public:
 		cudaFree(mnemonic);
 		cudaFree(hash160);
 		cudaFree(ret);
-		cudaFree(dev_nProcessedFromBatch);
-		cudaFree(dev_nProcessedMoreThanBatch);
+		cudaFree(nProcessedInstances);
+		cudaFree(nProcessedIterations);
 	}
 };
 

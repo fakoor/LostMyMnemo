@@ -122,7 +122,7 @@ int Generate_Mnemonic(void)
 	bool bCfgUseOldMethod = (Config.use_old_random_method == "yes")?true:false;
 
 
-	//if (bCfgUseOldMethod) {
+	if (bCfgUseOldMethod) {
 		if ((Config.generate_path[6] != 0) || (Config.generate_path[7] != 0))
 		{
 			std::cout << "READ TABLES SEGWIT(BIP49)..." << std::endl;
@@ -147,7 +147,7 @@ int Generate_Mnemonic(void)
 			std::cerr << "ERROR READ TABLES!! NO ADDRESSES IN FILES!!" << std::endl;
 			goto Error;
 		}
-//	}
+	}
 
 	if (Data->malloc(Config.cuda_grid, Config.cuda_block, Config.num_paths, Config.num_child_addresses, bCfgSaveResultsIntoFile) != 0) {
 		std::cerr << "Error Data->malloc()!" << std::endl;
@@ -160,26 +160,27 @@ int Generate_Mnemonic(void)
 	}
 
 	Data->host.freeTableBuffers();
+	if (bCfgUseOldMethod) {
 
-	std::cout << "START GENERATE ADDRESSES!" << std::endl;
+		std::cout << "START GENERATE ADDRESSES!" << std::endl;
+	}
 	std::cout << "PATH: " << std::endl;
-
-	//if (bCfgUseOldMethod) {
+	if (bCfgUseOldMethod) {
 		if (Config.generate_path[0] != 0) std::cout << "m/0/0.." << (Config.num_child_addresses - 1) << std::endl;
 		if (Config.generate_path[1] != 0) std::cout << "m/1/0.." << (Config.num_child_addresses - 1) << std::endl;
 		if (Config.generate_path[2] != 0) std::cout << "m/0/0/0.." << (Config.num_child_addresses - 1) << std::endl;
 		if (Config.generate_path[3] != 0) std::cout << "m/0/1/0.." << (Config.num_child_addresses - 1) << std::endl;
-//	}
+	}
 	if (Config.generate_path[4] != 0) std::cout << "m/44'/0'/0'/0/0.." << (Config.num_child_addresses - 1) << std::endl;
 
-//	if (bCfgUseOldMethod) {
+	if (bCfgUseOldMethod) {
 		if (Config.generate_path[5] != 0) std::cout << "m/44'/0'/0'/1/0.." << (Config.num_child_addresses - 1) << std::endl;
 		if (Config.generate_path[6] != 0) std::cout << "m/49'/0'/0'/0/0.." << (Config.num_child_addresses - 1) << std::endl;
 		if (Config.generate_path[7] != 0) std::cout << "m/49'/0'/0'/1/0.." << (Config.num_child_addresses - 1) << std::endl;
 		if (Config.generate_path[8] != 0) std::cout << "m/84'/0'/0'/0/0.." << (Config.num_child_addresses - 1) << std::endl;
 		if (Config.generate_path[9] != 0) std::cout << "m/84'/0'/0'/1/0.." << (Config.num_child_addresses - 1) << std::endl;
-//	}
 	std::cout << "\nGENERATE " << tools::formatWithCommas(Config.number_of_generated_mnemonics) << " MNEMONICS. " << tools::formatWithCommas(Config.number_of_generated_mnemonics * Data->num_all_childs) << " ADDRESSES. MNEMONICS IN ROUNDS " << tools::formatWithCommas(Data->wallets_in_round_gpu) << ". WAIT...\n\n";
+	}
 
 	//TODO: Here we should create incremental task: /or here
 	tools::generateRandomUint64Buffer(Data->host.entropy, Data->size_entropy_buf / (sizeof(uint64_t)));
