@@ -1,3 +1,7 @@
+Print Batch mnemo
+Beep
+Read Addresss
+
 Move words to device memory
 
 Overlapping with the next 24-bit batch
