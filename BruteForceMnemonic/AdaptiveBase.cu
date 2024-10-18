@@ -28,7 +28,8 @@
 
 
 
-
+__constant__ uint8_t dev_uniqueTargetAddressBytes[20];
+uint8_t host_uniqueTargetAddressBytes[20];
 
 
 __constant__ uint64_t dev_EntropyAbsolutePrefix64[1];

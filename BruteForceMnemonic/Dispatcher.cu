@@ -402,8 +402,14 @@ bool ApplyConfig(ConfigClass& Config)
 		}
 		std::string hashedAddr;
 		ValidateAndConvertAddress(Config.static_btc_legacy_public_wallet_address, hashedAddr);
-		std::cout << "We are looking for: " << hashedAddr.c_str() << " meaning address:" << Config.static_btc_legacy_public_wallet_address << std::endl;
 
+		int convErr = tools::hexStringToBytes(hashedAddr, host_uniqueTargetAddressBytes, 20);
+
+		std::cout << "We are looking for: " << hashedAddr.c_str() 
+			<<" with " << hashedAddr.length() << " characters"
+			<< " corresponding to original address:" << Config.static_btc_legacy_public_wallet_address 
+			<< " conversion result: "<< convErr
+			<< std::endl;
 	}//try
 	catch (...) {
 		for (;;)

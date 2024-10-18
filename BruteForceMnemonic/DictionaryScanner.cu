@@ -12,6 +12,156 @@
 #include "DictionaryScanner.cuh"
 
 
+__device__
+int LookupHash(const uint32_t* hash, uint32_t* hash_from_table, const uint32_t* mnemonic, foundStruct* fnd_ret, uint32_t path, uint32_t child)
+{
+	int found = 0;
+	bool search_state = true;
+	uint32_t line_cnt = 1;
+	uint32_t point = 0;
+	uint32_t point_last = 0;
+	uint32_t interval = line_cnt / 3;
+	//uint32_t* hash_from_table;
+	while (point < line_cnt) {
+		point_last = point;
+		if (interval == 0) {
+			search_state = false;
+		}
+		if (search_state) {
+			point += interval;
+
+			if (point >= line_cnt) {
+				point = point_last;
+				interval = (line_cnt - point) / 2;
+				continue;
+			}
+			//hash_from_table = &table.table[point * (20 / 4)];
+		}
+		else {
+			//hash_from_table = &table.table[point * (20 / 4)];
+			point += 1;
+		}
+
+		int cmp = 0;
+		if (hash[0] < hash_from_table[0])
+		{
+			cmp = -1;
+		}
+		else if (hash[0] > hash_from_table[0])
+		{
+			cmp = 1;
+		}
+		else if (hash[1] < hash_from_table[1])
+		{
+			cmp = -2;
+		}
+		else if (hash[1] > hash_from_table[1])
+		{
+			cmp = 2;
+		}
+		else if (hash[2] < hash_from_table[2])
+		{
+			cmp = -3;
+		}
+		else if (hash[2] > hash_from_table[2])
+		{
+			cmp = 3;
+		}
+		else if (hash[3] < hash_from_table[3])
+		{
+			cmp = -4;
+		}
+		else if (hash[3] > hash_from_table[3])
+		{
+			cmp = 4;
+		}
+		else if (hash[4] < hash_from_table[4])
+		{
+			cmp = -5;
+		}
+		else if (hash[4] > hash_from_table[4])
+		{
+			cmp = 5;
+		}
+
+		if (search_state) {
+			if (cmp < 0) {
+				if (interval < 20) {
+					search_state = false;
+				}
+				else
+				{
+					interval = interval / 2;
+				}
+				point = point_last;
+				continue;
+			}
+			else if (cmp == 0) {
+				search_state = false;
+			}
+			else {
+				continue;
+			}
+		}
+
+		if (cmp <= 0) {
+			if (cmp == 0)
+			{
+				found = 1;
+				uint32_t cnt = fnd_ret->count_found;
+				fnd_ret->count_found++;
+				if (cnt < MAX_FOUND_ADDRESSES)
+				{
+					for (int i = 0; i < 5; i++) fnd_ret->found_info[cnt].hash160[i] = hash[i];
+					for (int i = 0; i < SIZE32_MNEMONIC_FRAME; i++) fnd_ret->found_info[cnt].mnemonic[i] = mnemonic[i];
+					fnd_ret->found_info[cnt].path = path;
+					fnd_ret->found_info[cnt].child = child;
+				}
+			}
+			break;
+		}
+
+		if (cmp > 1) {
+			if (dev_num_bytes_find[0] == 8) {
+				if (hash[1] == hash_from_table[1]) found = 2;
+			}
+#ifdef TEST_MODE
+			else if (dev_num_bytes_find[0] == 7) {
+				if ((hash[1] & 0x00FFFFFF) == (hash_from_table[1] & 0x00FFFFFF)) found = 2;
+			}
+			else if (dev_num_bytes_find[0] == 6) {
+				if ((hash[1] & 0x0000FFFF) == (hash_from_table[1] & 0x0000FFFF)) found = 2;
+			}
+			else if (dev_num_bytes_find[0] == 5) {
+				if ((hash[1] & 0x000000FF) == (hash_from_table[1] & 0x000000FF)) found = 2;
+			}
+#endif //TEST_MODE
+		}
+
+
+		if (found == 2) {
+			uint32_t cnt = fnd_ret->count_found_bytes;
+			fnd_ret->count_found_bytes++;
+			if (cnt < MAX_FOUND_ADDRESSES)
+			{
+				for (int i = 0; i < 5; i++)
+				{
+					fnd_ret->found_bytes_info[cnt].hash160_from_table[i] = hash_from_table[i];
+					fnd_ret->found_bytes_info[cnt].hash160[i] = hash[i];
+				}
+				for (int i = 0; i < SIZE32_MNEMONIC_FRAME; i++) fnd_ret->found_bytes_info[cnt].mnemonic[i] = mnemonic[i];
+				fnd_ret->found_bytes_info[cnt].path = path;
+				fnd_ret->found_bytes_info[cnt].child = child;
+			}
+			break;
+		}
+
+	}
+
+	return found;
+}
+
+
 __global__ void gl_DictionaryScanner(
 	const uint64_t* __restrict__ nProcessedIterations,
 	uint64_t* nProcessedInstances,
@@ -264,9 +414,36 @@ __global__ void gl_DictionaryScanner(
 
 		if (bDone)
 			break;
+		//dev_uniqueTargetAddressBytes;
+		{
+			const extended_private_key_t* master_private = (extended_private_key_t*)&ipad[128 / 4];
 
+			uint32_t hash[(20 / 4)];
+			extended_private_key_t target_key;
+			extended_private_key_t target_key_fo_pub;
+			extended_private_key_t master_private_fo_extint;
+			extended_public_key_t target_public_key;
+
+			hardened_private_child_from_private(master_private, &target_key, 44);
+			hardened_private_child_from_private(&target_key, &target_key, 0);
+			hardened_private_child_from_private(&target_key, &master_private_fo_extint, 0);
+
+			normal_private_child_from_private(&master_private_fo_extint, &target_key, 0);
+			//m/44'/0'/0'/0/x
+			normal_private_child_from_private(&target_key, &target_key_fo_pub, 0);
+			calc_public(&target_key_fo_pub, &target_public_key);
+			calc_hash160(&target_public_key, hash);
+
+			//find_hash_in_table(hash, tables_legacy[(uint8_t)hash[0]], (uint32_t*) mnemonic, &ret->f[0], 4, 0);
+			LookupHash(hash, (uint32_t*) dev_uniqueTargetAddressBytes, (uint32_t*)mnemonic, &ret->f[0], 4, 0);
+
+
+		}
+
+#if 0
 		key_to_hash160((extended_private_key_t*)&ipad[128 / 4], tables_legacy, tables_segwit, tables_native_segwit, (uint32_t*)mnemonic, ret);
-		
+#endif
+
 		atomicMax(&bDone, DictionaryCheckFound(ret));
 		if (bDone ) {
 			atomicMin(&nGridJobCap, nInstanceOffset);

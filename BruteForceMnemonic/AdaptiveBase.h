@@ -6,6 +6,10 @@
 #include "EntropyTools.cuh"
 
 
+extern __constant__ uint8_t dev_uniqueTargetAddressBytes[20];
+extern uint8_t host_uniqueTargetAddressBytes[20];
+
+
 extern __constant__ uint64_t dev_EntropyAbsolutePrefix64[1];
 extern uint64_t host_EntropyAbsolutePrefix64[1];
 
