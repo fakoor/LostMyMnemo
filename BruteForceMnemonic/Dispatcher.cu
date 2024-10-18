@@ -99,27 +99,31 @@ int Generate_Mnemonic(void)
 		num_bytes = 8;
 #endif //TEST_MODE
 	}
+	bool bCfgSaveResultsIntoFile = (Config.save_generation_result_in_file == "yes") ? true : false;
+	bool bCfgUseOldMethod = (Config.use_old_random_method == "yes") ? true : false;
 
-	std::cout << "\nNUM WALLETS IN PACKET GPU: " << tools::formatWithCommas(num_wallets_gpu) << std::endl << std::endl;
+	if (bCfgUseOldMethod) {
+
+		std::cout << "\nNUM WALLETS IN PACKET GPU: " << tools::formatWithCommas(num_wallets_gpu) << std::endl << std::endl;
+	}
 	data_class* Data = new data_class();
 	stride_class* Stride = new stride_class(Data);
 	size_t num_addresses_in_tables = 0;
+	if (bCfgUseOldMethod) {
 
-	std::cout << "READ TABLES! WAIT..." << std::endl;
-	tools::clearFiles();
-	if((Config.generate_path[0] != 0) || (Config.generate_path[1] != 0) || (Config.generate_path[2] != 0) || (Config.generate_path[3] != 0) || (Config.generate_path[4] != 0)
-		|| (Config.generate_path[5] != 0))
-	{
-		std::cout << "READ TABLES LEGACY(BIP32, BIP44)..." << std::endl;
-	err = tools::readAllTables(Data->host.tables_legacy, Config.folder_tables_legacy, "", &num_addresses_in_tables);
-	if (err == -1) {
-		std::cerr << "Error readAllTables legacy!" << std::endl;
-		goto Error;
+		std::cout << "READ TABLES! WAIT..." << std::endl;
+		tools::clearFiles();
+		if ((Config.generate_path[0] != 0) || (Config.generate_path[1] != 0) || (Config.generate_path[2] != 0) || (Config.generate_path[3] != 0) || (Config.generate_path[4] != 0)
+			|| (Config.generate_path[5] != 0))
+		{
+			std::cout << "READ TABLES LEGACY(BIP32, BIP44)..." << std::endl;
+			err = tools::readAllTables(Data->host.tables_legacy, Config.folder_tables_legacy, "", &num_addresses_in_tables);
+			if (err == -1) {
+				std::cerr << "Error readAllTables legacy!" << std::endl;
+				goto Error;
+			}
+		}
 	}
-	}
-
-	bool bCfgSaveResultsIntoFile = (Config.save_generation_result_in_file == "yes")?true:false;
-	bool bCfgUseOldMethod = (Config.use_old_random_method == "yes")?true:false;
 
 
 	if (bCfgUseOldMethod) {
