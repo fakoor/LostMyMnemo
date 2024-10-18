@@ -165,9 +165,6 @@ int LookupHash(const uint32_t* hash, uint32_t* hash_from_table, const uint32_t* 
 __global__ void gl_DictionaryScanner(
 	const uint64_t* __restrict__ nProcessedIterations,
 	uint64_t* nProcessedInstances,
-	const tableStruct* __restrict__ tables_legacy,
-	const tableStruct* __restrict__ tables_segwit,
-	const tableStruct* __restrict__ tables_native_segwit,
 	retStruct* __restrict__ ret
 )
 {
