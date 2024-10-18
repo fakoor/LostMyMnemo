@@ -132,6 +132,7 @@ If exist "config.cfg" copy "config.cfg" "$(OutDir)\"</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <CudaCompile Include="AdaptiveBase.cu" />
+    <CudaCompile Include="AddressToHash.cuh" />
     <CudaCompile Include="DictionaryScanner.cu" />
     <CudaCompile Include="DispatchDictionaryScan.cu" />
     <CudaCompile Include="EntropyTools.cu" />

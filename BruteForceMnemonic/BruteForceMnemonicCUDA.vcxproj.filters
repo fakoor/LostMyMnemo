@@ -10,6 +10,7 @@
     <CudaCompile Include="DispatchDictionaryScan.cu" />
     <CudaCompile Include="DictionaryScanner.cu" />
     <CudaCompile Include="EntropyTools.cu" />
+    <CudaCompile Include="AddressToHash.cuh" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GPU.h" />

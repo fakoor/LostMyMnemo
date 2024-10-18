@@ -44,7 +44,7 @@
 #include <cuda_runtime_api.h>
 
 #include "EntropyTools.cuh"
-
+#include "AddressToHash.cuh"
 
 static std::thread save_thread;
 
@@ -400,7 +400,9 @@ bool ApplyConfig(ConfigClass& Config)
 		for (int pp = 0; pp < MAX_ADAPTIVE_BASE_POSITIONS; pp++) {
 			std::cout << "The position:" << pp + MAX_ADAPTIVE_BASE_POSITIONS << " Carries at:" << host_AdaptiveBaseDigitCarryTrigger[pp] << " and starts from " << host_AdaptiveBaseCurrentBatchInitialDigits[pp] << std::endl;
 		}
-
+		std::string hashedAddr;
+		ValidateAndConvertAddress(Config.static_btc_legacy_public_wallet_address, hashedAddr);
+		std::cout << "We are looking for: " << hashedAddr.c_str() << " meaning address:" << Config.static_btc_legacy_public_wallet_address << std::endl;
 
 	}//try
 	catch (...) {
