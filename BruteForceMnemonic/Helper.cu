@@ -98,7 +98,9 @@ int devicesInfo(void)
 	}
 	else
 	{
+		printf("------------------------------------------------------------------------------------------\r\n");
 		printf("\nDetected %d CUDA Capable device(s)\n", deviceCount);
+		printf("------------------------------------------------------------------------------------------\r\n");
 	}
 
 	int dev = 0, driverVersion = 0, runtimeVersion = 0;
@@ -108,35 +110,44 @@ int devicesInfo(void)
 		cudaDeviceProp deviceProp;
 		cudaGetDeviceProperties(&deviceProp, dev);
 
-		printf("\nDevice %d: \"%s\"\n", dev, deviceProp.name);
+		printf("------------------------------------------------------------------------------------------\r\n");
+		printf("Device %d: \"%s\"\n", dev, deviceProp.name);
+		printf("------------------------------------------------------------------------------------------\r\n");
 
 		std::cout << "Max threads per block: " << deviceProp.maxThreadsPerBlock << std::endl;
+		printf("------------------------------------------------------------------------------------------\r\n");
 		std::cout << "Max block dimensions: " << deviceProp.maxThreadsDim[0] << " x " << deviceProp.maxThreadsDim[1] << " x " << deviceProp.maxThreadsDim[2] << std::endl;
+		printf("------------------------------------------------------------------------------------------\r\n");
 		size_t freeMem, totalMem;
 		cudaError_t cuErr = cudaMemGetInfo(&freeMem, &totalMem);
 		if (cuErr == cudaSuccess) {
-			printf("Memory: %ul out of %ul is free.\r\n", freeMem / 1024.0 / 1024.0 , totalMem / 1024.0 / 1024.0);
+			printf("Memory: %llu out of %llu is free.\r\n", freeMem / 1024.0 / 1024.0 , totalMem / 1024.0 / 1024.0);
 		}
 		else {
 			printf("Cannot query free memory");
 		}
+		printf("------------------------------------------------------------------------------------------\r\n");
 
 		// Console log
 		cudaDriverGetVersion(&driverVersion);
 		cudaRuntimeGetVersion(&runtimeVersion);
 		printf("  CUDA Driver Version / Runtime Version          %d.%d / %d.%d\n", driverVersion / 1000, (driverVersion % 100) / 10, runtimeVersion / 1000, (runtimeVersion % 100) / 10);
+		printf("------------------------------------------------------------------------------------------\r\n");
 		//printf("  CUDA Capability Major/Minor version number:    %d.%d\n", deviceProp.major, deviceProp.minor);
 
 		char msg[256];
 		sprintf(msg, "  Total amount of global memory:                 %.0f MBytes (%llu bytes)\n",
 			(float)deviceProp.totalGlobalMem / 1048576.0f, (unsigned long long) deviceProp.totalGlobalMem);
 		printf("%s", msg);
+		printf("------------------------------------------------------------------------------------------\r\n");
 
 		printf("  (%2d) Multiprocessors, (%3d) CUDA Cores/MP:     %d CUDA Cores\n",
 			deviceProp.multiProcessorCount,
 			_ConvertSMVer2Cores(deviceProp.major, deviceProp.minor),
 			_ConvertSMVer2Cores(deviceProp.major, deviceProp.minor) * deviceProp.multiProcessorCount);
+		printf("------------------------------------------------------------------------------------------\r\n");
 		printf("  GPU Max Clock rate:                            %.0f MHz (%0.2f GHz)\n", (float)deviceProp.clockRate * 1e-3f, deviceProp.clockRate * 1e-6f);
+		printf("------------------------------------------------------------------------------------------\r\n");
 
 		//
 		//#if CUDART_VERSION >= 5000

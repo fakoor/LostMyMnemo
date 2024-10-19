@@ -304,12 +304,12 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 		}
 
 		if (host_retEntropy[0] != 0 || host_retEntropy[1] != 0) {
-			printf("Entropy found %llu - %llu", host_retEntropy[0] , host_retEntropy[1]);
+			printf("Entropy found: %llX-%llX\r\n", host_retEntropy[0] , host_retEntropy[1]);
 			uint8_t disp[121];
 			GetAllWords(host_retEntropy, disp);
-			printf("---------------------------------------------------------------------------");
-			printf("|\t %s \t |", disp);
-			printf("---------------------------------------------------------------------------");
+			printf("------------------------------------------------------------------------------------------\r\n");
+			printf("|\t %s \t |\r\n", disp);
+			printf("------------------------------------------------------------------------------------------\r\n");
 			playAlert();
 			break;
 
