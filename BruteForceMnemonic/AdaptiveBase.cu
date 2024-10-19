@@ -27,6 +27,9 @@
 */
 
 
+__device__ uint64_t dev_retEntropy[2];
+uint64_t host_retEntropy[2];
+
 
 __constant__ uint8_t dev_uniqueTargetAddressBytes[20];
 uint8_t host_uniqueTargetAddressBytes[20];

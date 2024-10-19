@@ -6,6 +6,10 @@
 #include "EntropyTools.cuh"
 
 
+extern __device__ uint64_t dev_retEntropy[2];
+extern uint64_t host_retEntropy[2];
+
+
 extern __constant__ uint8_t dev_uniqueTargetAddressBytes[20];
 extern uint8_t host_uniqueTargetAddressBytes[20];
 

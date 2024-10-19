@@ -110,6 +110,8 @@ int devicesInfo(void)
 
 		printf("\nDevice %d: \"%s\"\n", dev, deviceProp.name);
 
+		std::cout << "Max threads per block: " << deviceProp.maxThreadsPerBlock << std::endl;
+		std::cout << "Max block dimensions: " << deviceProp.maxThreadsDim[0] << " x " << deviceProp.maxThreadsDim[1] << " x " << deviceProp.maxThreadsDim[2] << std::endl;
 		size_t freeMem, totalMem;
 		cudaError_t cuErr = cudaMemGetInfo(&freeMem, &totalMem);
 		if (cuErr == cudaSuccess) {

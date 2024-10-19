@@ -21,7 +21,7 @@
 
 int main()
 {
-    printf("Compiled on Date ** : %s , time: %s \r\n", __DATE__, __TIME__);
+    printf("Compiled on Date **** : %s , time: %s \r\n", __DATE__, __TIME__);
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
     int ret = Generate_Mnemonic();

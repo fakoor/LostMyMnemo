@@ -23,6 +23,9 @@ namespace tools {
 	void entropyTo12Words(uint64_t entr[2], const int16_t gen_words_indices[12], uint32_t idx, uint8_t* mnemonic_phrase);
 	std::string GetMnemoString(int16_t* arr, uint8_t count);
 
+	void sha256(uint8_t* dest, const uint8_t* src, size_t n);
+
+
 	bool GetSingleWordIndex(std::string singleWord, int16_t* wordIndex);
 	std::vector<std::string> SplitWords(std::string str);
 	int stringToWordIndices(std::string str, int16_t* gen_words_indices);

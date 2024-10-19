@@ -141,7 +141,6 @@ public:
 
 	/*__device__*/ uint64_t* nProcessedIterations;
 
-
 	uint64_t memory_size = 0;
 public:
 	device_buffers_class()

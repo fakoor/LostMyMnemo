@@ -8,8 +8,7 @@
 
 __global__ void gl_DictionaryScanner(
 	const uint64_t* __restrict__ nProcessedIterations,
-	uint64_t* nProcessedInstances,
-	retStruct* __restrict__ ret
+	uint64_t* nProcessedInstances
 );
 
 inline __device__ __host__ int DictionaryCheckFound(retStruct* ret) {

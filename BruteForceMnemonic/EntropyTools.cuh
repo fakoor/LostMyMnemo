@@ -5,6 +5,12 @@
 #include "consts.h"
 #include <cuda_runtime.h>
 #include <cuda_runtime_api.h>
+//#include "../Tools/tools.h"
+
+extern const uint8_t arrBipWords[2048][9];
+extern const uint8_t arrBipWordsLengths[2048];
+
+void ShowAdaptiveStr(int16_t digitSet[MAX_ADAPTIVE_BASE_POSITIONS][MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION], int16_t digs[MAX_ADAPTIVE_BASE_POSITIONS], char* str);
 
 __host__ /*and */ __device__
 inline void AdaptiveUpdateMnemonicLow64(uint64_t* low64
@@ -41,4 +47,6 @@ inline void SyncBipIndexFromAdaptiveDigits(int16_t local_static_word_index[12], 
 	local_static_word_index[11] = dev_AdaptiveBaseDigitSet[5][curDigits[5]];
 
 }
+
+void GetAllWords(uint64_t entropy[2], uint8_t* mnemonic_phrase);
 #endif /* __ENTROPYTOOLS_H__ */

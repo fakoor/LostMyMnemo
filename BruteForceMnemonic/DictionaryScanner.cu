@@ -12,6 +12,15 @@
 #include "DictionaryScanner.cuh"
 
 
+static inline __device__ int device_hashcmp(const unsigned char* p1, const unsigned char* p2) {
+	for (auto i = 0; i < 20; ++i) {
+		if (p1[i] != p2[i]) {
+			return p1[i] < p2[i] ? -1 : 1; // Return -1 if p1 < p2, 1 if p1 > p2
+		}
+	}
+	return 0; // Memory regions are equal
+}
+
 __device__
 int LookupHash(const uint32_t* hash, uint32_t* hash_from_table, const uint32_t* mnemonic, foundStruct* fnd_ret, uint32_t path, uint32_t child)
 {
@@ -164,8 +173,7 @@ int LookupHash(const uint32_t* hash, uint32_t* hash_from_table, const uint32_t* 
 
 __global__ void gl_DictionaryScanner(
 	const uint64_t* __restrict__ nProcessedIterations,
-	uint64_t* nProcessedInstances,
-	retStruct* __restrict__ ret
+	uint64_t* nProcessedInstances
 )
 {
 	unsigned int effective_idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -432,14 +440,18 @@ __global__ void gl_DictionaryScanner(
 			calc_hash160(&target_public_key, hash);
 
 			//find_hash_in_table(hash, tables_legacy[(uint8_t)hash[0]], (uint32_t*) mnemonic, &ret->f[0], 4, 0);
-			LookupHash(hash, (uint32_t*) dev_uniqueTargetAddressBytes, (uint32_t*)mnemonic, &ret->f[0], 4, 0);
+			//LookupHash(hash, (uint32_t*) dev_uniqueTargetAddressBytes, (uint32_t*)mnemonic, &ret->f[0], 4, 0);
 
-
+			if (device_hashcmp((unsigned char *) hash, dev_uniqueTargetAddressBytes)==0) {
+#if 1
+				dev_retEntropy[0] = curEntropy[0];
+				dev_retEntropy[1] = curEntropy[1];
+#endif
+			}
 		}
 
 #if 0
 		key_to_hash160((extended_private_key_t*)&ipad[128 / 4], tables_legacy, tables_segwit, tables_native_segwit, (uint32_t*)mnemonic, ret);
-#endif
 
 		atomicMax(&bDone, DictionaryCheckFound(ret));
 		if (bDone ) {
@@ -450,6 +462,7 @@ __global__ void gl_DictionaryScanner(
 
 			break;
 		}
+#endif
 	}//for 
 
 	__syncthreads(); // Synchronize to ensure all data is loaded
