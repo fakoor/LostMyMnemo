@@ -16,17 +16,12 @@ jobs:
 
     steps:
     - name: Check out code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3  # Use the latest version of checkout action
 
-    - name: Install Visual Studio Build Tools 2022
+    - name: Install Visual Studio Build Tools and CUDA Toolkit
       run: |
-        # Install Visual Studio Build Tools 2022 with MSBuild
-        choco install visualstudio2022buildtools --installargs '--add Microsoft.VisualStudio.Workload.VCTools'
-
-    - name: Install CUDA Toolkit
-      run: |
-        # Install CUDA toolkit 12.6.2 using Chocolatey
-        choco install cuda --version=12.6.2
+        # Install both Visual Studio Build Tools 2022 and CUDA toolkit using Chocolatey
+        choco install visualstudio2022buildtools --installargs '--add Microsoft.VisualStudio.Workload.VCTools' -y && choco install cuda -y
 
     - name: Verify CUDA Installation
       run: |
@@ -40,7 +35,7 @@ jobs:
 
     - name: Create Release
       id: create_release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v1  # Use the latest version of the release action
       with:
         tag: ${{ github.ref }}
         files: x64/Release/BruteForceMnemonicBitcoinV200.exe  # Specify the correct path to your executable
