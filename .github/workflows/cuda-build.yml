@@ -12,11 +12,16 @@ on:
 
 jobs:
   build-windows:
-    runs-on: windows-latest
+    runs-on: windows-latest  # Use the latest Windows runner
 
     steps:
     - name: Check out code
       uses: actions/checkout@v2
+
+    - name: Install Visual Studio Build Tools 2022
+      run: |
+        # Install Visual Studio Build Tools 2022 with MSBuild
+        choco install visualstudio2022buildtools --installargs '--add Microsoft.VisualStudio.Workload.VCTools'
 
     - name: Install CUDA
       run: |
@@ -26,13 +31,15 @@ jobs:
         # Install CUDA using PowerShell with nvcc argument
         Start-Process -FilePath "cuda_12.6.2_560.94_windows.exe" -ArgumentList "-s nvcc_12.6" -Wait -NoNewWindow
 
+    - name: Verify CUDA Installation
+      run: |
+        # Check the installed CUDA compiler version
+        nvcc --version
+
     - name: Build with MSBuild
       run: |
-        # Restore NuGet packages if needed (uncomment if you use NuGet)
-        # nuget restore BruteForceMnemonicCUDA.sln
-        
-        # Build the solution
-        msbuild BruteForceMnemonicCUDA.sln /p:Configuration=Release
+        # Build the solution using the installed MSBuild
+        & "C:\Program Files\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe" BruteForceMnemonicCUDA.sln /p:Configuration=Release
 
     - name: Create Release
       id: create_release
