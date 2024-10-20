@@ -23,13 +23,10 @@ jobs:
         # Install Visual Studio Build Tools 2022 with MSBuild
         choco install visualstudio2022buildtools --installargs '--add Microsoft.VisualStudio.Workload.VCTools'
 
-    - name: Install CUDA
+    - name: Install CUDA Toolkit
       run: |
-        # Download CUDA 12.6.2 full installer
-        curl -O https://developer.download.nvidia.com/compute/cuda/12.6.2/local_installers/cuda_12.6.2_560.94_windows.exe
-        
-        # Install CUDA using PowerShell with nvcc argument
-        Start-Process -FilePath "cuda_12.6.2_560.94_windows.exe" -ArgumentList "-s nvcc_12.6" -Wait -NoNewWindow
+        # Install CUDA toolkit 12.6.2 using Chocolatey
+        choco install cuda --version=12.6.2
 
     - name: Verify CUDA Installation
       run: |
