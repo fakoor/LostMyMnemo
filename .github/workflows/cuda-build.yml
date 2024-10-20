@@ -18,10 +18,11 @@ jobs:
     - name: Check out code
       uses: actions/checkout@v2
 
-    - name: Set up CUDA
-      uses: actions/setup-cuda@v1
-      with:
-        cuda-version: 12.6.1  # Specify your CUDA version
+    - name: Install CUDA
+      run: |
+        # Download and install CUDA 12.6.1
+        curl -O https://developer.download.nvidia.com/compute/cuda/12.6.1/Prod/local_installers/cuda_12.6.1_515.65.01_windows.exe
+        start /wait cuda_12.6.1_515.65.01_windows.exe --silent --toolkit
 
     - name: Build with MSBuild
       run: |
