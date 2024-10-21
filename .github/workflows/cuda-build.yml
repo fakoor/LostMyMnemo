@@ -23,7 +23,7 @@ jobs:
 
     - name: Install CUDA Toolkit
       run: |
-        winget install -e --id Nvidia.CUDA  # Install CUDA toolkit using winget
+        winget install -e --id Nvidia.CUDA --accept-source-agreements --accept-package-agreements  # Install CUDA toolkit using winget
         # Add nvcc to the PATH
         $env:Path += ";C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.6\bin"
 
