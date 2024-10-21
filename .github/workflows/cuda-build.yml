@@ -28,10 +28,18 @@ jobs:
         Write-Host "CUDA_PATH: $env:CUDA_PATH"
         Write-Host "PATH: $env:Path"
 
+    - name: List Program Files and Program Files (x86) Top-Level Directories
+      run: |
+        # List the contents of Program Files and Program Files (x86)
+        Write-Host "Contents of C:\Program Files:"
+        Get-ChildItem "C:\Program Files"
+        Write-Host "Contents of C:\Program Files (x86):"
+        Get-ChildItem "C:\Program Files (x86)"
+
     - name: List CUDA bin directory
       run: |
         # List the contents of the CUDA bin directory to verify nvcc installation
-        Get-ChildItem "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.6\bin"
+        Get-ChildItem "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.6\bin" -ErrorAction SilentlyContinue
 
     - name: Verify CUDA Installation
       run: |
