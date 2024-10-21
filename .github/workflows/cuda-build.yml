@@ -18,14 +18,15 @@ jobs:
     - name: Check out code
       uses: actions/checkout@v3  # Use the latest version of checkout action
 
+    - name: Install CUDA Toolkit
+      run: |
+        choco install cuda --version=12.6.0.560 -y  # Install specific version of CUDA toolkit
+        # Add nvcc to the PATH
+        $env:Path += ";C:\ProgramData\chocolatey\lib\cuda\tools\cuda\bin"
+
     - name: Set up CUDA Environment
       run: |
-        # Set CUDA path
-        $env:CUDA_PATH = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.6"
-        $env:Path += ";$env:CUDA_PATH\bin;$env:CUDA_PATH\libnvvp"
-        
         # Print important environment variables
-        Write-Host "CUDA_PATH: $env:CUDA_PATH"
         Write-Host "PATH: $env:Path"
 
     - name: List Program Files and Program Files (x86) Top-Level Directories
@@ -35,11 +36,6 @@ jobs:
         Get-ChildItem "C:\Program Files"
         Write-Host "Contents of C:\Program Files (x86):"
         Get-ChildItem "C:\Program Files (x86)"
-
-    - name: List CUDA bin directory
-      run: |
-        # List the contents of the CUDA bin directory to verify nvcc installation
-        Get-ChildItem "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.6\bin" -ErrorAction SilentlyContinue
 
     - name: Verify CUDA Installation
       run: |
