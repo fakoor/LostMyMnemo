@@ -12,16 +12,11 @@ on:
 
 jobs:
   build-windows:
-    runs-on: windows-latest  # Use the latest Windows runner
+    runs-on: windows-2022  # Use the latest Windows image with pre-installed tools
 
     steps:
     - name: Check out code
       uses: actions/checkout@v3  # Use the latest version of checkout action
-
-    - name: Install Visual Studio Build Tools and CUDA Toolkit
-      run: |
-        # Install both Visual Studio Build Tools 2022 and CUDA toolkit using Chocolatey
-        choco install visualstudio2022buildtools --installargs '--add Microsoft.VisualStudio.Workload.VCTools' -y && choco install cuda -y
 
     - name: Verify CUDA Installation
       run: |
