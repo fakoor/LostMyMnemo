@@ -18,6 +18,9 @@ jobs:
     - name: Check out code
       uses: actions/checkout@v3  # Use the latest version of checkout action
 
+    - name: Install winget
+      uses: Cyberboss/install-winget@v1  # Install winget from the marketplace
+
     - name: Install CUDA Toolkit
       run: |
         winget install -e --id Nvidia.CUDA  # Install CUDA toolkit using winget
