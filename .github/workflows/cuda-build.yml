@@ -20,9 +20,9 @@ jobs:
 
     - name: Install CUDA Toolkit
       run: |
-        choco install cuda --version=12.6.0.560 -y  # Install specific version of CUDA toolkit
+        winget install -e --id Nvidia.CUDA  # Install CUDA toolkit using winget
         # Add nvcc to the PATH
-        $env:Path += ";C:\ProgramData\chocolatey\lib\cuda\tools\cuda\bin"
+        $env:Path += ";C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.6\bin"
 
     - name: Set up CUDA Environment
       run: |
