@@ -18,9 +18,17 @@ jobs:
     - name: Check out code
       uses: actions/checkout@v3  # Use the latest version of checkout action
 
-    - name: Verify CUDA Installation
+    - name: Set up CUDA Environment
       run: |
-        # Check the installed CUDA compiler version
+        # Set CUDA path
+        $env:CUDA_PATH = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.6"
+        $env:Path += ";$env:CUDA_PATH\bin;$env:CUDA_PATH\libnvvp"
+        
+        # Print important environment variables
+        Write-Host "CUDA_PATH: $env:CUDA_PATH"
+        Write-Host "PATH: $env:Path"
+
+        # Verify CUDA installation
         nvcc --version
 
     - name: Build with MSBuild
