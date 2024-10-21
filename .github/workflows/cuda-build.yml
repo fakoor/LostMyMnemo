@@ -12,33 +12,33 @@ on:
 
 jobs:
   build-windows:
-    runs-on: windows-2022  # Use the latest Windows image with pre-installed tools
+    runs-on: self-hosted  # Use the latest Windows image with pre-installed tools
 
     steps:
     - name: Check out code
       uses: actions/checkout@v3  # Use the latest version of checkout action
 
-    - name: Install winget
-      uses: Cyberboss/install-winget@v1  # Install winget from the marketplace
+#    - name: Install winget
+#      uses: Cyberboss/install-winget@v1  # Install winget from the marketplace
 
-    - name: Install CUDA Toolkit
-      run: |
-        winget install -e --id Nvidia.CUDA --accept-source-agreements --accept-package-agreements  # Install CUDA toolkit using winget
-        # Add nvcc to the PATH
-        $env:Path += ";C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.6\bin"
+#    - name: Install CUDA Toolkit
+#      run: |
+#        winget install -e --id Nvidia.CUDA --accept-source-agreements --accept-package-agreements  # Install CUDA toolkit using winget
+#        # Add nvcc to the PATH
+#        $env:Path += ";C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.6\bin"
 
-    - name: Set up CUDA Environment
-      run: |
-        # Print important environment variables
-        Write-Host "PATH: $env:Path"
+#    - name: Set up CUDA Environment
+#      run: |
+#        # Print important environment variables
+#        Write-Host "PATH: $env:Path"
 
-    - name: List Program Files and Program Files (x86) Top-Level Directories
-      run: |
-        # List the contents of Program Files and Program Files (x86)
-        Write-Host "Contents of C:\Program Files:"
-        Get-ChildItem "C:\Program Files"
-        Write-Host "Contents of C:\Program Files (x86):"
-        Get-ChildItem "C:\Program Files (x86)"
+#    - name: List Program Files and Program Files (x86) Top-Level Directories
+#      run: |
+#        # List the contents of Program Files and Program Files (x86)
+#        Write-Host "Contents of C:\Program Files:"
+#        Get-ChildItem "C:\Program Files"
+#        Write-Host "Contents of C:\Program Files (x86):"
+#        Get-ChildItem "C:\Program Files (x86)"
 
     - name: Verify CUDA Installation
       run: |
@@ -48,7 +48,7 @@ jobs:
     - name: Build with MSBuild
       run: |
         # Build the solution using the installed MSBuild
-        & "C:\Program Files\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe" BruteForceMnemonicCUDA.sln /p:Configuration=Release
+        & "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\amd64\MSBuild.exe" BruteForceMnemonicCUDA.sln /p:Configuration=Release
 
     - name: Create Release
       id: create_release
