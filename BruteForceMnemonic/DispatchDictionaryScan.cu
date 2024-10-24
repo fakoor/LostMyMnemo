@@ -188,32 +188,29 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 	uint64_t nSolverThreads = Config->cuda_block * Config->cuda_grid;
 	uint64_t nIterationPower = nSolverThreads * host_AdaptiveBaseDigitCarryTrigger[5];
 	uint64_t nIterationsNeeded = nProblemPower / nIterationPower;
-
-	if (nIterationsNeeded * nIterationPower < nProblemPower)
+	uint64_t nLastIterationRemainder = nProblemPower - nIterationsNeeded * nIterationPower;
+	if (nLastIterationRemainder > 0) {
 		nIterationsNeeded++;
-
+	}
 
 
 	std::cout << "-- Starting Dictionary SCAN -- " << std::endl;
 
 	std::cout << " Going to dispatch " << nProblemPower << " total COMBOs"
-		<< " via " << nIterationsNeeded << " iterations "
-		" (each able to process " << nIterationPower << " instances)." << std::endl;
+		<< " via " << nIterationsNeeded<<((nLastIterationRemainder > 0) ? "" : "Perfet")<< " iterations [Remainder:" <<
+		nLastIterationRemainder<<"] (each able to process " << nIterationPower << " instances)="<< Config->cuda_grid <<"x" << Config->cuda_block<< "x" << host_AdaptiveBaseDigitCarryTrigger[5] << std::endl;
 
 
 
-	uint64_t nBatchMax = 1;
 
-	int nBatch = 0;
 
 
 	
 	size_t copySize;
 	cudaError cudaResult;
 
-	//uint64_t nMasterIteration = 0;
 	*Data->host.nProcessedInstances = 0;
-	*Data->host.nProcessedIterations = 0;
+	*Data->host.nProcessingIteration = 0;
 
 	host_retEntropy[0] = 0ui64;
 	host_retEntropy[1] = 0ui64;
@@ -238,7 +235,7 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 	do
 	{
 		//Set Master Iteration
-		if (cudaSuccess != cudaMemcpy(Data->dev.nProcessedIterations, Data->host.nProcessedIterations, 8, cudaMemcpyHostToDevice)) {
+		if (cudaSuccess != cudaMemcpy(Data->dev.nProcessingIteration, Data->host.nProcessingIteration, 8, cudaMemcpyHostToDevice)) {
 			std::cout << "Error-Line--" << __LINE__ << std::endl;
 		}
 
@@ -248,7 +245,7 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 			std::cout << "Error-Line--" << __LINE__ << std::endl;
 		}
 
-		printf("Iteration: %llu started.\r\n", *Data->host.nProcessedIterations + 1);
+		printf("Iteration: %llu started.\r\n", *Data->host.nProcessingIteration + 1);
 		IncrementAdaptiveDigits(host_AdaptiveBaseDigitCarryTrigger, host_AdaptiveBaseCurrentBatchInitialDigits
 			, nUniversalProcessed, digitShow);
 		ShowAdaptiveStr(host_AdaptiveBaseDigitSet,digitShow, strMnemoShow);
@@ -291,13 +288,13 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 
 		printf("Checking results of %llu checkups.\r\n", *Data->host.nProcessedInstances);
 
+		uint64_t nSkippedLast = (nIterationPower - *Data->host.nProcessedInstances);
 
-		//std::cout << std::endl << "PROCESSED: at " << tools::formatPrefix((double)*Data->host.nProcessedInstances / delay) << " COMBO/Sec" << std::endl;
-
-
-		std::cout << "Iteration " << *Data->host.nProcessedIterations
-			<< " completed we have processed  " << *Data->host.nProcessedInstances << " COMBOs  at " << tools::formatPrefix((double)*Data->host.nProcessedInstances / delay) << " COMBO/Sec" << std::endl;
-
+		std::cout << "Iteration " << *Data->host.nProcessingIteration + 1
+			<< " completed we have processed  " << *Data->host.nProcessedInstances << " COMBOs  at " << tools::formatPrefix((double)*Data->host.nProcessedInstances / delay) << " COMBO/Sec" 
+			<<" (Skip:"<<nSkippedLast<<") "
+			<< std::endl;
+			
 
 		if (cudaSuccess != cudaMemcpyFromSymbol (host_retEntropy, dev_retEntropy, 16)) {
 			std::cout << "Error-Line--" << __LINE__ << std::endl;
@@ -314,14 +311,8 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 			break;
 
 		}
-
-#if 0
-		if (DictionaryCheckFound(Data->host.ret)) {
-			tools::checkResult(Data->host.ret);
-		}
-#endif //old method
-		++*Data->host.nProcessedIterations;
-	} while (*Data->host.nProcessedIterations < nIterationsNeeded);//trunk
+		++*Data->host.nProcessingIteration;
+	} while (*Data->host.nProcessingIteration < nIterationsNeeded);//trunk
 
 	return true;
 }

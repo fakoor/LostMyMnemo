@@ -23,7 +23,7 @@
 
 
 int stride_class::DictionaryAttack(uint64_t grid, uint64_t block) {
-	gl_DictionaryScanner << <(uint32_t)grid, (uint32_t)block, 0, dt->stream1 >> > (dt->dev.nProcessedIterations, dt->dev.nProcessedInstances);
+	gl_DictionaryScanner << <(uint32_t)grid, (uint32_t)block, 0, dt->stream1 >> > (dt->dev.nProcessingIteration, dt->dev.nProcessedInstances);
 	cudaError_t err = cudaGetLastError();
 	if (err != cudaSuccess) {
 		std::cerr << "Kernel launch failed: " << cudaGetErrorString(err) << std::endl;
@@ -167,7 +167,7 @@ int stride_class::endDictionaryAttack()
 		fprintf(stderr, "cudaMemcpy host_nProcessedFromBatch failed!");
 		return -1;
 	}
-	cudaStatus = cudaMemcpy(dt->host.nProcessedIterations, dt->dev.nProcessedIterations, 8, cudaMemcpyDeviceToHost);
+	cudaStatus = cudaMemcpy(dt->host.nProcessingIteration, dt->dev.nProcessingIteration, 8, cudaMemcpyDeviceToHost);
 	if (cudaStatus != cudaSuccess) {
 		fprintf(stderr, "cudaMemcpy host_nProcessedMoreThanBatch failed!");
 		return -1;

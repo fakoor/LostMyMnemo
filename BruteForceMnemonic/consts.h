@@ -7,7 +7,7 @@
 //use to avoid using pointer and simple use array names as pointer to first and only member
 #define PTR_AVOID_ELEMENTS	1
 #define PTR_AVOIDER			0
-
+#define MAX_PATH_ARRAY_SIZE 12
 
 #define MAX_TRY_PER_THREAD	1
 

@@ -49,7 +49,7 @@
     <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(ProjectDir)CUDA_Helper;$(ProjectDir);$(SolutionDir)Config;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)CUDA_Helper;$(ProjectDir);$(SolutionDir)Config;$(SolutionDir)BruteForceMnemonic;$(IncludePath)</IncludePath>
     <SourcePath>$(ProjectDir);$(ProjectDir)Source Files;$(SourcePath)</SourcePath>
     <TargetName>BruteForceMnemonicBitcoinV200</TargetName>
     <LibraryPath>$(LibraryPath)</LibraryPath>
@@ -118,7 +118,7 @@ If exist "config.cfg" copy "config.cfg" "$(OutDir)\"</Command>
       <Defines>
       </Defines>
       <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
-      <Include>$(SolutionDir)$(Platform)\$(Configuration)\</Include>
+      <Include>$(SolutionDir)$(Platform)\$(Configuration)\;$(SolutionDir)BruteForceMnemonic</Include>
       <CodeGeneration>compute_61,sm_61</CodeGeneration>
       <CudaRuntime>Static</CudaRuntime>
     </CudaCompile>

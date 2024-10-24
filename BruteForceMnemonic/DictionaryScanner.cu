@@ -12,8 +12,9 @@
 #include "DictionaryScanner.cuh"
 
 
-static inline __device__ int device_hashcmp(const unsigned char* p1, const unsigned char* p2) {
-	for (auto i = 0; i < 20; ++i) {
+static inline __device__ int device_hashcmp(const  uint32_t* p1, const uint32_t* p2) {
+#pragma unroll
+	for (auto i = 0; i < 20/4; ++i) {
 		if (p1[i] != p2[i]) {
 			return p1[i] < p2[i] ? -1 : 1; // Return -1 if p1 < p2, 1 if p1 > p2
 		}
@@ -235,6 +236,8 @@ __global__ void gl_DictionaryScanner(
 	uint8_t mnemonic_phrase[SIZE_MNEMONIC_FRAME] = { 0 };
 	uint8_t* mnemonic = mnemonic_phrase;
 	uint64_t nLoopMasterOffset = effective_idx * lastPosCarryTrig + *nProcessedIterations * nTotalThreads;
+
+#pragma unroll
 	for (int16_t nWordElevenOffset = 0; nWordElevenOffset < lastPosCarryTrig; nWordElevenOffset++) {
 		//break on nTried < MAX_TRY_PER_THREAD
 		uint64_t nInstanceOffset = nLoopMasterOffset + nWordElevenOffset;
@@ -251,8 +254,6 @@ __global__ void gl_DictionaryScanner(
 			, dev_AdaptiveBaseCurrentBatchInitialDigits
 			, nInstanceOffset, curDigits);
 
-		if (bDone)
-			break;
 
 		if (bCouldAdd == false /*&& lastPosCarryTrig == nWordElevenOffset*/) {
 			//if (effective_idx == nMaxCloudAdd + 1) {
@@ -433,24 +434,26 @@ __global__ void gl_DictionaryScanner(
 			hardened_private_child_from_private(&target_key, &target_key, 0);
 			hardened_private_child_from_private(&target_key, &master_private_fo_extint, 0);
 
-			normal_private_child_from_private(&master_private_fo_extint, &target_key, 0);
-			//m/44'/0'/0'/0/x
-			normal_private_child_from_private(&target_key, &target_key_fo_pub, 0);
-			calc_public(&target_key_fo_pub, &target_public_key);
-			calc_hash160(&target_public_key, hash);
+			uint8_t h33 = 0;
+			for (uint8_t h34 = 0; h34 < 3; h34++) {
+				normal_private_child_from_private(&master_private_fo_extint, &target_key, 0, 0, h34);
+				//m/44'/0'/0'/0/x
+				normal_private_child_from_private(&target_key, &target_key_fo_pub, 0);
+				calc_public(&target_key_fo_pub, &target_public_key);
+				calc_hash160(&target_public_key, hash);
 
-			//find_hash_in_table(hash, tables_legacy[(uint8_t)hash[0]], (uint32_t*) mnemonic, &ret->f[0], 4, 0);
-			//LookupHash(hash, (uint32_t*) dev_uniqueTargetAddressBytes, (uint32_t*)mnemonic, &ret->f[0], 4, 0);
+				//find_hash_in_table(hash, tables_legacy[(uint8_t)hash[0]], (uint32_t*) mnemonic, &ret->f[0], 4, 0);
+				//LookupHash(hash, (uint32_t*) dev_uniqueTargetAddressBytes, (uint32_t*)mnemonic, &ret->f[0], 4, 0);
 
-			if (device_hashcmp((unsigned char *) hash, dev_uniqueTargetAddressBytes)==0) {
+				if (device_hashcmp((uint32_t*)hash, (uint32_t*)dev_uniqueTargetAddressBytes) == 0) {
 #if 1
-				dev_retEntropy[0] = curEntropy[0];
-				dev_retEntropy[1] = curEntropy[1];
-				break;
+					dev_retEntropy[0] = curEntropy[0];
+					dev_retEntropy[1] = curEntropy[1];
+					break;
 #endif
+				}
 			}
 		}
-
 #if 0
 		key_to_hash160((extended_private_key_t*)&ipad[128 / 4], tables_legacy, tables_segwit, tables_native_segwit, (uint32_t*)mnemonic, ret);
 

@@ -1,3 +1,5 @@
+If found one, show all alternatives as well
+
 Print Batch mnemo
 Beep
 Read Addresss

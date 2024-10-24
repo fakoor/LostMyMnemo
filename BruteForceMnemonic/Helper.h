@@ -44,7 +44,7 @@ public:
 
 	uint64_t* nProcessedInstances;
 
-	uint64_t* nProcessedIterations;
+	uint64_t* nProcessingIteration;
 
 
 	uint64_t memory_size = 0;
@@ -76,7 +76,7 @@ public:
 		if (alignedMalloc((void**)&hash160, size_hash160_buf, &memory_size, "hash160") != 0) return -1;
 		if (mallocHost((void**)&ret, sizeof(retStruct), &memory_size, "ret") != 0) return -1;
 		if (mallocHost((void**)&nProcessedInstances, 8, &memory_size, "BatchSched") != 0) return -1;
-		if (mallocHost((void**)&nProcessedIterations, 8, &memory_size, "BatchMore") != 0) return -1;
+		if (mallocHost((void**)&nProcessingIteration, 8, &memory_size, "BatchMore") != 0) return -1;
 
 		std::cout << "MALLOC ALL RAM MEMORY SIZE (HOST): " << std::to_string((float)memory_size / (1024.0f * 1024.0f)) << " MB\n";
 		return 0;
@@ -111,7 +111,7 @@ public:
 		cudaFreeHost(entropy);
 		cudaFreeHost(ret);
 		cudaFreeHost(nProcessedInstances);
-		cudaFreeHost(nProcessedIterations);
+		cudaFreeHost(nProcessingIteration);
 
 		//for CPU
 		_aligned_free(hash160);
@@ -139,7 +139,7 @@ public:
 	retStruct* ret = NULL;
 	/*__device__*/ uint64_t* nProcessedInstances;
 
-	/*__device__*/ uint64_t* nProcessedIterations;
+	/*__device__*/ uint64_t* nProcessingIteration;
 
 	uint64_t memory_size = 0;
 public:
@@ -166,7 +166,7 @@ public:
 		if (cudaMallocDevice((uint8_t**)&dev_tables_native_segwit, sizeof(tableStruct) * 256, &memory_size, "dev_tables_native_segwit") != 0) return -1;
 		if (cudaMallocDevice((uint8_t**)&ret, sizeof(retStruct), &memory_size, "ret") != 0) return -1;
 		if (cudaMallocDevice((uint8_t**)&nProcessedInstances, 8, &memory_size, "BatchSched") != 0) return -1;
-		if (cudaMallocDevice((uint8_t**)&nProcessedIterations, 8, &memory_size, "BatchMore") != 0) return -1;
+		if (cudaMallocDevice((uint8_t**)&nProcessingIteration, 8, &memory_size, "BatchMore") != 0) return -1;
 
 		std::cout << "MALLOC ALL MEMORY SIZE (GPU): " << std::to_string((float)(memory_size) / (1024.0f * 1024.0f)) << " MB\n";
 		return 0;
@@ -198,7 +198,7 @@ public:
 		cudaFree(hash160);
 		cudaFree(ret);
 		cudaFree(nProcessedInstances);
-		cudaFree(nProcessedIterations);
+		cudaFree(nProcessingIteration);
 	}
 };
 

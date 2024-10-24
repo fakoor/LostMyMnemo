@@ -10,7 +10,7 @@
 #pragma once
 #include <string>
 
-
+#include "consts.h"
 
 struct ConfigClass
 {
@@ -32,8 +32,10 @@ public:
 	std::string path_m49h_0h_0h_1_x = "";
 	std::string path_m84h_0h_0h_0_x = "";
 	std::string path_m84h_0h_0h_1_x = "";
+	std::string path_m44h_0h_1h_0_x = "";
+	std::string path_m44h_0h_2h_0_x = "";
 
-	uint32_t generate_path[10] = { 0 };
+	uint32_t generate_path[MAX_PATH_ARRAY_SIZE] = { 0 };
 	uint32_t num_paths = 0;
 
 
@@ -42,18 +44,6 @@ public:
 
 	std::string static_words_starting_point = "";
 	std::string dynamic_words[12] = { "" };
-	//std::string static_words_position_00 = "";
-	//std::string static_words_position_01 = "";
-	//std::string static_words_position_02 = "";
-	//std::string static_words_position_03 = "";
-	//std::string static_words_position_04 = "";
-	//std::string static_words_position_05 = "";
-	//std::string static_words_position_06 = "";
-	//std::string static_words_position_07 = "";
-	//std::string static_words_position_08 = "";
-	//std::string static_words_position_09 = "";
-	//std::string static_words_position_10 = "";
-	//std::string static_words_position_11 = "";
 
 	std::string chech_equal_bytes_in_adresses = "";
 	std::string save_generation_result_in_file = "";

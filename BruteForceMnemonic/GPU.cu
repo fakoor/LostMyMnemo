@@ -19,28 +19,7 @@
 
 
 
-  //#define F1(x,y,z) (bitselect(z,y,x))
-  //#define F0(x,y,z) (bitselect (x, y, ((x) ^ (z))))
 
-  /* Two of six logical functions used in SHA-1, SHA-256, SHA-384, and SHA-512: */
-#define SHAF1(x,y,z)	(((x) & (y)) ^ ((~(x)) & (z)))
-#define SHAF0(x,y,z)	(((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
-
-
-
-#define mod(x,y) ((x)-((x)/(y)*(y)))
-#define shr32(x,n) ((x) >> (n))
-#define rotl32(n,d) (((n) << (d)) | ((n) >> (32 - (d))))
-#define rotl64(n,d) (((n) << (d)) | ((n) >> (64 - (d))))
-#define rotr64(n,d) (((n) >> (d)) | ((n) << (64 - (d))))
-#define S0(x) (rotl32 ((x), 25u) ^ rotl32 ((x), 14u) ^ shr32 ((x),  3u))
-#define S1(x) (rotl32 ((x), 15u) ^ rotl32 ((x), 13u) ^ shr32 ((x), 10u))
-#define S2(x) (rotl32 ((x), 30u) ^ rotl32 ((x), 19u) ^ rotl32 ((x), 10u))
-#define S3(x) (rotl32 ((x), 26u) ^ rotl32 ((x), 21u) ^ rotl32 ((x),  7u))
-//#define SHA512_S0(x) (rotr64(x,28ul) ^ rotr64(x,34ul) ^ rotr64(x,39ul))
-//#define SHA512_S1(x) (rotr64(x,14ul) ^ rotr64(x,18ul) ^ rotr64(x,41ul))
-//#define little_s0(x) (rotr64(x,1ul) ^ rotr64(x,8ul) ^ ((x) >> 7ul))
-//#define little_s1(x) (rotr64(x,19ul) ^ rotr64(x,61ul) ^ ((x) >> 6ul))
 
 
  /* Shift-right (used in SHA-256, SHA-384, and SHA-512): */
@@ -151,14 +130,6 @@ static uint32_t SWAP256(uint32_t val) {
 
 
 
-__device__
- uint64_t SWAP512(uint64_t val) {
-	uint64_t tmp;
-	uint64_t ret;
-	tmp = (rotr64((uint64_t)((val) & (uint64_t)0x0000FFFF0000FFFFUL), 16) | rotl64((uint64_t)((val) & (uint64_t)0xFFFF0000FFFF0000UL), 16));
-	ret = (rotr64((uint64_t)((tmp) & (uint64_t)0xFF00FF00FF00FF00UL), 8) | rotl64((uint64_t)((tmp) & (uint64_t)0x00FF00FF00FF00FFUL), 8));
-	return ret;
-}
 
 
 // 1, 383 0's, 128 bit length BE
@@ -2684,14 +2655,14 @@ void hardened_private_child_from_private(const extended_private_key_t* parent, e
 
 }
 __device__
-void normal_private_child_from_private(const extended_private_key_t* parent, extended_private_key_t* child, uint16_t normal_child_number) {
+void normal_private_child_from_private(const extended_private_key_t* parent, extended_private_key_t* child, uint16_t normal_child_number, uint8_t h33=0, uint8_t h34=0) {
 	uint32_t hmacsha512_result[64 / 4];
 	extended_public_key_t pub;
 	calc_public(parent, &pub);
 	uint8_t hmac_input[40]; //37 bytes
 	serialized_public_key(&pub, (uint8_t*)&hmac_input);
-	hmac_input[33] = 0;
-	hmac_input[34] = 0;
+	hmac_input[33] = h33;
+	hmac_input[34] = h34;
 	//*(uint16_t*)&hmac_input[35] = normal_child_number;
 	hmac_input[35] = *(uint8_t*)((uint8_t*)&normal_child_number + 1);
 	hmac_input[36] = *(uint8_t*)&normal_child_number;
@@ -3054,7 +3025,7 @@ __constant__ uint8_t word_lengths[2048] = { 7,7,4,5,5,6,6,8,6,5,6,8,7,6,7,4,8,7,
 
 //#define printf(...)
 __constant__ uint32_t dev_num_bytes_find[1];
-__constant__ uint32_t dev_generate_path[10];
+__constant__ uint32_t dev_generate_path[MAX_PATH_ARRAY_SIZE];
 __constant__ uint32_t dev_num_paths[1];
 __constant__ uint32_t dev_num_childs[1];
 __constant__ int16_t dev_static_words_indices[12];

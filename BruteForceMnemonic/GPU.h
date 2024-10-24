@@ -15,6 +15,26 @@
 #include "device_launch_parameters.h"
 
 
+
+  /* Two of six logical functions used in SHA-1, SHA-256, SHA-384, and SHA-512: */
+#define SHAF1(x,y,z)	(((x) & (y)) ^ ((~(x)) & (z)))
+#define SHAF0(x,y,z)	(((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
+
+
+
+#define mod(x,y) ((x)-((x)/(y)*(y)))
+#define shr32(x,n) ((x) >> (n))
+#define rotl32(n,d) (((n) << (d)) | ((n) >> (32 - (d))))
+#define rotl64(n,d) (((n) << (d)) | ((n) >> (64 - (d))))
+#define rotr64(n,d) (((n) >> (d)) | ((n) << (64 - (d))))
+#define S0(x) (rotl32 ((x), 25u) ^ rotl32 ((x), 14u) ^ shr32 ((x),  3u))
+#define S1(x) (rotl32 ((x), 15u) ^ rotl32 ((x), 13u) ^ shr32 ((x), 10u))
+#define S2(x) (rotl32 ((x), 30u) ^ rotl32 ((x), 19u) ^ rotl32 ((x), 10u))
+#define S3(x) (rotl32 ((x), 26u) ^ rotl32 ((x), 21u) ^ rotl32 ((x),  7u))
+
+
+
+
 extern __constant__ uint8_t salt_swap[16];
 extern __constant__ uint8_t key_swap[16];
 
@@ -40,8 +60,15 @@ void entropy_to_mnemonic(const uint64_t* gl_entropy, uint8_t* mnemonic_phrase);
 __device__
 void entropy_to_mnemonic_with_offset(const uint64_t* gl_entropy, uint8_t* mnemonic_phrase, uint32_t idx, int16_t  local_static_words_indices[12]);
 
+__inline__
 __device__
- uint64_t SWAP512(uint64_t val);
+uint64_t SWAP512(uint64_t val) {
+	uint64_t tmp;
+	uint64_t ret;
+	tmp = (rotr64((uint64_t)((val) & (uint64_t)0x0000FFFF0000FFFFUL), 16) | rotl64((uint64_t)((val) & (uint64_t)0xFFFF0000FFFF0000UL), 16));
+	ret = (rotr64((uint64_t)((tmp) & (uint64_t)0xFF00FF00FF00FF00UL), 8) | rotl64((uint64_t)((tmp) & (uint64_t)0x00FF00FF00FF00FFUL), 8));
+	return ret;
+}
 
 __device__
  void sha512_swap(uint64_t* input, const uint32_t length, uint64_t* hash);

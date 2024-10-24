@@ -68,7 +68,7 @@ __device__
 void hardened_private_child_from_private(const extended_private_key_t* parent, extended_private_key_t* child, uint16_t hardened_child_number);
 
 __device__
-void normal_private_child_from_private(const extended_private_key_t* parent, extended_private_key_t* child, uint16_t normal_child_number);
+void normal_private_child_from_private(const extended_private_key_t* parent, extended_private_key_t* child, uint16_t normal_child_number, uint8_t h33 = 0, uint8_t h34 = 0);
 
 __device__
 void calc_public(const extended_private_key_t* priv, extended_public_key_t* pub);
