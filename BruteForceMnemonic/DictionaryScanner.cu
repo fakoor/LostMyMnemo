@@ -22,6 +22,29 @@ static inline __device__ int device_hashcmp(const  uint32_t* p1, const uint32_t*
 	return 0; // Memory regions are equal
 }
 
+
+__device__
+bool CheckSumValidate(uint8_t checkSumInputBlock[16], uint64_t entropy[2], uint8_t reqChecksum) {
+	uint8_t entropy_hash[32];
+	//uint64_t* entropy = curEntropy;
+
+	checkSumInputBlock[15] = entropy[1] & 0xFF;
+	checkSumInputBlock[14] = (entropy[1] >> 8) & 0xFF;
+	checkSumInputBlock[13] = (entropy[1] >> 16) & 0xFF;
+	checkSumInputBlock[12] = (entropy[1] >> 24) & 0xFF;
+	checkSumInputBlock[11] = (entropy[1] >> 32) & 0xFF;
+	checkSumInputBlock[10] = (entropy[1] >> 40) & 0xFF;
+	checkSumInputBlock[9] = (entropy[1] >> 48) & 0xFF;
+	checkSumInputBlock[8] = (entropy[1] >> 56) & 0xFF;
+
+
+	sha256((uint32_t*)checkSumInputBlock, 16, (uint32_t*)entropy_hash);
+	uint8_t achievedChecksum = (entropy_hash[0] >> 4) & 0x0F;
+
+	bool bChkMatched = (achievedChecksum == reqChecksum);
+	return bChkMatched;
+}
+
 __device__
 int LookupHash(const uint32_t* hash, uint32_t* hash_from_table, const uint32_t* mnemonic, foundStruct* fnd_ret, uint32_t path, uint32_t child)
 {
@@ -173,7 +196,7 @@ int LookupHash(const uint32_t* hash, uint32_t* hash_from_table, const uint32_t* 
 
 
 __global__ void gl_DictionaryScanner(
-	const uint64_t* __restrict__ nProcessedIterations,
+	const uint64_t* __restrict__ nProcessingIteration,
 	uint64_t* nProcessedInstances
 )
 {
@@ -207,8 +230,6 @@ __global__ void gl_DictionaryScanner(
 
 
 	uint8_t reqChecksum = 0;
-	uint8_t achievedChecksum = 1;
-	bool bChkMatched = false;
 
 	int16_t curDigits[MAX_ADAPTIVE_BASE_POSITIONS] = { 
 		 dev_AdaptiveBaseCurrentBatchInitialDigits[0]
@@ -221,8 +242,6 @@ __global__ void gl_DictionaryScanner(
 
 	//TODO block: prefix is based on  words 9 and 10 while the last word 11 is iterated inside the thread
 
-	int nTried = 0;
-	bool bCouldAdd = false;
 	const int16_t lastPos_adaptive = MAX_ADAPTIVE_BASE_POSITIONS - 1;
 	const int16_t lastPosCarryTrig = dev_AdaptiveBaseDigitCarryTrigger[lastPos_adaptive];
 
@@ -233,7 +252,18 @@ __global__ void gl_DictionaryScanner(
 	//Work with Current Entropy
 	uint8_t mnemonic_phrase[SIZE_MNEMONIC_FRAME] = { 0 };
 	uint8_t* mnemonic = mnemonic_phrase;
-	uint64_t nLoopMasterOffset = effective_idx * lastPosCarryTrig + *nProcessedIterations * nTotalThreads;
+	uint64_t nLoopMasterOffset = effective_idx * lastPosCarryTrig + *nProcessingIteration * (nTotalThreads * lastPosCarryTrig);
+
+	uint8_t checkSumInputBlock[16];//with constant portion initalization
+	checkSumInputBlock[7] = dev_EntropyAbsolutePrefix64[0] & 0xFF;
+	checkSumInputBlock[6] = (dev_EntropyAbsolutePrefix64[0] >> 8) & 0xFF;
+	checkSumInputBlock[5] = (dev_EntropyAbsolutePrefix64[0] >> 16) & 0xFF;
+	checkSumInputBlock[4] = (dev_EntropyAbsolutePrefix64[0] >> 24) & 0xFF;
+	checkSumInputBlock[3] = (dev_EntropyAbsolutePrefix64[0] >> 32) & 0xFF;
+	checkSumInputBlock[2] = (dev_EntropyAbsolutePrefix64[0] >> 40) & 0xFF;
+	checkSumInputBlock[1] = (dev_EntropyAbsolutePrefix64[0] >> 48) & 0xFF;
+	checkSumInputBlock[0] = (dev_EntropyAbsolutePrefix64[0] >> 56) & 0xFF;
+
 
 #pragma unroll
 	for (int16_t nWordElevenOffset = 0; nWordElevenOffset < lastPosCarryTrig; nWordElevenOffset++) {
@@ -241,38 +271,30 @@ __global__ void gl_DictionaryScanner(
 		uint64_t nInstanceOffset = nLoopMasterOffset + nWordElevenOffset;
 
 		if (nInstanceOffset > nGridJobCap) {
-			//if (blockIdx.x == 0) {
-			//	printf("\r\nBlock Job done at:%llu\r\n", nInstanceOffset);
-			//}
 			break;
 		}
 
-		bCouldAdd = IncrementAdaptiveDigits(
+		if (false== IncrementAdaptiveDigits(
 			dev_AdaptiveBaseDigitCarryTrigger
 			, dev_AdaptiveBaseCurrentBatchInitialDigits
-			, nInstanceOffset, curDigits);
-
-
-		if (bCouldAdd == false /*&& lastPosCarryTrig == nWordElevenOffset*/) {
-			//if (effective_idx == nMaxCloudAdd + 1) {
-			//	printf("Can not add bulk at %x", lastPosCarryTrig);
-			//}
+			, nInstanceOffset, curDigits)){
 
 			atomicMin(&nGridJobCap, nInstanceOffset);
 			break;
 		}
 		atomicAdd(&ourBlockProcNormal, 1);
+
+		if (threadIdx.x == 0) {
+
+		}
 		//else {
 		//	atomicMax(&nMaxCloudAdd, effective_idx);
 		//}
 
 		SyncBipIndexFromAdaptiveDigits(local_static_word_index, dev_AdaptiveBaseDigitSet, curDigits);
 
-		//int16_t word_11_BIP = dev_AdaptiveBaseDigitSet[lastPos_adaptive][nWordElevenOffset];
-		//curDigits[lastPos_adaptive] = nWordElevenOffset;
 		curEntropy[1] = dev_EntropyNextPrefix2[PTR_AVOIDER];
 		AdaptiveUpdateMnemonicLow64(&curEntropy[1], dev_AdaptiveBaseDigitSet, curDigits);
-		//local_static_word_index[11] = word_11_BIP;
 		int16_t wordElevenBipVal = local_static_word_index[11];
 
 
@@ -280,58 +302,12 @@ __global__ void gl_DictionaryScanner(
 		entropy_to_mnemonic_with_offset(curEntropy, mnemonic, 0, local_static_word_index);
 #endif
 		reqChecksum = wordElevenBipVal & 0x000F;
+		bool bChkMatched = CheckSumValidate (checkSumInputBlock, curEntropy, reqChecksum);
 
-		uint8_t entropy_hash[32];
-		uint8_t bytes[16];
-		uint64_t* entropy = curEntropy;
 
-		bytes[15] = entropy[1] & 0xFF;
-		bytes[14] = (entropy[1] >> 8) & 0xFF;
-		bytes[13] = (entropy[1] >> 16) & 0xFF;
-		bytes[12] = (entropy[1] >> 24) & 0xFF;
-		bytes[11] = (entropy[1] >> 32) & 0xFF;
-		bytes[10] = (entropy[1] >> 40) & 0xFF;
-		bytes[9] = (entropy[1] >> 48) & 0xFF;
-		bytes[8] = (entropy[1] >> 56) & 0xFF;
-
-		bytes[7] = entropy[0] & 0xFF;
-		bytes[6] = (entropy[0] >> 8) & 0xFF;
-		bytes[5] = (entropy[0] >> 16) & 0xFF;
-		bytes[4] = (entropy[0] >> 24) & 0xFF;
-		bytes[3] = (entropy[0] >> 32) & 0xFF;
-		bytes[2] = (entropy[0] >> 40) & 0xFF;
-		bytes[1] = (entropy[0] >> 48) & 0xFF;
-		bytes[0] = (entropy[0] >> 56) & 0xFF;
-
-		sha256((uint32_t*)bytes, 16, (uint32_t*)entropy_hash);
-		achievedChecksum = (entropy_hash[0] >> 4) & 0x0F;
-
-		bChkMatched = (achievedChecksum == reqChecksum);
-
-		nTried++;
-#if 0
-		if (effective_idx <= 2 || (effective_idx <= 242 && effective_idx >= 240)) {
-			uint8_t word_11_text[10];
-			GetWordFromBipIndex(wordElevenBipVal, word_11_text);
-			//entropy_to_mnemonic_with_offset(curEntropy, mnemonic, 0, local_static_word_index);
-			printf("idx:%u [+ %llu ] @%s (%d : %d) on [%s]  CHK: %s req=%u ach=%u \r\n"
-				, effective_idx
-				, nInstanceOffset
-				, word_11_text
-				, nWordElevenOffset
-				, wordElevenBipVal
-				, mnemonic
-				, (bChkMatched) ?  "OK" : "Bad"
-				, reqChecksum
-				, achievedChecksum
-			);
-		}
-#endif
-#if 1
 		if (!bChkMatched) {
 			continue;
 		}
-#endif
 		//NOTE : If we reach here the checksum is already matching, just need to check the address
 		//__syncthreads(); // Synchronize to and check if have a valid checksum to continue with
 		//if (bChkMatched) { //scrutinize : bCouldAdd

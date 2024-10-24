@@ -248,7 +248,7 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 		printf("Iteration: %llu started.\r\n", *Data->host.nProcessingIteration + 1);
 		IncrementAdaptiveDigits(host_AdaptiveBaseDigitCarryTrigger, host_AdaptiveBaseCurrentBatchInitialDigits
 			, nUniversalProcessed, digitShow);
-		ShowAdaptiveStr(host_AdaptiveBaseDigitSet,digitShow, strMnemoShow);
+		ShowAdaptiveStr(host_AdaptiveBaseDigitSet,digitShow, arrBipWords,arrBipWordsLengths,strMnemoShow);
 		printf("<FROM> * * * * * *\t %s </FROM> (%llu)\r\n", strMnemoShow, nUniversalProcessed+1);
 
 
@@ -282,7 +282,7 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 		//printf("\t\t\t.\r\n\t\t\t.\r\n\t\t\t.\r\n");
 		IncrementAdaptiveDigits(host_AdaptiveBaseDigitCarryTrigger, host_AdaptiveBaseCurrentBatchInitialDigits
 			, nUniversalProcessed-1, digitShow);
-		ShowAdaptiveStr(host_AdaptiveBaseDigitSet, digitShow, strMnemoShow);
+		ShowAdaptiveStr(host_AdaptiveBaseDigitSet, digitShow, arrBipWords, arrBipWordsLengths, strMnemoShow);
 
 		printf("<UPTO> * * * * * * \t %s </UPTO> (%llu)\r\n", strMnemoShow, nUniversalProcessed);
 

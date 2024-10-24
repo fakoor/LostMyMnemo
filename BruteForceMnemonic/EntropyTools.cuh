@@ -10,7 +10,12 @@
 extern const uint8_t arrBipWords[2048][9];
 extern const uint8_t arrBipWordsLengths[2048];
 
-void ShowAdaptiveStr(int16_t digitSet[MAX_ADAPTIVE_BASE_POSITIONS][MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION], int16_t digs[MAX_ADAPTIVE_BASE_POSITIONS], char* str);
+__host__ /*and */ __device__
+void ShowAdaptiveStr(int16_t digitSet[MAX_ADAPTIVE_BASE_POSITIONS][MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION]
+	, int16_t digs[MAX_ADAPTIVE_BASE_POSITIONS]
+	, const uint8_t arrBipWords[2048][9]
+	, const uint8_t arrBipWordsLengths[2048]
+	, char* str);
 
 __host__ /*and */ __device__
 inline void AdaptiveUpdateMnemonicLow64(uint64_t* low64

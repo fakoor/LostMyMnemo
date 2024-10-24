@@ -11,58 +11,6 @@ __global__ void gl_DictionaryScanner(
 	uint64_t* nProcessedInstances
 );
 
-inline __device__ __host__ int DictionaryCheckFound(retStruct* ret) {
-
-	//if (ret->f[0].count_found >= MAX_FOUND_ADDRESSES)
-	//{
-	//	ret->f[0].count_found = MAX_FOUND_ADDRESSES;
-	//}
-	//if (ret->f[1].count_found >= MAX_FOUND_ADDRESSES)
-	//{
-	//	ret->f[1].count_found = MAX_FOUND_ADDRESSES;
-	//}
-	//if (ret->f[2].count_found >= MAX_FOUND_ADDRESSES)
-	//{
-	//	ret->f[2].count_found = MAX_FOUND_ADDRESSES;
-	//}
-	//if (ret->f[0].count_found_bytes >= MAX_FOUND_ADDRESSES)
-	//{
-	//	ret->f[0].count_found_bytes = MAX_FOUND_ADDRESSES;
-	//}
-	//if (ret->f[1].count_found_bytes >= MAX_FOUND_ADDRESSES)
-	//{
-	//	ret->f[1].count_found_bytes = MAX_FOUND_ADDRESSES;
-	//}
-	//if (ret->f[2].count_found_bytes >= MAX_FOUND_ADDRESSES)
-	//{
-	//	ret->f[2].count_found_bytes = MAX_FOUND_ADDRESSES;
-
-	//}
-
-	if (ret->f[0].count_found != 0)
-	{
-		//for (uint32_t i = 0; i < ret->f[0].count_found; i++)
-		//{
-			return 1;
-		//}
-	}
-	if (ret->f[1].count_found != 0)
-	{
-		//for (uint32_t i = 0; i < ret->f[1].count_found; i++)
-		//{
-			return 1;
-		//}
-	}
-	if (ret->f[2].count_found != 0)
-	{
-		//for (uint32_t i = 0; i < ret->f[2].count_found; i++)
-		//{
-			return 1;
-		//}
-	}
-
-	return 0;
-}
 
 __device__
 void hardened_private_child_from_private(const extended_private_key_t* parent, extended_private_key_t* child, uint16_t hardened_child_number);
