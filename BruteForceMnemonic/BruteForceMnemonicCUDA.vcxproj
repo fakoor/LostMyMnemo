@@ -151,6 +151,7 @@ If exist "config.cfg" copy "config.cfg" "$(OutDir)\"</Command>
     <ClInclude Include="GPU.h" />
     <ClInclude Include="Dispatcher.h" />
     <ClInclude Include="Helper.h" />
+    <ClInclude Include="MemConfig.cuh" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="KernelStride.hpp" />
   </ItemGroup>
