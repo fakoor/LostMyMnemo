@@ -182,9 +182,8 @@ __global__ void gl_DictionaryScanner(
 	uint32_t nTotalThreads = blockDim.x * gridDim.x;
 
 	__shared__ uint64_t ourBlockProcNormal;
-	__shared__ unsigned int nMoreIterated;
 	__shared__ uint64_t nGridJobCap;
-	__shared__ int bDone;
+	__shared__ uint8_t bDone;
 
 	int16_t local_static_word_index[12];
 
@@ -192,7 +191,6 @@ __global__ void gl_DictionaryScanner(
 	if (threadIdx.x == 0) {
 		ourBlockProcNormal = 0; // Only the first thread initializes it
 
-		nMoreIterated = 0;
 		nGridJobCap = ULLONG_MAX;//0xFFFFFFFFFFFFFFFFull;
 		bDone = 0;
 	}
@@ -418,8 +416,6 @@ __global__ void gl_DictionaryScanner(
 		//printf("END block %d - thread  %d - EffectiveId:%d - curDigits:%d-%d-%d-%d-%d-%d %s\r\n", blockId, threadId, effective_idx
 		//	, curDigits[0], curDigits[1], curDigits[2], curDigits[3], curDigits[4], curDigits[5] , mnemonic);
 
-		if (bDone)
-			break;
 		//dev_uniqueTargetAddressBytes;
 		{
 			const extended_private_key_t* master_private = (extended_private_key_t*)&ipad[128 / 4];
@@ -438,21 +434,34 @@ __global__ void gl_DictionaryScanner(
 			for (uint8_t h34 = 0; h34 < 3; h34++) {
 				normal_private_child_from_private(&master_private_fo_extint, &target_key, 0, 0, h34);
 				//m/44'/0'/0'/0/x
-				normal_private_child_from_private(&target_key, &target_key_fo_pub, 0);
-				calc_public(&target_key_fo_pub, &target_public_key);
-				calc_hash160(&target_public_key, hash);
+				for (int x = 0; x < dev_num_childs[0]; x++) {
 
-				//find_hash_in_table(hash, tables_legacy[(uint8_t)hash[0]], (uint32_t*) mnemonic, &ret->f[0], 4, 0);
-				//LookupHash(hash, (uint32_t*) dev_uniqueTargetAddressBytes, (uint32_t*)mnemonic, &ret->f[0], 4, 0);
+					normal_private_child_from_private(&target_key, &target_key_fo_pub, x);
+					calc_public(&target_key_fo_pub, &target_public_key);
+					calc_hash160(&target_public_key, hash);
 
-				if (device_hashcmp((uint32_t*)hash, (uint32_t*)dev_uniqueTargetAddressBytes) == 0) {
+					//find_hash_in_table(hash, tables_legacy[(uint8_t)hash[0]], (uint32_t*) mnemonic, &ret->f[0], 4, 0);
+					//LookupHash(hash, (uint32_t*) dev_uniqueTargetAddressBytes, (uint32_t*)mnemonic, &ret->f[0], 4, 0);
+
+					if (device_hashcmp((uint32_t*)hash, (uint32_t*)dev_uniqueTargetAddressBytes) == 0) {
 #if 1
-					dev_retEntropy[0] = curEntropy[0];
-					dev_retEntropy[1] = curEntropy[1];
-					break;
+						dev_retEntropy[0] = curEntropy[0];
+						dev_retEntropy[1] = curEntropy[1];
+						bDone = 1;
+						break;
 #endif
+					}
+					if (bDone != 0)
+						break;
+
 				}
+				if (bDone != 0)
+					break;
+
 			}
+			if (bDone != 0)
+				break;
+
 		}
 #if 0
 		key_to_hash160((extended_private_key_t*)&ipad[128 / 4], tables_legacy, tables_segwit, tables_native_segwit, (uint32_t*)mnemonic, ret);

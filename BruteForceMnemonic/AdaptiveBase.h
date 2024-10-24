@@ -68,15 +68,16 @@ inline __host__ /* __and__ */ __device__   bool IncrementAdaptiveDigits(int16_t*
 		nYetToAdd = 0; //all active in carry if any
 	}
 	{
-		if ((nYetToAdd != 0 || nCarryValue != 0)) {
+		bool bMoreCarry = (nYetToAdd != 0 || nCarryValue != 0);
+
+		for (char i = 0; i < MAX_ADAPTIVE_BASE_POSITIONS; i++) {
+			outDigits[i] = (bMoreCarry)? local_AdaptiveBaseDigitCarryTrigger[i]-1 : tmpResult[i];
+		}
+		if (bMoreCarry) {
 			//ASSERT: We have carried out of our space, NOP anyway
 			return false;
 		}
 
-		for (char i = 0; i < MAX_ADAPTIVE_BASE_POSITIONS; i++) {
-			outDigits[i] = tmpResult[i];
-		}
-		
 	}
 	return true;
 }
