@@ -1,3 +1,7 @@
+Configure Build get skipped for old code
+configure ranges for account and child
+report found path
+
 If found one, show all alternatives as well
 
 Print Batch mnemo

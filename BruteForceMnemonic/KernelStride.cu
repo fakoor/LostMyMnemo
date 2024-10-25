@@ -20,7 +20,7 @@
 
 #include "../Tools/utils.h"
 #include "EntropyTools.cuh"
-
+#include "BuildConfig.cuh"
 
 int stride_class::DictionaryAttack(uint64_t grid, uint64_t block) {
 	gl_DictionaryScanner << <(uint32_t)grid, (uint32_t)block, 0, dt->stream1 >> > (dt->dev.nProcessingIteration, dt->dev.nProcessedInstances);
@@ -31,7 +31,7 @@ int stride_class::DictionaryAttack(uint64_t grid, uint64_t block) {
 	return 0;
 }
 
-
+#if STILL_BUILD_OLD_METHOD
 int stride_class::bruteforce_mnemonic(uint64_t grid, uint64_t block) {
 	gl_bruteforce_mnemonic << <(uint32_t)grid, (uint32_t)block, 0, dt->stream1 >> > (dt->dev.entropy, dt->dev.dev_tables_legacy, dt->dev.dev_tables_segwit, dt->dev.dev_tables_native_segwit, dt->dev.ret);
 	return 0;
@@ -41,7 +41,6 @@ int stride_class::bruteforce_mnemonic_for_save(uint64_t grid, uint64_t block) {
 	gl_bruteforce_mnemonic_for_save << <(uint32_t)grid, (uint32_t)block, 0, dt->stream1 >> > (dt->dev.entropy, dt->dev.dev_tables_legacy, dt->dev.dev_tables_segwit, dt->dev.dev_tables_native_segwit, dt->dev.ret, dt->dev.mnemonic, dt->dev.hash160);
 	return 0;
 }
-
 int stride_class::memsetGlobalMnemonic()
 {
 	//if (DeviceSynchronize("cudaMemcpy table") != cudaSuccess) return -1;
@@ -56,9 +55,12 @@ int stride_class::memsetGlobalMnemonicSave()
 	if (cudaMemsetAsync(dt->dev.ret, 0, sizeof(retStruct), dt->stream1) != cudaSuccess) { fprintf(stderr, "cudaMemset Board->dev.ret failed!"); return -1; }
 	return 0;
 }
+#endif /*dev_tables_legacy*/
 
 int stride_class::init()
 {
+#if STILL_BUILD_OLD_METHOD
+
 	size_t memory_size = 0;
 	for (int i = 0; i < 256; i++)
 	{
@@ -140,6 +142,7 @@ int stride_class::init()
 	}
 	std::cout << "  100%\r";
 	if (cudaMemcpy(dt->dev.dev_tables_native_segwit, dt->dev.tables_native_segwit, 256 * sizeof(tableStruct), cudaMemcpyHostToDevice) != cudaSuccess) { fprintf(stderr, "cudaMemcpyAsync to Board->dev.tables_native_segwit failed!"); return -1; }
+#endif
 	if (deviceSynchronize("init") != cudaSuccess) return -1;
 	return 0;
 }
@@ -147,7 +150,6 @@ int stride_class::init()
 
 int stride_class::startDictionaryAttack(uint64_t grid, uint64_t block)
 {
-	//if (memsetGlobalMnemonic() != 0) return -1;
 	if (DictionaryAttack(grid, block) != 0) return -1;
 
 	return 0;
@@ -176,7 +178,7 @@ int stride_class::endDictionaryAttack()
 	return 0;
 }
 
-
+#if STILL_BUILD_OLD_METHOD
 int stride_class::start(uint64_t grid, uint64_t block)
 {
 	if (memsetGlobalMnemonic() != 0) return -1;
@@ -230,3 +232,4 @@ int stride_class::end_for_save()
 
 	return 0;
 }
+#endif /* STILL_BUILD_OLD_METHOD */

@@ -292,7 +292,7 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 
 		std::cout << "Iteration " << *Data->host.nProcessingIteration + 1
 			<< " completed we have processed  " << *Data->host.nProcessedInstances << " COMBOs  at " << tools::formatPrefix((double)*Data->host.nProcessedInstances / delay) << " COMBO/Sec" 
-			<<" (Skip:"<<nSkippedLast<<") "
+			<<" (Unused:"<<nSkippedLast<<") "
 			<< std::endl;
 			
 

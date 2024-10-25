@@ -27,15 +27,16 @@
 
 #include "stdafx.h"
 #include "../Tools/utils.h"
-
+#include "BuildConfig.cuh"
 
 class host_buffers_class
 {
 public:
+#if STILL_BUILD_OLD_METHOD
 	tableStruct tables_legacy[256] = { NULL };
 	tableStruct tables_segwit[256] = { NULL };
 	tableStruct tables_native_segwit[256] = { NULL };
-
+#endif
 	uint64_t* entropy = NULL;
 	uint8_t* mnemonic = NULL;
 	uint32_t* hash160 = NULL;
@@ -78,10 +79,11 @@ public:
 		if (mallocHost((void**)&nProcessedInstances, 8, &memory_size, "BatchSched") != 0) return -1;
 		if (mallocHost((void**)&nProcessingIteration, 8, &memory_size, "BatchMore") != 0) return -1;
 
-		std::cout << "MALLOC ALL RAM MEMORY SIZE (HOST): " << std::to_string((float)memory_size / (1024.0f * 1024.0f)) << " MB\n";
+		std::cout << "| MALLOC ALL RAM MEMORY SIZE (HOST): " << std::to_string((float)memory_size / (1024.0f * 1024.0f)) << " MB\n";
 		return 0;
 	}
 	void freeTableBuffers(void) {
+#if STILL_BUILD_OLD_METHOD
 		for (int x = 0; x < 256; x++) {
 			if (tables_legacy[x].table != NULL)
 			{
@@ -103,6 +105,7 @@ public:
 				tables_native_segwit[x].table = NULL;
 			}
 		}	
+#endif /*STILL_BUILD_OLD_METHOD*/
 	}
 
 	~host_buffers_class()
@@ -161,14 +164,16 @@ public:
 		if (cudaMallocDevice((uint8_t**)&entropy, size_entropy_buf, &memory_size, "entropy") != 0) return -1;
 		if (cudaMallocDevice((uint8_t**)&mnemonic, size_mnemonic_buf, &memory_size, "mnemonic") != 0) return -1;
 		if (cudaMallocDevice((uint8_t**)&hash160, size_hash160_buf, &memory_size, "hash160") != 0) return -1;
+#if STILL_BUILD_OLD_METHOD
 		if (cudaMallocDevice((uint8_t**)&dev_tables_legacy, sizeof(tableStruct) * 256, &memory_size, "dev_tables_legacy") != 0) return -1;
 		if (cudaMallocDevice((uint8_t**)&dev_tables_segwit, sizeof(tableStruct) * 256, &memory_size, "dev_tables_segwit") != 0) return -1;
 		if (cudaMallocDevice((uint8_t**)&dev_tables_native_segwit, sizeof(tableStruct) * 256, &memory_size, "dev_tables_native_segwit") != 0) return -1;
+#endif
 		if (cudaMallocDevice((uint8_t**)&ret, sizeof(retStruct), &memory_size, "ret") != 0) return -1;
 		if (cudaMallocDevice((uint8_t**)&nProcessedInstances, 8, &memory_size, "BatchSched") != 0) return -1;
 		if (cudaMallocDevice((uint8_t**)&nProcessingIteration, 8, &memory_size, "BatchMore") != 0) return -1;
 
-		std::cout << "MALLOC ALL MEMORY SIZE (GPU): " << std::to_string((float)(memory_size) / (1024.0f * 1024.0f)) << " MB\n";
+		std::cout << "| MALLOC ALL MEMORY SIZE (GPU): " << std::to_string((float)(memory_size) / (1024.0f * 1024.0f)) << " MB\n";
 		return 0;
 	}
 
@@ -244,6 +249,10 @@ public:
 		if (cudaStreamCreate(&stream1) != cudaSuccess) { fprintf(stderr, "cudaStreamCreate failed!  stream1"); return -1; }
 		if (dev.malloc(size_entropy_buf, size_mnemonic_buf, size_hash160_buf) != 0) return -1;
 		if (host.malloc(size_entropy_buf, size_mnemonic_buf, size_hash160_buf) != 0) return -1;
+
+		printf("|------------------------------------------------------------------------------------------\r\n");
+
+
 		this->size_entropy_buf = size_entropy_buf;
 		this->size_mnemonic_buf = size_mnemonic_buf;
 		this->size_hash160_buf = size_hash160_buf;

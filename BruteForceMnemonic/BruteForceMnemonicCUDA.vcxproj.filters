@@ -24,6 +24,7 @@
     <ClInclude Include="DictionaryScanner.cuh" />
     <ClInclude Include="EntropyTools.cuh" />
     <ClInclude Include="MemConfig.cuh" />
+    <ClInclude Include="BuildConfig.cuh" />
   </ItemGroup>
   <ItemGroup>
     <None Include="config.cfg" />

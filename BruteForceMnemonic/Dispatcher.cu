@@ -76,20 +76,21 @@ int Generate_Mnemonic(void)
 #endif //TEST_MODE
 	}
 	else {
-		std::cout << " The only CUDA capable device selected automatically." << std::endl;
+		std::cout << "| (*) The only CUDA capable device selected automatically." << std::endl;
 	}
 	cudaStatus = cudaSetDevice(num_device);
 	if (cudaStatus != cudaSuccess) {
 		fprintf(stderr, "cudaSetDevice failed!  Do you have a CUDA-capable GPU installed?");
 		return -1;
 	}
-
 	size_t num_wallets_gpu = Config.cuda_grid * Config.cuda_block;
+#if STILL_BUILD_OLD_METHOD
 	if (num_wallets_gpu < NUM_PACKETS_SAVE_IN_FILE)
 	{
 		std::cerr << "Error num_wallets_gpu < NUM_PACKETS_SAVE_IN_FILE!" << std::endl;
 		return -1;
 	}
+#endif
 	uint32_t num_bytes = 0;
 	if (Config.chech_equal_bytes_in_adresses == "yes")
 	{
@@ -109,6 +110,7 @@ int Generate_Mnemonic(void)
 	data_class* Data = new data_class();
 	stride_class* Stride = new stride_class(Data);
 	size_t num_addresses_in_tables = 0;
+#if STILL_BUILD_OLD_METHOD
 	if (bCfgUseOldMethod) {
 
 		std::cout << "READ TABLES! WAIT..." << std::endl;
@@ -152,7 +154,7 @@ int Generate_Mnemonic(void)
 			goto Error;
 		}
 	}
-
+#endif
 	if (Data->malloc(Config.cuda_grid, Config.cuda_block, Config.num_paths, Config.num_child_addresses, bCfgSaveResultsIntoFile) != 0) {
 		std::cerr << "Error Data->malloc()!" << std::endl;
 		goto Error;
@@ -228,6 +230,7 @@ int Generate_Mnemonic(void)
 		}
 	}//NEW METHOD
 	else {
+#if STILL_BUILD_OLD_METHOD
 		for (uint64_t step = 0; step < Config.number_of_generated_mnemonics / (Data->wallets_in_round_gpu); step++)
 		{
 			tools::start_time();
@@ -281,9 +284,9 @@ int Generate_Mnemonic(void)
 				<< " | ROUND: " << step;
 
 		}//for (step)
+#endif
 
 	}
-
 	std::cout << "\n\nEND!" << std::endl;
 	if (save_thread.joinable()) save_thread.join();
 	// cudaDeviceReset must be called before exiting in order for profiling and

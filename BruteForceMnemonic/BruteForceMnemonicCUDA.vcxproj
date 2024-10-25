@@ -144,6 +144,7 @@ If exist "config.cfg" copy "config.cfg" "$(OutDir)\"</Command>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AdaptiveBase.h" />
+    <ClInclude Include="BuildConfig.cuh" />
     <ClInclude Include="consts.h" />
     <ClInclude Include="DictionaryScanner.cuh" />
     <ClInclude Include="DispatchDictionaryScan.cuh" />

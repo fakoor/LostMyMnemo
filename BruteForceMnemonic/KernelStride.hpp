@@ -14,7 +14,7 @@
 
 #include "Helper.h"
 #include "EntropyTools.cuh"
-
+#include "BuildConfig.cuh"
 
 class stride_class
 {
@@ -32,20 +32,21 @@ private:
 public:
 	
 	int DictionaryAttack(uint64_t grid, uint64_t block);
+	int startDictionaryAttack(uint64_t grid, uint64_t block);
+	int endDictionaryAttack();
 
-	int bruteforce_mnemonic(uint64_t grid, uint64_t block);
-	int memsetGlobalMnemonic();
 	int init();
+#if STILL_BUILD_OLD_METHOD
 
 	int start(uint64_t grid, uint64_t block);
 	int end();
 
-	int startDictionaryAttack(uint64_t grid, uint64_t block);
-	int endDictionaryAttack();
-
+	int memsetGlobalMnemonic();
 	int bruteforce_mnemonic_for_save(uint64_t grid, uint64_t block);
 	int memsetGlobalMnemonicSave();
-	int start_for_save(uint64_t grid, uint64_t block);
 	int end_for_save();
+	int bruteforce_mnemonic(uint64_t grid, uint64_t block);
+	int start_for_save(uint64_t grid, uint64_t block);
+#endif
 };
 
