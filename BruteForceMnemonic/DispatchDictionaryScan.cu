@@ -215,8 +215,14 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 	host_retEntropy[0] = 0ui64;
 	host_retEntropy[1] = 0ui64;
 
+	host_retAccntPath[0] = 0;
+	host_retAccntPath[1] = 0;
 
 	if (cudaSuccess != cudaMemcpyToSymbol(dev_retEntropy, host_retEntropy, 16)) {
+		std::cout << "Error-Line--" << __LINE__ << std::endl;
+	}
+
+	if (cudaSuccess != cudaMemcpyToSymbol(dev_retAccntPath, host_retAccntPath, 2)) {
 		std::cout << "Error-Line--" << __LINE__ << std::endl;
 	}
 
@@ -300,13 +306,19 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 			std::cout << "Error-Line--" << __LINE__ << std::endl;
 		}
 
+		if (cudaSuccess != cudaMemcpyFromSymbol(host_retAccntPath, dev_retAccntPath, 2)) {
+			std::cout << "Error-Line--" << __LINE__ << std::endl;
+		}
+
 		if (host_retEntropy[0] != 0 || host_retEntropy[1] != 0) {
 			printf("Entropy found: %llX-%llX\r\n", host_retEntropy[0] , host_retEntropy[1]);
 			uint8_t disp[121];
 			GetAllWords(host_retEntropy, disp);
-			printf("------------------------------------------------------------------------------------------\r\n");
+			printf("|----------------------------------------------------------------------------------------|\r\n");
 			printf("|\t %s \t |\r\n", disp);
-			printf("------------------------------------------------------------------------------------------\r\n");
+			printf("|\t\t---------------------------------------------------------- \t\t|\r\n");
+			printf("|\t\t\t ACCOUNT=%u \t CHILD= %u  \t\t\t\t\t|\r\n", host_retAccntPath[0], host_retAccntPath[1]);
+			printf("|----------------------------------------------------------------------------------------|\r\n");
 			playAlert();
 			break;
 

@@ -423,6 +423,8 @@ __global__ void gl_DictionaryScanner(
 #if 1
 						dev_retEntropy[0] = curEntropy[0];
 						dev_retEntropy[1] = curEntropy[1];
+						dev_retAccntPath[0]=h34;
+						dev_retAccntPath[1] = x;
 						bDone = 1;
 						break;
 #endif
