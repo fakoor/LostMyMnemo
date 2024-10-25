@@ -402,41 +402,43 @@ __global__ void gl_DictionaryScanner(
 			extended_private_key_t master_private_fo_extint;
 			extended_public_key_t target_public_key;
 
-			hardened_private_child_from_private(master_private, &target_key, 44);
-			hardened_private_child_from_private(&target_key, &target_key, 0);
-			hardened_private_child_from_private(&target_key, &master_private_fo_extint, 0);
+			for (uint8_t accNo = 0; accNo < 3; accNo++) {
+				hardened_private_child_from_private(master_private, &target_key, 44);
+				hardened_private_child_from_private(&target_key, &target_key, 0);
 
-			uint8_t h33 = 0;
-			for (uint8_t h34 = 0; h34 < 3; h34++) {
-				normal_private_child_from_private(&master_private_fo_extint, &target_key, 0, 0, h34);
-				//m/44'/0'/0'/0/x
-				for (int x = 0; x < dev_num_childs[0]; x++) {
+				hardened_private_child_from_private(&target_key, &master_private_fo_extint, accNo); //acount-number
 
-					normal_private_child_from_private(&target_key, &target_key_fo_pub, x);
-					calc_public(&target_key_fo_pub, &target_public_key);
-					calc_hash160(&target_public_key, hash);
+				//for (uint8_t h33 = 0; h33 < 3; h33++) {
+					normal_private_child_from_private(&master_private_fo_extint, &target_key, 0); //extension-0-internal-external
+					//m/44'/0'/0'/0/x
+					for (int x = 0; x < dev_num_childs[0]; x++) {
 
-					//find_hash_in_table(hash, tables_legacy[(uint8_t)hash[0]], (uint32_t*) mnemonic, &ret->f[0], 4, 0);
-					//LookupHash(hash, (uint32_t*) dev_uniqueTargetAddressBytes, (uint32_t*)mnemonic, &ret->f[0], 4, 0);
+						normal_private_child_from_private(&target_key, &target_key_fo_pub, x); //child x
+						calc_public(&target_key_fo_pub, &target_public_key);
+						calc_hash160(&target_public_key, hash);
 
-					if (device_hashcmp((uint32_t*)hash, (uint32_t*)dev_uniqueTargetAddressBytes) == 0) {
+						//find_hash_in_table(hash, tables_legacy[(uint8_t)hash[0]], (uint32_t*) mnemonic, &ret->f[0], 4, 0);
+						//LookupHash(hash, (uint32_t*) dev_uniqueTargetAddressBytes, (uint32_t*)mnemonic, &ret->f[0], 4, 0);
+
+						if (device_hashcmp((uint32_t*)hash, (uint32_t*)dev_uniqueTargetAddressBytes) == 0) {
 #if 1
-						dev_retEntropy[0] = curEntropy[0];
-						dev_retEntropy[1] = curEntropy[1];
-						dev_retAccntPath[0]=h34;
-						dev_retAccntPath[1] = x;
-						bDone = 1;
-						break;
+							dev_retEntropy[0] = curEntropy[0];
+							dev_retEntropy[1] = curEntropy[1];
+							dev_retAccntPath[0] = accNo;
+							dev_retAccntPath[1] = x;
+							bDone = 1;
+							break;
 #endif
+						}
+						if (bDone != 0)
+							break;
+
 					}
 					if (bDone != 0)
 						break;
 
-				}
-				if (bDone != 0)
-					break;
-
-			}
+				//}//h33
+			}//h34
 			if (bDone != 0)
 				break;
 
