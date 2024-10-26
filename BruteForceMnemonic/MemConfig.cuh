@@ -3,6 +3,8 @@
 #ifndef __MEMCONFIG_CUH__
 #define __MEMCONFIG_CUH__
 
+#include "cuda_runtime.h"
+
 /*	
  * 
  *  either use:

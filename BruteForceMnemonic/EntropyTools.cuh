@@ -54,4 +54,35 @@ inline void SyncBipIndexFromAdaptiveDigits(int16_t local_static_word_index[12], 
 }
 
 void GetAllWords(uint64_t entropy[2], uint8_t* mnemonic_phrase);
+
+
+
+__device__
+inline void IndicesToMnemonic(
+	  int16_t  indices[12]
+	, uint8_t* mnemonic_phrase
+	, const uint8_t words[2048][9]
+	, const uint8_t word_lengths[2048]
+)
+{
+	int mnemonic_index = 0;
+#pragma unroll
+	for (int i = 0; i < 12; i++) {
+		uint16_t word_index = indices[i];
+		uint16_t word_length = word_lengths[word_index];
+
+#pragma unroll
+		for (int j = 0; j < word_length; j++) {
+			mnemonic_phrase[mnemonic_index] = words[word_index][j];
+			mnemonic_index++;
+		}
+		mnemonic_phrase[mnemonic_index] = 32;
+		mnemonic_index++;
+	}
+
+	mnemonic_phrase[mnemonic_index - 1] = 0;
+}
+
+
+
 #endif /* __ENTROPYTOOLS_H__ */

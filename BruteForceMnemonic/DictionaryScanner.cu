@@ -10,6 +10,8 @@
 
 #include "EntropyTools.cuh"
 #include "DictionaryScanner.cuh"
+#include "Bip39Tools.cuh"
+
 
 
 static inline __device__ int device_hashcmp(const  uint32_t* p1, const uint32_t* p2) {
@@ -210,11 +212,10 @@ __global__ void gl_DictionaryScanner(
 
 	int16_t local_static_word_index[12];
 
-	// Initialize the shared variable
+	// Initialize the shared variable (first thread of each block)
 	if (threadIdx.x == 0) {
-		ourBlockProcNormal = 0; // Only the first thread initializes it
-
-		nGridJobCap = ULLONG_MAX;//0xFFFFFFFFFFFFFFFFull;
+		ourBlockProcNormal = 0; 
+		nGridJobCap = ULLONG_MAX;
 		bDone = 0;
 	}
 	__syncthreads(); // Synchronize to ensure the initialization is complete
@@ -228,8 +229,6 @@ __global__ void gl_DictionaryScanner(
 	curEntropy[0] = dev_EntropyAbsolutePrefix64[PTR_AVOIDER];
 	curEntropy[1] = dev_EntropyNextPrefix2[PTR_AVOIDER];
 
-
-	uint8_t reqChecksum = 0;
 
 	int16_t curDigits[MAX_ADAPTIVE_BASE_POSITIONS] = { 
 		 dev_AdaptiveBaseCurrentBatchInitialDigits[0]
@@ -267,7 +266,6 @@ __global__ void gl_DictionaryScanner(
 
 #pragma unroll
 	for (int16_t nWordElevenOffset = 0; nWordElevenOffset < lastPosCarryTrig; nWordElevenOffset++) {
-		//break on nTried < MAX_TRY_PER_THREAD
 		uint64_t nInstanceOffset = nLoopMasterOffset + nWordElevenOffset;
 
 		if (nInstanceOffset > nGridJobCap) {
@@ -284,12 +282,6 @@ __global__ void gl_DictionaryScanner(
 		}
 		atomicAdd(&ourBlockProcNormal, 1);
 
-		if (threadIdx.x == 0) {
-
-		}
-		//else {
-		//	atomicMax(&nMaxCloudAdd, effective_idx);
-		//}
 
 		SyncBipIndexFromAdaptiveDigits(local_static_word_index, dev_AdaptiveBaseDigitSet, curDigits);
 
@@ -298,10 +290,7 @@ __global__ void gl_DictionaryScanner(
 		int16_t wordElevenBipVal = local_static_word_index[11];
 
 
-#if 0 //not required for checksum comparison here
-		entropy_to_mnemonic_with_offset(curEntropy, mnemonic, 0, local_static_word_index);
-#endif
-		reqChecksum = wordElevenBipVal & 0x000F;
+		uint8_t reqChecksum = wordElevenBipVal & 0x000F;
 		bool bChkMatched = CheckSumValidate (checkSumInputBlock, curEntropy, reqChecksum);
 
 
@@ -320,12 +309,9 @@ __global__ void gl_DictionaryScanner(
 
 
 		//Work with Current Entropy
-		entropy_to_mnemonic_with_offset(curEntropy, mnemonic, 0, local_static_word_index);
+		//entropy_to_mnemonic_with_offset(curEntropy, mnemonic, 0, local_static_word_index);
+		IndicesToMnemonic (local_static_word_index,(uint8_t*) mnemonic, words, word_lengths);
 
-		//if (idx == 0) {
-//			printf("nemo-%u  (retry.remain=%d/%d) = :%s \r\n\r\n", effective_idx,nTried,MAX_TRY_PER_THREAD, mnemonic);
-		//}
-		//entropy_to_mnemonic(entropy, mnemonic);
 #pragma unroll
 		for (int x = 0; x < 120 / 8; x++) {
 			*(uint64_t*)((uint64_t*)ipad + x) = 0x3636363636363636ULL ^ SWAP512(*(uint64_t*)((uint64_t*)mnemonic + x));
@@ -389,10 +375,6 @@ __global__ void gl_DictionaryScanner(
 			*(uint64_t*)((uint64_t*)&ipad[128 / 4] + x) = SWAP512(*(uint64_t*)((uint64_t*)&ipad[128 / 4] + x));
 		}
 
-		//printf("END block %d - thread  %d - EffectiveId:%d - curDigits:%d-%d-%d-%d-%d-%d %s\r\n", blockId, threadId, effective_idx
-		//	, curDigits[0], curDigits[1], curDigits[2], curDigits[3], curDigits[4], curDigits[5] , mnemonic);
-
-		//dev_uniqueTargetAddressBytes;
 		{
 			const extended_private_key_t* master_private = (extended_private_key_t*)&ipad[128 / 4];
 
@@ -405,62 +387,37 @@ __global__ void gl_DictionaryScanner(
 			for (uint8_t accNo = 0; accNo < 3; accNo++) {
 				hardened_private_child_from_private(master_private, &target_key, 44);
 				hardened_private_child_from_private(&target_key, &target_key, 0);
-
 				hardened_private_child_from_private(&target_key, &master_private_fo_extint, accNo); //acount-number
+				normal_private_child_from_private(&master_private_fo_extint, &target_key, 0); //extension-0-internal-external
+				//m/44'/0'/0'/0/x
+				for (int x = 0; x < dev_num_childs[0]; x++) {
 
-				//for (uint8_t h33 = 0; h33 < 3; h33++) {
-					normal_private_child_from_private(&master_private_fo_extint, &target_key, 0); //extension-0-internal-external
-					//m/44'/0'/0'/0/x
-					for (int x = 0; x < dev_num_childs[0]; x++) {
+					normal_private_child_from_private(&target_key, &target_key_fo_pub, x); //child x
+					calc_public(&target_key_fo_pub, &target_public_key);
+					calc_hash160(&target_public_key, hash);
 
-						normal_private_child_from_private(&target_key, &target_key_fo_pub, x); //child x
-						calc_public(&target_key_fo_pub, &target_public_key);
-						calc_hash160(&target_public_key, hash);
 
-						//find_hash_in_table(hash, tables_legacy[(uint8_t)hash[0]], (uint32_t*) mnemonic, &ret->f[0], 4, 0);
-						//LookupHash(hash, (uint32_t*) dev_uniqueTargetAddressBytes, (uint32_t*)mnemonic, &ret->f[0], 4, 0);
-
-						if (device_hashcmp((uint32_t*)hash, (uint32_t*)dev_uniqueTargetAddressBytes) == 0) {
-#if 1
-							dev_retEntropy[0] = curEntropy[0];
-							dev_retEntropy[1] = curEntropy[1];
-							dev_retAccntPath[0] = accNo;
-							dev_retAccntPath[1] = x;
-							bDone = 1;
-							break;
-#endif
-						}
-						if (bDone != 0)
-							break;
-
+					if (device_hashcmp((uint32_t*)hash, (uint32_t*)dev_uniqueTargetAddressBytes) == 0) {
+						dev_retEntropy[0] = curEntropy[0];
+						dev_retEntropy[1] = curEntropy[1];
+						dev_retAccntPath[0] = accNo;
+						dev_retAccntPath[1] = x;
+						bDone = 1;
+						break;
 					}
 					if (bDone != 0)
 						break;
-
-				//}//h33
-			}//h34
+				}
+				if (bDone != 0)
+					break;
+			}//accNo
 			if (bDone != 0)
 				break;
-
 		}
-#if 0
-		key_to_hash160((extended_private_key_t*)&ipad[128 / 4], tables_legacy, tables_segwit, tables_native_segwit, (uint32_t*)mnemonic, ret);
-
-		atomicMax(&bDone, DictionaryCheckFound(ret));
-		if (bDone ) {
-			atomicMin(&nGridJobCap, nInstanceOffset);
-			//if (nInstanceOffset == nGridJobCap) {
-			//	printf("\r\n\r\n\tBreaking operation at %llu Since Match is Found!\r\n\r\n", nInstanceOffset);
-			//}
-
-			break;
-		}
-#endif
 	}//for 
 
 	__syncthreads(); // Synchronize to ensure all data is loaded
 	if (threadIdx.x == 0) {
 		atomicAdd(nProcessedInstances, ourBlockProcNormal);
 	}
-
 }//DICTIONARY ATTACK

@@ -11,6 +11,7 @@
     <CudaCompile Include="DictionaryScanner.cu" />
     <CudaCompile Include="EntropyTools.cu" />
     <CudaCompile Include="AddressToHash.cuh" />
+    <CudaCompile Include="Bip39Tools.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GPU.h" />
@@ -25,6 +26,7 @@
     <ClInclude Include="EntropyTools.cuh" />
     <ClInclude Include="MemConfig.cuh" />
     <ClInclude Include="BuildConfig.cuh" />
+    <ClInclude Include="Bip39Tools.cuh" />
   </ItemGroup>
   <ItemGroup>
     <None Include="config.cfg" />

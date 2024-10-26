@@ -133,6 +133,7 @@ If exist "config.cfg" copy "config.cfg" "$(OutDir)\"</Command>
   <ItemGroup>
     <CudaCompile Include="AdaptiveBase.cu" />
     <CudaCompile Include="AddressToHash.cuh" />
+    <CudaCompile Include="Bip39Tools.cu" />
     <CudaCompile Include="DictionaryScanner.cu" />
     <CudaCompile Include="DispatchDictionaryScan.cu" />
     <CudaCompile Include="EntropyTools.cu" />
@@ -144,6 +145,7 @@ If exist "config.cfg" copy "config.cfg" "$(OutDir)\"</Command>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AdaptiveBase.h" />
+    <ClInclude Include="Bip39Tools.cuh" />
     <ClInclude Include="BuildConfig.cuh" />
     <ClInclude Include="consts.h" />
     <ClInclude Include="DictionaryScanner.cuh" />

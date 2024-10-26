@@ -60,6 +60,10 @@ void entropy_to_mnemonic(const uint64_t* gl_entropy, uint8_t* mnemonic_phrase);
 __device__
 void entropy_to_mnemonic_with_offset(const uint64_t* gl_entropy, uint8_t* mnemonic_phrase, uint32_t idx, int16_t  local_static_words_indices[12]);
 
+//__inline__
+//__device__
+//void IndicesToMnemonic(int16_t  indices[12], uint8_t* mnemonic_phrase);
+
 __inline__
 __device__
 uint64_t SWAP512(uint64_t val) {
