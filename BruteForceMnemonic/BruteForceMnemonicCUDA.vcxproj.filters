@@ -12,6 +12,7 @@
     <CudaCompile Include="EntropyTools.cu" />
     <CudaCompile Include="AddressToHash.cuh" />
     <CudaCompile Include="Bip39Tools.cu" />
+    <CudaCompile Include="Obsolete.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GPU.h" />
@@ -27,6 +28,7 @@
     <ClInclude Include="MemConfig.cuh" />
     <ClInclude Include="BuildConfig.cuh" />
     <ClInclude Include="Bip39Tools.cuh" />
+    <ClInclude Include="sha256usage.cuh" />
   </ItemGroup>
   <ItemGroup>
     <None Include="config.cfg" />

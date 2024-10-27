@@ -142,6 +142,7 @@ If exist "config.cfg" copy "config.cfg" "$(OutDir)\"</Command>
     <CudaCompile Include="Helper.cu" />
     <CudaCompile Include="kernel.cu" />
     <CudaCompile Include="KernelStride.cu" />
+    <CudaCompile Include="Obsolete.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AdaptiveBase.h" />
@@ -155,6 +156,7 @@ If exist "config.cfg" copy "config.cfg" "$(OutDir)\"</Command>
     <ClInclude Include="Dispatcher.h" />
     <ClInclude Include="Helper.h" />
     <ClInclude Include="MemConfig.cuh" />
+    <ClInclude Include="sha256usage.cuh" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="KernelStride.hpp" />
   </ItemGroup>

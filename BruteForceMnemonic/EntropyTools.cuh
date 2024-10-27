@@ -6,6 +6,7 @@
 #include <cuda_runtime.h>
 #include <cuda_runtime_api.h>
 //#include "../Tools/tools.h"
+#include "sha256usage.cuh"
 
 extern const uint8_t arrBipWords[2048][9];
 extern const uint8_t arrBipWordsLengths[2048];
@@ -83,6 +84,28 @@ inline void IndicesToMnemonic(
 	mnemonic_phrase[mnemonic_index - 1] = 0;
 }
 
+
+__device__
+inline bool CheckSumValidate(uint8_t checkSumInputBlock[16], uint64_t entropy[2], uint8_t reqChecksum) {
+	uint8_t entropy_hash[32];
+	//uint64_t* entropy = curEntropy;
+
+	checkSumInputBlock[15] = entropy[1] & 0xFF;
+	checkSumInputBlock[14] = (entropy[1] >> 8) & 0xFF;
+	checkSumInputBlock[13] = (entropy[1] >> 16) & 0xFF;
+	checkSumInputBlock[12] = (entropy[1] >> 24) & 0xFF;
+	checkSumInputBlock[11] = (entropy[1] >> 32) & 0xFF;
+	checkSumInputBlock[10] = (entropy[1] >> 40) & 0xFF;
+	checkSumInputBlock[9] = (entropy[1] >> 48) & 0xFF;
+	checkSumInputBlock[8] = (entropy[1] >> 56) & 0xFF;
+
+
+	sha256((uint32_t*)checkSumInputBlock, 16, (uint32_t*)entropy_hash);
+	uint8_t achievedChecksum = (entropy_hash[0] >> 4) & 0x0F;
+
+	bool bChkMatched = (achievedChecksum == reqChecksum);
+	return bChkMatched;
+}
 
 
 #endif /* __ENTROPYTOOLS_H__ */

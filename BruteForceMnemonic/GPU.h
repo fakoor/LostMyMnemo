@@ -13,7 +13,7 @@
 #include "stdafx.h"
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
-
+#include "sha256usage.cuh"
 
 
   /* Two of six logical functions used in SHA-1, SHA-256, SHA-384, and SHA-512: */
@@ -48,8 +48,6 @@ typedef struct {
 	uint8_t chain_code[32];
 } extended_public_key_t;
 
-__device__
-void sha256(const uint32_t* pass, int pass_len, uint32_t* hash);
 
 __device__
 void GetWordFromBipIndex(int16_t  index, uint8_t word[10]);
