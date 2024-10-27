@@ -54,7 +54,7 @@ jobs:
       id: create_release
       uses: softprops/action-gh-release@v1  # Use the latest version of the release action
       with:
-        tag_name: ${{ github.ref_name }}  # Use the branch name directly
+        tag_name: Rel-${{ github.ref_name }}  # Use the branch name directly
         files: x64/Release/BruteForceMnemonicBitcoinV200.exe  # Specify the correct path to your executable
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
