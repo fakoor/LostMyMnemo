@@ -186,7 +186,7 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 
 
 	uint64_t nSolverThreads = Config->cuda_block * Config->cuda_grid;
-	uint64_t nIterationPower = nSolverThreads * host_AdaptiveBaseDigitCarryTrigger[5];
+	uint64_t nIterationPower = nSolverThreads * host_AdaptiveBaseDigitCarryTrigger[4] * host_AdaptiveBaseDigitCarryTrigger[5];
 	uint64_t nIterationsNeeded = nProblemPower / nIterationPower;
 	uint64_t nLastIterationRemainder = nProblemPower - nIterationsNeeded * nIterationPower;
 	if (nLastIterationRemainder > 0) {
@@ -274,11 +274,6 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 		}
 		tools::stop_time_and_calc_sec(&delay);
 
-		//if (bCfgSaveResultsIntoFile) {
-		//	save_thread = std::thread(&tools::saveResult, (char*)Data->host.mnemonic, (uint8_t*)Data->host.hash160, Data->wallets_in_round_gpu, Data->num_all_childs, Data->num_childs, Config->generate_path);
-		//}
-
-
 
 		if (cudaSuccess != cudaMemcpy(Data->host.nProcessedInstances, Data->dev.nProcessedInstances, 8, cudaMemcpyDeviceToHost)) {
 			std::cout << "Error-Line--" << __LINE__ << std::endl;
@@ -317,7 +312,7 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 			printf("|----------------------------------------------------------------------------------------|\r\n");
 			printf("|\t %s \t |\r\n", disp);
 			printf("|\t\t---------------------------------------------------------- \t\t|\r\n");
-			printf("|\t\t\t ACCOUNT=%u \t CHILD= %u  \t\t\t\t\t|\r\n", host_retAccntPath[0], host_retAccntPath[1]);
+			printf("|\t\t\t ACCOUNT= %u \t CHILD= %u  \t\t\t\t\t|\r\n", host_retAccntPath[0], host_retAccntPath[1]);
 			printf("|----------------------------------------------------------------------------------------|\r\n");
 			playAlert();
 			break;
