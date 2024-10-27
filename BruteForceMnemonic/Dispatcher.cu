@@ -372,8 +372,21 @@ bool ApplyConfig(ConfigClass& Config)
 					Config.words_indicies_mnemonic[nemoIter] = thisBipIdx; //or even -1 when ? 
 				}
 
-				if (adaptivePositionIdx < 0)
+				if (adaptivePositionIdx < 0) {
+					//first 6 known words :-6,  -5 ,...,-1
 					break;
+				}
+				//FROM now on , we are from positions 6 to 11 (last 6-word part)
+
+				if (thisBipIdx < 0) { //unknown word
+					if (thisWord.compare("?") != 0 || thisWord.compare("0")!=0 ) {
+						std::cout << "WARNING: " << thisWord << " in position "<< nemoIter  << " offset: " << thisPosDictTraverseIdx<< " is not a valid BIP-39 word!" << std::endl;
+					}
+					else {
+						std::cout << "WARNING: Wildcard " << thisWord << " is only allowed for starting point configuration line !" << std::endl;
+					}
+					return false;
+				}
 
 				//FROM now on, we are on the second 6 words
 
