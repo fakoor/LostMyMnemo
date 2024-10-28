@@ -34,6 +34,9 @@ uint64_t host_retEntropy[2];
 __device__ uint8_t dev_retAccntPath[2];
 uint8_t host_retAccntPath[2];
 
+/* Account numbers. BlockChain's start from 1 all other standard from zero */
+__device__ uint8_t dev_accntMinMax[2] = { 0,5 };
+uint8_t host_accntMinMax[2] = { 0,5 };
 
 
 __constant__ uint8_t dev_uniqueTargetAddressBytes[20];
