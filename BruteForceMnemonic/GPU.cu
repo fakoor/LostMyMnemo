@@ -19,7 +19,7 @@
 #include "EntropyTools.cuh"
 #include "MemConfig.cuh"
 #include "Bip39Tools.cuh"
-
+#include "BuildConfig.cuh"
 
 
 
@@ -3296,6 +3296,7 @@ int find_hash_in_table(const uint32_t* hash, const tableStruct table, const uint
 	return found;
 }
 
+#if STILL_BUILD_OLD_METHOD
 
 __device__ void key_to_hash160(
 	const extended_private_key_t* master_private,
@@ -3691,7 +3692,6 @@ __device__ void key_to_hash160_for_save(
 
 
 
-
 __global__ void gl_bruteforce_mnemonic(
 	const uint64_t* __restrict__ entropy,
 	const tableStruct* __restrict__ tables_legacy,
@@ -3864,6 +3864,6 @@ __global__ void gl_bruteforce_mnemonic_for_save(
 	//__syncthreads();
 }
 
-
+#endif /*STILL_BUILD_OLD_METHOD*/
 
 

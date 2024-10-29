@@ -14,7 +14,7 @@
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 #include "sha256usage.cuh"
-
+#include "BuildConfig.cuh"
 
   /* Two of six logical functions used in SHA-1, SHA-256, SHA-384, and SHA-512: */
 #define SHAF1(x,y,z)	(((x) & (y)) ^ ((~(x)) & (z)))
@@ -75,6 +75,8 @@ uint64_t SWAP512(uint64_t val) {
 __device__
  void sha512_swap(uint64_t* input, const uint32_t length, uint64_t* hash);
 
+#if STILL_BUILD_OLD_METHOD
+
 __device__ void key_to_hash160(
 	const extended_private_key_t* master_private,
 	const tableStruct* tables_legacy,
@@ -83,7 +85,6 @@ __device__ void key_to_hash160(
 	const uint32_t* mnemonic,
 	retStruct* ret
 );
-
 
 __global__ void gl_bruteforce_mnemonic(
 	const uint64_t* __restrict__ entropy,
@@ -102,7 +103,7 @@ __global__ void gl_bruteforce_mnemonic_for_save(
 	uint8_t* __restrict__ mnemonic_ret,
 	uint32_t* __restrict__ hash160_ret
 );
-
+#endif /*STILL_BUILD_OLD_METHOD*/
 
 extern __constant__ uint32_t dev_num_bytes_find[];
 extern __constant__ uint32_t dev_generate_path[];
