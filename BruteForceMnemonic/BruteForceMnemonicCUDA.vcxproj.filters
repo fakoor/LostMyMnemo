@@ -13,6 +13,7 @@
     <CudaCompile Include="AddressToHash.cuh" />
     <CudaCompile Include="Bip39Tools.cu" />
     <CudaCompile Include="Obsolete.cu" />
+    <CudaCompile Include="vars.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GPU.h" />
@@ -29,6 +30,7 @@
     <ClInclude Include="BuildConfig.cuh" />
     <ClInclude Include="Bip39Tools.cuh" />
     <ClInclude Include="sha256usage.cuh" />
+    <ClInclude Include="vars.cuh" />
   </ItemGroup>
   <ItemGroup>
     <None Include="config.cfg" />

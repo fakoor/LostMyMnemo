@@ -143,6 +143,7 @@ If exist "config.cfg" copy "config.cfg" "$(OutDir)\"</Command>
     <CudaCompile Include="kernel.cu" />
     <CudaCompile Include="KernelStride.cu" />
     <CudaCompile Include="Obsolete.cu" />
+    <CudaCompile Include="vars.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AdaptiveBase.h" />
@@ -159,6 +160,7 @@ If exist "config.cfg" copy "config.cfg" "$(OutDir)\"</Command>
     <ClInclude Include="sha256usage.cuh" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="KernelStride.hpp" />
+    <ClInclude Include="vars.cuh" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\README.md" />
