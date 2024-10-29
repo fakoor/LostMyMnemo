@@ -171,6 +171,7 @@ int Generate_Mnemonic(void)
 
 		std::cout << "START GENERATE ADDRESSES!" << std::endl;
 	}
+#if STILL_BUILD_OLD_METHOD
 	std::cout << "PATH: " << std::endl;
 	if (bCfgUseOldMethod) {
 		if (Config.generate_path[0] != 0) std::cout << "m/0/0.." << (Config.num_child_addresses - 1) << std::endl;
@@ -190,12 +191,7 @@ int Generate_Mnemonic(void)
 		std::cout << "\nGENERATE " << tools::formatWithCommas(Config.number_of_generated_mnemonics) << " MNEMONICS. " << tools::formatWithCommas(Config.number_of_generated_mnemonics * Data->num_all_childs) << " ADDRESSES. MNEMONICS IN ROUNDS " << tools::formatWithCommas(Data->wallets_in_round_gpu) << ". WAIT...\n\n";
 	}
 	
-	if (bCfgUseOldMethod) {
-		//Old methid does not use this path
-	}else{
-		if (Config.generate_path[10] != 0) std::cout << "m/44'/0'/1'/0/0.." << (Config.num_child_addresses - 1) << std::endl;
-		if (Config.generate_path[11] != 0) std::cout << "m/44'/0'/2'/0/0.." << (Config.num_child_addresses - 1) << std::endl;
-	}
+#endif
 
 	//TODO: Here we should create incremental task: /or here
 	tools::generateRandomUint64Buffer(Data->host.entropy, Data->size_entropy_buf / (sizeof(uint64_t)));

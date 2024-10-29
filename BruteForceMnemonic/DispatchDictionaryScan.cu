@@ -195,10 +195,14 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 
 
 	std::cout << "-- Starting Dictionary SCAN -- " << std::endl;
+	std::cout << "Looking for Account Range" <<host_accntMinMax[0]<<" to "<<host_accntMinMax[1]<< "."<< std::endl;
+	std::cout << "Looking for Child Addresses" << 0 << " to " << Config->num_child_addresses << "." << std::endl;
 
-	std::cout << " Going to dispatch " << nProblemPower << " total COMBOs"
-		<< " via " << nIterationsNeeded<<((nLastIterationRemainder > 0) ? "" : "Perfet")<< " iterations [Remainder:" <<
-		nLastIterationRemainder<<"] (each able to process " << nIterationPower << " instances)="<< Config->cuda_grid <<"x" << Config->cuda_block<< "x" << host_AdaptiveBaseDigitCarryTrigger[5] << std::endl;
+	std::cout << " Going to dispatch " << nProblemPower << " total COMBOs" <<std::endl
+		<< " {via " << nIterationsNeeded
+		<<((nLastIterationRemainder > 0) ? "" : "Perfet")<< " iterations}" << " [Remainder:" <<
+		nLastIterationRemainder<<"]" <<std::endl
+		<<" (each able to process " << nIterationPower << " instances)="<< Config->cuda_grid <<"x" << Config->cuda_block<< "x" << host_AdaptiveBaseDigitCarryTrigger[5] << std::endl;
 
 
 

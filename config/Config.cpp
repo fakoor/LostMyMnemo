@@ -93,26 +93,6 @@ int check_config(ConfigClass& config)
 		std::cerr << "Error parse path_m84h_0h_0h_1_x. Please write \"yes\" or \"no\"" << std::endl;
 		throw std::logic_error("error parse config.cfg file");
 	}
-#if 0
-	if (config.path_m44h_0h_1h_0_x == "yes") {
-		num_paths++;
-		config.generate_path[10] = 1;
-	}
-	else if (config.path_m44h_0h_0h_0_x != "no") {
-		std::cerr << "Error parse path_m44h_0h_1h_0_x. Please write \"yes\" or \"no\"" << std::endl;
-		throw std::logic_error("error parse config.cfg file");
-	}
-
-	if (config.path_m44h_0h_2h_0_x == "yes") {
-		num_paths++;
-		config.generate_path[11] = 1;
-	}
-	else if (config.path_m44h_0h_2h_0_x != "no") {
-		std::cerr << "Error parse path_m44h_0h_2h_0_x. Please write \"yes\" or \"no\"" << std::endl;
-		throw std::logic_error("error parse config.cfg file");
-	}
-
-#endif
 
 	if (config.chech_equal_bytes_in_adresses == "yes") {
 	}
@@ -175,10 +155,7 @@ int parse_config(ConfigClass* config, std::string path)
 		config->path_m49h_0h_0h_1_x = access(v, tao::config::key("path_m49h_0h_0h_1_x")).get_string();
 		config->path_m84h_0h_0h_0_x = access(v, tao::config::key("path_m84h_0h_0h_0_x")).get_string();
 		config->path_m84h_0h_0h_1_x = access(v, tao::config::key("path_m84h_0h_0h_1_x")).get_string();
-#if 0
-		config->path_m44h_0h_1h_0_x = access(v, tao::config::key("path_m44h_0h_1h_0_x")).get_string();
-		config->path_m44h_0h_2h_0_x = access(v, tao::config::key("path_m44h_0h_2h_0_x")).get_string();
-#endif
+
 		config->static_btc_legacy_public_wallet_address = access(v, tao::config::key("static_btc_legacy_public_wallet_address")).get_string();
 
 		config->static_words_starting_point = access(v, tao::config::key("static_words_starting_point")).get_string();

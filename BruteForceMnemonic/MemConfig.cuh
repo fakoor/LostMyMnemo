@@ -8,7 +8,7 @@
 /************************************************************************/
 #define GPU_WORD_TO_CONST				0
 #define GPU_LENGTH_TO_CONST				0
-#define GPU_ACCNT_MIN_MAX_TO_CONST		0
+#define GPU_ACCNT_MIN_MAX_TO_CONST		0 /*Weired : Does Not Work When CONST */
 /************************************************************************/
 /*	
  * 

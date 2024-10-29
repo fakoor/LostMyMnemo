@@ -32,10 +32,7 @@ public:
 	std::string path_m49h_0h_0h_1_x = "";
 	std::string path_m84h_0h_0h_0_x = "";
 	std::string path_m84h_0h_0h_1_x = "";
-#if 0
-	std::string path_m44h_0h_1h_0_x = "";
-	std::string path_m44h_0h_2h_0_x = "";
-#endif
+
 	uint32_t generate_path[MAX_PATH_ARRAY_SIZE] = { 0 };
 	uint32_t num_paths = 0;
 
