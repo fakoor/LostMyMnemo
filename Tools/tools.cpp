@@ -97,7 +97,7 @@ namespace tools {
 		return words;
 	}
 
-	std::string GetMnemoString(int16_t* arr, uint8_t count) {
+	std::string GetMnemoString(int16_t* arr, uint8_t count, const uint8_t mnemonic_words[2048][9]) {
 		std::ostringstream words;
 		words.str("");;
 		for (int i = 0; i < count - 1; i++) {
@@ -129,7 +129,7 @@ namespace tools {
 	}
 
 
-
+#if STILL_BUILD_OLD_METHOD
 	void entropyTo12Words(uint64_t entr[2], const int16_t gen_words_indices[12], uint32_t idx, uint8_t* mnemonic_phrase) {
 		uint32_t num_worlds_gen = 0;
 		int16_t indices[12];
@@ -237,7 +237,7 @@ namespace tools {
 		mnemonic_phrase[mnemonic_index - 1] = 0;	//обязательно, убирает последний пробел
 
 	}
-
+#endif
 	int pushToMemory(uint8_t* addr_buff, std::vector<std::string>& lines, int max_len) {
 		int err = 0;
 		for (int x = 0; x < lines.size(); x++) {

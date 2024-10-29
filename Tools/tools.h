@@ -11,6 +11,8 @@
 #include <vector>
 #include <string>
 #include "../BruteForceMnemonic/stdafx.h"
+#include "../BruteForceMnemonic/Buildconfig.cuh"
+
 namespace tools {
 
 	void generateRandomUint64Buffer(uint64_t* buff, size_t len);
@@ -19,9 +21,10 @@ namespace tools {
 	void clearFiles(void);
 	void saveResult(char* mnemonic, uint8_t* hash160, size_t num_wallets, size_t num_all_childs, size_t num_childs, uint32_t path_generate[10]);
 	int checkResult(retStruct* ret);
-
+#if STILL_BUILD_OLD_METHOD
 	void entropyTo12Words(uint64_t entr[2], const int16_t gen_words_indices[12], uint32_t idx, uint8_t* mnemonic_phrase);
-	std::string GetMnemoString(int16_t* arr, uint8_t count);
+#endif
+	std::string GetMnemoString(int16_t* arr, uint8_t count, const uint8_t mnemonic_words[2048][9]);
 
 	void sha256(uint8_t* dest, const uint8_t* src, size_t n);
 

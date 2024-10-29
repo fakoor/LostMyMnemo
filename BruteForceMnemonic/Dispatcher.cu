@@ -45,6 +45,7 @@
 
 #include "EntropyTools.cuh"
 #include "AddressToHash.cuh"
+#include "Bip39Tools.cuh"
 
 static std::thread save_thread;
 
@@ -445,6 +446,8 @@ bool ApplyConfig(ConfigClass& Config)
 	}//catch
 	return true;
 }
+
+#if 0
 __host__ __device__
 void PrintNextMnemo(uint64_t batchMnemo[2] , uint64_t nHowMuch, int16_t carry [MAX_ADAPTIVE_BASE_POSITIONS]
 	, int16_t initDigits[MAX_ADAPTIVE_BASE_POSITIONS]
@@ -492,10 +495,10 @@ void PrintNextMnemo(uint64_t batchMnemo[2] , uint64_t nHowMuch, int16_t carry [M
 		,	digitSet[3][batchDigits[3]]
 		,	digitSet[4][batchDigits[4]]
 		,	digitSet[5][batchDigits[5]] };
-	printf ("Stars from 2nd half [%llu] --> %s\r\n", nHowMuch , tools::GetMnemoString(temArr, 6).c_str() );
-	printf ("Fully last checksum: [%llu] --> %s\r\n" ,nHowMuch, tools::GetMnemoString(tmp2, 12).c_str());
+	printf ("Stars from 2nd half [%llu] --> %s\r\n", nHowMuch , tools::GetMnemoString(temArr, 6, arrBipWords).c_str());
+	printf ("Fully last checksum: [%llu] --> %s\r\n" ,nHowMuch, tools::GetMnemoString(tmp2, 12, arrBipWords).c_str());
 }
-
+#endif
 
 
 

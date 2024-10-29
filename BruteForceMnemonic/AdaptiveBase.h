@@ -43,12 +43,13 @@ extern uint64_t host_EntropyNextPrefix2[1]; //Per-Batch Const
 //extern uint64_t* host_nProcessedFromBatch;
 //
 //extern uint64_t* host_nProcessedMoreThanBatch;
+#if 0
 __host__ __device__
 void PrintNextMnemo(uint64_t entrop[2], uint64_t nHowMuch, int16_t carry[MAX_ADAPTIVE_BASE_POSITIONS]
 	, int16_t initDigits[MAX_ADAPTIVE_BASE_POSITIONS]
 	, int16_t digitSet[MAX_ADAPTIVE_BASE_POSITIONS][MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION]
 );
-
+#endif
 
 
 
