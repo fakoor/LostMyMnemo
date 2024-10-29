@@ -227,6 +227,13 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 	}
 
 
+	host_accntMinMax[0] = 0;
+	host_accntMinMax[1] = 5;
+	printf("Size[0]=%u , Size_tot=%u\r\n", sizeof(host_accntMinMax[0]), sizeof(host_accntMinMax));
+	if (cudaSuccess != cudaMemcpyToSymbol(dev_accntMinMax, host_accntMinMax, sizeof (host_accntMinMax))) {
+		std::cout << "Error-Line--" << __LINE__ << std::endl;
+	}
+
 
 
 

@@ -8,6 +8,7 @@
 /************************************************************************/
 #define GPU_WORD_TO_CONST				0
 #define GPU_LENGTH_TO_CONST				0
+#define GPU_ACCNT_MIN_MAX_TO_CONST		0
 /************************************************************************/
 /*	
  * 
@@ -27,6 +28,13 @@
 #define GPU_BIP_WORDS_LENGTH_LOCATION		__constant__
 #else
 #define GPU_BIP_WORDS_LENGTH_LOCATION		__device__
-
 #endif
+
+#if GPU_ACCNT_MIN_MAX_TO_CONST
+#define GPU_ACCNT_MIN_MAX_LOCATION			__constant__
+#else
+#define GPU_ACCNT_MIN_MAX_LOCATION			__device__
+#endif
+
+
 #endif /*__MEMCONFIG_CUH__*/

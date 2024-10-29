@@ -25,9 +25,6 @@ static inline __device__ int device_hashcmp(const  uint32_t* p1, const uint32_t*
 }
 
 
-
-
-
 __global__ void gl_DictionaryScanner(
 	const uint64_t* __restrict__ nProcessingIteration,
 	uint64_t* nProcessedInstances
@@ -222,7 +219,7 @@ __global__ void gl_DictionaryScanner(
 				extended_private_key_t master_private_fo_extint;
 				extended_public_key_t target_public_key;
 
-				for (uint8_t accNo = 0; accNo < 3; accNo++) {
+				for (uint8_t accNo = dev_accntMinMax[0]; accNo <= dev_accntMinMax[1]; accNo++) {
 					hardened_private_child_from_private(master_private, &target_key, 44);
 					hardened_private_child_from_private(&target_key, &target_key, 0);
 					hardened_private_child_from_private(&target_key, &master_private_fo_extint, accNo); //acount-number

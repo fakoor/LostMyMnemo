@@ -1,6 +1,9 @@
 #pragma once
 #ifndef __VARS_CUH__
 #define __VARS_CUH__
+#include "cuda_runtime.h"
+#include "consts.h"
+#include "Memconfig.cuh"
 
 extern __device__ uint64_t dev_retEntropy[2];
 extern uint64_t host_retEntropy[2];
