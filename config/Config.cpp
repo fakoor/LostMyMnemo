@@ -156,6 +156,8 @@ int parse_config(ConfigClass* config, std::string path)
 		config->path_m84h_0h_0h_0_x = access(v, tao::config::key("path_m84h_0h_0h_0_x")).get_string();
 		config->path_m84h_0h_0h_1_x = access(v, tao::config::key("path_m84h_0h_0h_1_x")).get_string();
 
+		config->account_min_max = access(v, tao::config::key("account_min_max")).get_string();
+
 		config->static_btc_legacy_public_wallet_address = access(v, tao::config::key("static_btc_legacy_public_wallet_address")).get_string();
 
 		config->static_words_starting_point = access(v, tao::config::key("static_words_starting_point")).get_string();

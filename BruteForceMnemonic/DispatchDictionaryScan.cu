@@ -195,7 +195,7 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 
 
 	std::cout << "-- Starting Dictionary SCAN -- " << std::endl;
-	std::cout << "Looking for Account Range" <<host_accntMinMax[0]<<" to "<<host_accntMinMax[1]<< "."<< std::endl;
+	printf ("Looking for Account Range %u to %u.\r\n",host_accntMinMax[0],host_accntMinMax[1]);
 	std::cout << "Looking for Child Addresses" << 0 << " to " << Config->num_child_addresses << "." << std::endl;
 
 	std::cout << " Going to dispatch " << nProblemPower << " total COMBOs" <<std::endl
@@ -231,9 +231,9 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 	}
 
 
-	host_accntMinMax[0] = 0;
-	host_accntMinMax[1] = 5;
-	printf("Size[0]=%u , Size_tot=%u\r\n", sizeof(host_accntMinMax[0]), sizeof(host_accntMinMax));
+	//host_accntMinMax[0] = 0;
+	//host_accntMinMax[1] = 5;
+	printf("Size[0]=%llu , Size_tot=%llu\r\n", sizeof(host_accntMinMax[0]), sizeof(host_accntMinMax));
 	if (cudaSuccess != cudaMemcpyToSymbol(dev_accntMinMax, host_accntMinMax, sizeof (host_accntMinMax))) {
 		std::cout << "Error-Line--" << __LINE__ << std::endl;
 	}

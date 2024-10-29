@@ -33,6 +33,8 @@ public:
 	std::string path_m84h_0h_0h_0_x = "";
 	std::string path_m84h_0h_0h_1_x = "";
 
+	std::string account_min_max = "0 5";
+
 	uint32_t generate_path[MAX_PATH_ARRAY_SIZE] = { 0 };
 	uint32_t num_paths = 0;
 

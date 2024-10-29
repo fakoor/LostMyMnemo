@@ -323,6 +323,17 @@ bool ApplyConfig(ConfigClass& Config)
 
 		parse_config(&Config, "config.cfg");
 
+		std::vector<std::string> accntMinMax = tools::SplitWords(Config.account_min_max);
+		if (accntMinMax.size() == 2) {
+			char end[] = { NULL };
+			char* en = end;
+			host_accntMinMax[0] = strtoul(accntMinMax[0].c_str(),&en, 10);
+			host_accntMinMax[1] = strtoul(accntMinMax[1].c_str(), &en, 10);
+		}
+		else {
+			std::cout << "accntMinMax must be in range 0 to 255" << std::endl;
+		}
+
 		std::vector<std::string> startFrom = tools::SplitWords(Config.static_words_starting_point);
 
 
