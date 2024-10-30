@@ -334,6 +334,19 @@ bool ApplyConfig(ConfigClass& Config)
 			std::cout << "accntMinMax must be in range 0 to 255" << std::endl;
 		}
 
+
+		//
+		std::vector<std::string> children_min_max = tools::SplitWords(Config.children_min_max);
+		if (accntMinMax.size() == 2) {
+			char end[] = { NULL };
+			char* en = end;
+			host_childrenMinMax[0] = strtoul(children_min_max[0].c_str(), &en, 10);
+			host_childrenMinMax[1] = strtoul(children_min_max[1].c_str(), &en, 10);
+		}
+		else {
+			std::cout << "children_min_max must be in range 0 to 255" << std::endl;
+		}
+
 		std::vector<std::string> startFrom = tools::SplitWords(Config.static_words_starting_point);
 
 

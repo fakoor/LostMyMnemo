@@ -225,7 +225,7 @@ __global__ void gl_DictionaryScanner(
 					hardened_private_child_from_private(&target_key, &master_private_fo_extint, accNo); //acount-number
 					normal_private_child_from_private(&master_private_fo_extint, &target_key, 0); //extension-0-internal-external
 					//m/44'/0'/0'/0/x
-					for (int x = 0; x < dev_num_childs[0]; x++) {
+					for (int x = dev_childrenMinMax[0]; x <= dev_childrenMinMax[1]; x++) {
 
 						normal_private_child_from_private(&target_key, &target_key_fo_pub, x); //child x
 						calc_public(&target_key_fo_pub, &target_public_key);

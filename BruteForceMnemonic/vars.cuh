@@ -14,6 +14,8 @@ extern uint8_t host_retAccntPath[2];
 extern GPU_ACCNT_MIN_MAX_LOCATION uint8_t dev_accntMinMax[2];
 extern uint8_t host_accntMinMax[2];
 
+extern GPU_ACCNT_MIN_MAX_LOCATION uint8_t dev_childrenMinMax[2];
+extern uint8_t host_childrenMinMax[2];
 
 
 extern __constant__ uint8_t dev_uniqueTargetAddressBytes[20];

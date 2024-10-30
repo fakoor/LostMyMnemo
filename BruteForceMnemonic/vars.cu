@@ -12,6 +12,11 @@ GPU_ACCNT_MIN_MAX_LOCATION uint8_t dev_accntMinMax[2];
 uint8_t host_accntMinMax[2];
 
 
+
+GPU_ACCNT_MIN_MAX_LOCATION uint8_t dev_childrenMinMax[2];
+uint8_t host_childrenMinMax[2];
+
+
 __constant__ uint8_t dev_uniqueTargetAddressBytes[20];
 uint8_t host_uniqueTargetAddressBytes[20];
 

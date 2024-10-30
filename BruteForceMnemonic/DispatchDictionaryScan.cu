@@ -194,14 +194,14 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 	}
 
 
-	std::cout << "-- Starting Dictionary SCAN -- " << std::endl;
-	printf ("Looking for Account Range %u to %u.\r\n",host_accntMinMax[0],host_accntMinMax[1]);
-	std::cout << "Looking for Child Addresses" << 0 << " to " << Config->num_child_addresses << "." << std::endl;
+	printf("Starting Dictionary Scan...\r\n");
+	printf("Looking for Account Range %u to %u.\r\n",host_accntMinMax[0],host_accntMinMax[1]);
+	printf("Looking for Children Address from %u to %u.\r\n ", host_childrenMinMax[0], host_childrenMinMax[1]);
 
 	std::cout << " Going to dispatch " << nProblemPower << " total COMBOs" <<std::endl
 		<< " {via " << nIterationsNeeded
-		<<((nLastIterationRemainder > 0) ? "" : "Perfet")<< " iterations}" << " [Remainder:" <<
-		nLastIterationRemainder<<"]" <<std::endl
+		<<((nLastIterationRemainder > 0) ? "" : "Perfet")<< " iterations}" << " [Last one with:" <<
+		nLastIterationRemainder<<" COMBOs]" <<std::endl
 		<<" (each able to process " << nIterationPower << " instances)="<< Config->cuda_grid <<"x" << Config->cuda_block<< "x" << host_AdaptiveBaseDigitCarryTrigger[5] << std::endl;
 
 
@@ -233,11 +233,14 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 
 	//host_accntMinMax[0] = 0;
 	//host_accntMinMax[1] = 5;
-	printf("Size[0]=%llu , Size_tot=%llu\r\n", sizeof(host_accntMinMax[0]), sizeof(host_accntMinMax));
+	//printf("Size[0]=%llu , Size_tot=%llu\r\n", sizeof(host_accntMinMax[0]), sizeof(host_accntMinMax));
 	if (cudaSuccess != cudaMemcpyToSymbol(dev_accntMinMax, host_accntMinMax, sizeof (host_accntMinMax))) {
 		std::cout << "Error-Line--" << __LINE__ << std::endl;
 	}
 
+	if (cudaSuccess != cudaMemcpyToSymbol(dev_childrenMinMax, host_childrenMinMax, sizeof(host_childrenMinMax))) {
+		std::cout << "Error-Line--" << __LINE__ << std::endl;
+	}
 
 
 
@@ -317,14 +320,22 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 		}
 
 		if (host_retEntropy[0] != 0 || host_retEntropy[1] != 0) {
-			printf("Entropy found: %llX-%llX\r\n", host_retEntropy[0] , host_retEntropy[1]);
 			uint8_t disp[121];
 			GetAllWords(host_retEntropy, disp);
-			printf("|----------------------------------------------------------------------------------------|\r\n");
-			printf("|\t %s \t |\r\n", disp);
-			printf("|\t\t---------------------------------------------------------- \t\t|\r\n");
-			printf("|\t\t\t ACCOUNT= %u \t CHILD= %u  \t\t\t\t\t|\r\n", host_retAccntPath[0], host_retAccntPath[1]);
-			printf("|----------------------------------------------------------------------------------------|\r\n");
+			printf("|----------------------------------------------------------------------------------------\r\n");
+			// Get the handle to the console
+			HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+
+			// Set the text color to green (Green text on black background)
+			SetConsoleTextAttribute(hConsole, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
+			printf("|\t %s \t \r\n", disp);
+			// Reset the text color to default (usually white on black)
+			SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+			printf("|\t\t---------------------------------------------------------- \t\t\r\n");
+			printf("|\t\t\t ACCOUNT= %u \t CHILD= %u  \t\t\t\t\t\r\n", host_retAccntPath[0], host_retAccntPath[1]);
+			printf("|\t\t---------------------------------------------------------- \t\t\r\n");
+			printf("|\t\t\t\tEntropy : 0x%llX%llX\r\n", host_retEntropy[0], host_retEntropy[1]);
+			printf("|----------------------------------------------------------------------------------------\r\n");
 			playAlert();
 			break;
 
