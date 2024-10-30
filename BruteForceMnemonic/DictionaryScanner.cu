@@ -33,7 +33,7 @@ __global__ void gl_DictionaryScanner(
 
 	__shared__ uint64_t ourBlockProcNormal;
 	__shared__ uint64_t nGridJobCap;
-	__shared__ int16_t bContinueRunning;
+	__shared__ int32_t bContinueRunning;
 
 	int16_t local_static_word_index[12];
 
@@ -223,6 +223,7 @@ __global__ void gl_DictionaryScanner(
 					hardened_private_child_from_private(&target_key, &target_key, 0);
 					hardened_private_child_from_private(&target_key, &master_private_fo_extint, accNo); //acount-number
 					normal_private_child_from_private(&master_private_fo_extint, &target_key, 0); //extension-0-internal-external
+
 					//m/44'/0'/acc'/0/child (Zeros: first 0=Bitcoin , penultimate 0 = Extension)
 					for (int x = dev_childrenMinMax[0]; x <= dev_childrenMinMax[1]; x++) {
 
