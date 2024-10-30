@@ -13,17 +13,14 @@
 #include "Bip39Tools.cuh"
 
 
-
-static inline __device__ int device_hashcmp(const  uint32_t* p1, const uint32_t* p2) {
-#pragma unroll
-	for (auto i = 0; i < 20/4; ++i) {
-		if (p1[i] != p2[i]) {
-			return p1[i] < p2[i] ? -1 : 1; // Return -1 if p1 < p2, 1 if p1 > p2
-		}
-	}
-	return 0; // Memory regions are equal
+#if 1
+#define device_hashcmp(p1, p2) \
+    ( (((uint64_t*)p1)[0] == ((uint64_t*)p2)[0] && ((uint64_t*)p1)[1] == ((uint64_t*)p2)[1] && ((p1)[4] == ((uint32_t*)p2)[4]) )? (0) : (-1) )
+#else
+static inline __device__ int device_hashcmp(const  uint64_t* p1, const uint64_t* p2) {
+	return ( ((p1)[0] == (p2)[0] && (p1)[1] == (p2)[1] && *(uint32_t*)(&(p1)[2]) == *(uint32_t*)(&(p2)[2]) )? (0) : (-1) );
 }
-
+#endif
 
 __global__ void gl_DictionaryScanner(
 	const uint64_t* __restrict__ nProcessingIteration,
@@ -224,7 +221,7 @@ __global__ void gl_DictionaryScanner(
 					hardened_private_child_from_private(&target_key, &target_key, 0);
 					hardened_private_child_from_private(&target_key, &master_private_fo_extint, accNo); //acount-number
 					normal_private_child_from_private(&master_private_fo_extint, &target_key, 0); //extension-0-internal-external
-					//m/44'/0'/0'/0/x
+					//m/44'/0'/acc'/0/child (Zeros: first 0=Bitcoin , penultimate 0 = Extension)
 					for (int x = dev_childrenMinMax[0]; x <= dev_childrenMinMax[1]; x++) {
 
 						normal_private_child_from_private(&target_key, &target_key_fo_pub, x); //child x
@@ -232,7 +229,7 @@ __global__ void gl_DictionaryScanner(
 						calc_hash160(&target_public_key, hash);
 
 
-						if (device_hashcmp((uint32_t*)hash, (uint32_t*)dev_uniqueTargetAddressBytes) == 0) {
+						if (device_hashcmp(hash, dev_uniqueTargetAddressBytes) == 0) {
 							dev_retEntropy[0] = curEntropy[0];
 							dev_retEntropy[1] = curEntropy[1];
 							dev_retAccntPath[0] = accNo;
