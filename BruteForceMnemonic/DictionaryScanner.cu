@@ -15,7 +15,7 @@
 
 #if 1
 #define device_hashcmp(p1, p2) \
-    ( (((uint64_t*)p1)[0] == ((uint64_t*)p2)[0] && ((uint64_t*)p1)[1] == ((uint64_t*)p2)[1] && ((p1)[4] == ((uint32_t*)p2)[4]) )? (0) : (-1) )
+    ( (((uint64_t*)p1)[0] == ((uint64_t*)p2)[0] && ((uint64_t*)p1)[1] == ((uint64_t*)p2)[1] && ((p1)[4] == ((uint32_t*)p2)[4]) )? (0) : (1) )
 #else
 static inline __device__ int device_hashcmp(const  uint64_t* p1, const uint64_t* p2) {
 	return ( ((p1)[0] == (p2)[0] && (p1)[1] == (p2)[1] && *(uint32_t*)(&(p1)[2]) == *(uint32_t*)(&(p2)[2]) )? (0) : (-1) );
@@ -229,7 +229,7 @@ __global__ void gl_DictionaryScanner(
 						calc_hash160(&target_public_key, hash);
 
 
-						if (device_hashcmp(hash, dev_uniqueTargetAddressBytes) == 0) {
+						if (device_hashcmp(hash, dev_uniqueTargetAddressBytes)<=0) {
 							dev_retEntropy[0] = curEntropy[0];
 							dev_retEntropy[1] = curEntropy[1];
 							dev_retAccntPath[0] = accNo;

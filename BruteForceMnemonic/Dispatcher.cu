@@ -454,10 +454,8 @@ bool ApplyConfig(ConfigClass& Config)
 
 		int convErr = tools::hexStringToBytes(hashedAddr, host_uniqueTargetAddressBytes, 20);
 
-		std::cout << "We are looking for: " << hashedAddr.c_str() 
-			<<" with " << hashedAddr.length() << " characters"
-			<< " corresponding to original address:" << Config.static_btc_legacy_public_wallet_address 
-			<< " conversion result: "<< convErr
+		std::cout << "We are looking for: " << hashedAddr.c_str() <<" hash" <<std::endl
+			<< " that is representation of :" << Config.static_btc_legacy_public_wallet_address 
 			<< std::endl;
 	}//try
 	catch (...) {

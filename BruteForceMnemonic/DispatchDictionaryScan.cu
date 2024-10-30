@@ -332,9 +332,9 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 			// Reset the text color to default (usually white on black)
 			SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
 			printf("|\t\t---------------------------------------------------------- \t\t\r\n");
-			printf("|\t\t\t ACCOUNT= %u \t CHILD= %u  \t\t\t\t\t\r\n", host_retAccntPath[0], host_retAccntPath[1]);
+			printf("|\t\t\t Account= %u \t Child= %u  \t\t\t\t\t\r\n", host_retAccntPath[0], host_retAccntPath[1]);
 			printf("|\t\t---------------------------------------------------------- \t\t\r\n");
-			printf("|\t\t\t\tEntropy : 0x%llX%llX\r\n", host_retEntropy[0], host_retEntropy[1]);
+			printf("|\t\t\t Entropy : 0x%llX%llX\r\n", host_retEntropy[0], host_retEntropy[1]);
 			printf("|----------------------------------------------------------------------------------------\r\n");
 			playAlert();
 			break;
