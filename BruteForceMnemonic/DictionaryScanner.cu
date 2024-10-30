@@ -33,7 +33,7 @@ __global__ void gl_DictionaryScanner(
 
 	__shared__ uint64_t ourBlockProcNormal;
 	__shared__ uint64_t nGridJobCap;
-	__shared__ uint8_t bDone;
+	__shared__ int16_t bContinueRunning;
 
 	int16_t local_static_word_index[12];
 
@@ -41,7 +41,7 @@ __global__ void gl_DictionaryScanner(
 	if (threadIdx.x == 0) {
 		ourBlockProcNormal = 0;
 		nGridJobCap = ULLONG_MAX;
-		bDone = 0;
+		bContinueRunning = 1;
 	}
 	__syncthreads(); // Synchronize to ensure the initialization is complete
 
@@ -49,6 +49,7 @@ __global__ void gl_DictionaryScanner(
 		local_static_word_index[i] = dev_static_words_indices[i];
 	}
 
+	//int4 m128retEntropy = { 0,0,0,0 };
 
 	uint64_t curEntropy[2];
 	curEntropy[0] = dev_EntropyAbsolutePrefix64[PTR_AVOIDER];
@@ -104,10 +105,12 @@ __global__ void gl_DictionaryScanner(
 				break;
 			}
 
-			if (false == IncrementAdaptiveDigits(
+			IncrementAdaptiveDigits(
 				dev_AdaptiveBaseDigitCarryTrigger
 				, dev_AdaptiveBaseCurrentBatchInitialDigits
-				, nInstanceOffset, curDigits)) {
+				, nInstanceOffset, curDigits, &bContinueRunning);
+
+			if (bContinueRunning<=0) {
 
 				atomicMin(&nGridJobCap, nInstanceOffset);
 				break;
@@ -141,7 +144,6 @@ __global__ void gl_DictionaryScanner(
 
 
 			//Work with Current Entropy
-			//entropy_to_mnemonic_with_offset(curEntropy, mnemonic, 0, local_static_word_index);
 			IndicesToMnemonic(local_static_word_index, (uint8_t*)mnemonic, words, word_lengths);
 
 #pragma unroll
@@ -234,19 +236,23 @@ __global__ void gl_DictionaryScanner(
 							dev_retEntropy[1] = curEntropy[1];
 							dev_retAccntPath[0] = accNo;
 							dev_retAccntPath[1] = x;
-							bDone = 1;
-							break;
+							bContinueRunning = 0;
+							return;
 						}
-						if (bDone != 0)
+						if (bContinueRunning <= 0)
 							break;
 					}
-					if (bDone != 0)
+					if (bContinueRunning <= 0)
 						break;
 				}//accNo
-				if (bDone != 0)
+				if (bContinueRunning <= 0)
 					break;
 			}
+			if (bContinueRunning <= 0)
+				break;
 		}//for word 11 
+		if (bContinueRunning <= 0)
+			break;
 	}//word 10
 	__syncthreads(); // Synchronize to ensure all data is loaded
 	if (threadIdx.x == 0) {

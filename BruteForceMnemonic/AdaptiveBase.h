@@ -24,44 +24,44 @@ void PrintNextMnemo(uint64_t entrop[2], uint64_t nHowMuch, int16_t carry[MAX_ADA
 );
 #endif
 
-
-
-inline __host__ /* __and__ */ __device__   bool IncrementAdaptiveDigits(int16_t* local_AdaptiveBaseDigitCarryTrigger, int16_t* inDigits, uint64_t howMuch, int16_t* outDigits) {
-	uint64_t nYetToAdd = howMuch;
-	uint64_t nCarryValue = 0;
-	int16_t tmpResult[MAX_ADAPTIVE_BASE_POSITIONS];
-
-	for (char i = MAX_ADAPTIVE_BASE_POSITIONS - 1; i >= 0; i--) {
-		if (nYetToAdd == 0 && nCarryValue == 0) {
-			tmpResult[i] = inDigits[i];
-			continue;
-		}
-
-		int16_t beforeIncDigit = inDigits[i];
-		int nCarryAt = local_AdaptiveBaseDigitCarryTrigger[i];
-
-		int nThisIdeal = nYetToAdd + beforeIncDigit + nCarryValue;
-		int nThisNewDigit = nThisIdeal % nCarryAt;
-
-
-		tmpResult[i] = nThisNewDigit;
-		nCarryValue = nThisIdeal / nCarryAt;
-		nYetToAdd = 0; //all active in carry if any
-	}
-	{
-		bool bMoreCarry = (nYetToAdd != 0 || nCarryValue != 0);
-
-		for (char i = 0; i < MAX_ADAPTIVE_BASE_POSITIONS; i++) {
-			outDigits[i] = (bMoreCarry)? local_AdaptiveBaseDigitCarryTrigger[i]-1 : tmpResult[i];
-		}
-		if (bMoreCarry) {
-			//ASSERT: We have carried out of our space, NOP anyway
-			return false;
-		}
-
-	}
-	return true;
-}
+//#if 1
+//#else
+//inline __host__ /* __and__ */ __device__   void IncrementAdaptiveDigits(int16_t* local_AdaptiveBaseDigitCarryTrigger, int16_t* inDigits, uint64_t howMuch, int16_t* outDigits, int16_t* bCanContinue) 
+//#endif
+#define IncrementAdaptiveDigits(local_AdaptiveBaseDigitCarryTrigger, inDigits, howMuch, outDigits, bCanContinue) \
+{ \
+	uint64_t nYetToAdd = howMuch; \
+	uint64_t nCarryValue = 0; \
+	int16_t tmpResult[MAX_ADAPTIVE_BASE_POSITIONS]; \
+	\
+	for (char i = MAX_ADAPTIVE_BASE_POSITIONS - 1; i >= 0; i--) { \
+		if (nYetToAdd == 0 && nCarryValue == 0) { \
+			tmpResult[i] = inDigits[i]; \
+			\
+		}\
+		else {\
+			\
+			int16_t beforeIncDigit = inDigits[i]; \
+			int16_t nCarryAt = local_AdaptiveBaseDigitCarryTrigger[i];\
+\
+			uint64_t nThisIdeal = nYetToAdd + beforeIncDigit + nCarryValue; \
+			int16_t nThisNewDigit = nThisIdeal % nCarryAt; \
+\
+			tmpResult[i] = nThisNewDigit; \
+			nCarryValue = nThisIdeal / nCarryAt; \
+			nYetToAdd = 0; /*all active in carry if any*/ \
+		} \
+	}/* for */ \
+	if (nYetToAdd != 0 || nCarryValue != 0) \
+		*bCanContinue = 0; \
+\
+		outDigits[0] = (*bCanContinue<=0)? local_AdaptiveBaseDigitCarryTrigger[0]-1 : tmpResult[0]; \
+		outDigits[1] = (*bCanContinue<=0)? local_AdaptiveBaseDigitCarryTrigger[1]-1 : tmpResult[1]; \
+		outDigits[2] = (*bCanContinue<=0)? local_AdaptiveBaseDigitCarryTrigger[2]-1 : tmpResult[2]; \
+		outDigits[3] = (*bCanContinue<=0)? local_AdaptiveBaseDigitCarryTrigger[3]-1 : tmpResult[3]; \
+		outDigits[4] = (*bCanContinue<=0)? local_AdaptiveBaseDigitCarryTrigger[4]-1 : tmpResult[4]; \
+		outDigits[5] = (*bCanContinue<=0)? local_AdaptiveBaseDigitCarryTrigger[5]-1 : tmpResult[5]; \
+} 
 
 __host__ /* __and__ */ __device__ void GetBipForAdaptiveDigit(
 	int16_t* local_AdaptiveBaseCurrentBatchInitialDigits

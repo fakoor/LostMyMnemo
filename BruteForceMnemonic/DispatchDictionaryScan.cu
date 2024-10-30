@@ -266,8 +266,11 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 		}
 
 		printf("Iteration: %llu started.\r\n", *Data->host.nProcessingIteration + 1);
+		int16_t nDummyRet;
+
 		IncrementAdaptiveDigits(host_AdaptiveBaseDigitCarryTrigger, host_AdaptiveBaseCurrentBatchInitialDigits
-			, nUniversalProcessed, digitShow);
+			, nUniversalProcessed, digitShow, &nDummyRet);
+
 		ShowAdaptiveStr(host_AdaptiveBaseDigitSet,digitShow, arrBipWords,arrBipWordsLengths,strMnemoShow);
 		printf("<FROM> * * * * * *\t %s </FROM> (%llu)\r\n", strMnemoShow, nUniversalProcessed+1);
 
@@ -295,8 +298,10 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 
 		nUniversalProcessed += *Data->host.nProcessedInstances;
 		//printf("\t\t\t.\r\n\t\t\t.\r\n\t\t\t.\r\n");
+		//int16_t nDummyRet;
 		IncrementAdaptiveDigits(host_AdaptiveBaseDigitCarryTrigger, host_AdaptiveBaseCurrentBatchInitialDigits
-			, nUniversalProcessed-1, digitShow);
+			, nUniversalProcessed-1, digitShow, &nDummyRet);
+
 		ShowAdaptiveStr(host_AdaptiveBaseDigitSet, digitShow, arrBipWords, arrBipWordsLengths, strMnemoShow);
 
 		printf("<UPTO> * * * * * * \t %s </UPTO> (%llu)\r\n", strMnemoShow, nUniversalProcessed);
@@ -328,13 +333,13 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 
 			// Set the text color to green (Green text on black background)
 			SetConsoleTextAttribute(hConsole, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
-			printf("|\t %s \t \r\n", disp);
+			printf("|    %s \t \r\n", disp);
 			// Reset the text color to default (usually white on black)
 			SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-			printf("|\t\t---------------------------------------------------------- \t\t\r\n");
-			printf("|\t\t\t Account= %u \t Child= %u  \t\t\t\t\t\r\n", host_retAccntPath[0], host_retAccntPath[1]);
-			printf("|\t\t---------------------------------------------------------- \t\t\r\n");
-			printf("|\t\t\t Entropy : 0x%llX%llX\r\n", host_retEntropy[0], host_retEntropy[1]);
+			printf("|\t---------------------------------------------------------- \t\t\r\n");
+			printf("|\t\t Account= %u \t Child= %u  \t\t\t\t\t\r\n", host_retAccntPath[0], host_retAccntPath[1]);
+			printf("|\t---------------------------------------------------------- \t\t\r\n");
+			printf("|\t\t Entropy : 0x%llX%llX\r\n", host_retEntropy[0], host_retEntropy[1]);
 			printf("|----------------------------------------------------------------------------------------\r\n");
 			playAlert();
 			break;
