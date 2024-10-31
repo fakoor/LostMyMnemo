@@ -18,27 +18,34 @@ void ShowAdaptiveStr(int16_t digitSet[MAX_ADAPTIVE_BASE_POSITIONS][MAX_ADAPTIVE_
 	, const uint8_t arrBipWordsLengths[2048]
 	, char* str);
 
-__host__ /*and */ __device__
-inline void AdaptiveUpdateMnemonicLow64(uint64_t* low64
-	, int16_t digitSet[MAX_ADAPTIVE_BASE_POSITIONS][MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION]
-	, int16_t curDigits[MAX_ADAPTIVE_BASE_POSITIONS]
-)
-
-{
-	uint64_t tmpHigh = *low64;
-	uint64_t tmpAns = tmpHigh;
-
-	tmpAns = tmpHigh >> 62;
-	//tmpAns = tmpAns << 2;
-#pragma unroll
-	for (int i = 0; i < MAX_ADAPTIVE_BASE_POSITIONS - 1; i++) {
-		tmpAns = tmpAns << 11;
-		tmpAns |= (uint64_t)(digitSet[i][curDigits[i]]);
-	}
-	tmpAns = tmpAns << 7;
-	tmpAns |= ((uint64_t)(digitSet[MAX_ADAPTIVE_BASE_POSITIONS - 1][curDigits[MAX_ADAPTIVE_BASE_POSITIONS - 1]]) >> 4);
-
-	*low64 = tmpAns;
+//__host__ /*and */ __device__
+//inline void AdaptiveUpdateMnemonicLow64(uint64_t* low64
+//	, int16_t digitSet[MAX_ADAPTIVE_BASE_POSITIONS][MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION]
+//	, int16_t curDigits[MAX_ADAPTIVE_BASE_POSITIONS]
+//)
+#define AdaptiveUpdateMnemonicLow64(low64, digitSet, curDigits) \
+{\
+	uint64_t tmpAns = *low64 >> 62;\
+	/* Post 6 to 10 (penultimate) */\
+	tmpAns = tmpAns << 11;\
+	tmpAns |= (uint64_t)(digitSet[0][curDigits[0]]);\
+\
+	tmpAns = tmpAns << 11;\
+	tmpAns |= (uint64_t)(digitSet[1][curDigits[1]]);\
+\
+	tmpAns = tmpAns << 11;\
+	tmpAns |= (uint64_t)(digitSet[2][curDigits[2]]);\
+\
+	tmpAns = tmpAns << 11;\
+	tmpAns |= (uint64_t)(digitSet[3][curDigits[3]]);\
+\
+	tmpAns = tmpAns << 11;\
+	tmpAns |= (uint64_t)(digitSet[4][curDigits[4]]);\
+	/* Last Pos (11) */\
+	tmpAns = tmpAns << 7;\
+	tmpAns |= ((uint64_t)(digitSet[MAX_ADAPTIVE_BASE_POSITIONS - 1][curDigits[MAX_ADAPTIVE_BASE_POSITIONS - 1]]) >> 4);\
+\
+	*low64 = tmpAns;\
 }
 
 
