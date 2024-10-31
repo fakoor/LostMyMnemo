@@ -25,7 +25,7 @@ void ShowAdaptiveStr(int16_t digitSet[MAX_ADAPTIVE_BASE_POSITIONS][MAX_ADAPTIVE_
 //)
 #define AdaptiveUpdateMnemonicLow64(low64, digitSet, curDigits) \
 {\
-	uint64_t tmpAns = *low64 >> 62;\
+	uint64_t tmpAns = *(low64) >> 62;\
 	/* Post 6 to 10 (penultimate) */\
 	tmpAns = tmpAns << 11;\
 	tmpAns |= (uint64_t)(digitSet[0][curDigits[0]]);\
@@ -92,9 +92,8 @@ inline void IndicesToMnemonic(
 
 
 __device__
-inline bool CheckSumValidate(uint8_t checkSumInputBlock[16], uint64_t entropy[2], uint8_t reqChecksum) {
+inline void CheckSumValidate(uint8_t checkSumInputBlock[16], uint64_t entropy[2], uint8_t reqChecksum, int8_t* bChkMatched) {
 	uint8_t entropy_hash[32];
-	//uint64_t* entropy = curEntropy;
 
 	checkSumInputBlock[15] = entropy[1] & 0xFF;
 	checkSumInputBlock[14] = (entropy[1] >> 8) & 0xFF;
@@ -109,8 +108,8 @@ inline bool CheckSumValidate(uint8_t checkSumInputBlock[16], uint64_t entropy[2]
 	sha256((uint32_t*)checkSumInputBlock, 16, (uint32_t*)entropy_hash);
 	uint8_t achievedChecksum = (entropy_hash[0] >> 4) & 0x0F;
 
-	bool bChkMatched = (achievedChecksum == reqChecksum);
-	return bChkMatched;
+	*bChkMatched = (achievedChecksum == reqChecksum)?1:0;
+	//return bChkMatched;
 }
 
 

@@ -126,10 +126,11 @@ __global__ void gl_DictionaryScanner(
 
 
 			uint8_t reqChecksum = wordElevenBipVal & 0x000F;
-			bool bChkMatched = CheckSumValidate(checkSumInputBlock, curEntropy, reqChecksum);
+			int8_t bChkMatched;
+			CheckSumValidate(checkSumInputBlock, curEntropy, reqChecksum, &bChkMatched);
 
 
-			if (!bChkMatched) {
+			if (bChkMatched<=0) {
 				continue;
 			}
 			//NOTE : If we reach here the checksum is already matching, just need to check the address
