@@ -127,6 +127,7 @@ __global__ void gl_DictionaryScanner(
 
 			uint8_t reqChecksum = wordElevenBipVal & 0x000F;
 			int8_t bChkMatched;
+			
 			CheckSumValidate(checkSumInputBlock, curEntropy, reqChecksum, &bChkMatched);
 
 
