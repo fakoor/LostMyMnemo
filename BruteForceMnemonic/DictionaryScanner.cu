@@ -31,12 +31,14 @@ __global__ void gl_DictionaryScanner()
 	__shared__ uint64_t ourBlockProcNormal;
 	__shared__ uint64_t nGridJobCap;
 	__shared__ int32_t bContinueRunning;
+	__shared__ uint64_t nThisBlockAddrs;
 	int16_t local_static_word_index[12];
 
 	// Initialize the shared variable (first thread of each block)
 	if (threadIdx.x == 0) {
 		ourBlockProcNormal = 0;
 		nGridJobCap = ULLONG_MAX;
+		nThisBlockAddrs = 0;
 		atomicExch(&bContinueRunning, 1);
 	}
 	__syncthreads(); // Synchronize to ensure the initialization is complete
@@ -74,6 +76,11 @@ __global__ void gl_DictionaryScanner()
 
 	for (uint64_t nManagedIter = 0; nManagedIter < dev_nManagedIterationsMaxCurrent[0]; nManagedIter++) {
 		//atomicMin(&nManagedIterationsMaxCurrent[1], nManagedIter);
+		if (b_globalContinueRunning == 0) {
+			atomicExch (&bContinueRunning, 0);
+			return;
+		}
+
 
 		uint8_t mnemonic_phrase[SIZE_MNEMONIC_FRAME] = { 0 };
 		uint8_t* mnemonic = mnemonic_phrase;
@@ -108,9 +115,6 @@ __global__ void gl_DictionaryScanner()
 					, dev_AdaptiveBaseCurrentBatchInitialDigits
 					, nInstanceOffset, curDigits, &bContinueRunning);
 
-				if (b_globalContinueRunning == 0) {
-					bContinueRunning = 0;
-				}
 
 				if (bContinueRunning <= 0) {
 
@@ -222,6 +226,7 @@ __global__ void gl_DictionaryScanner()
 					extended_private_key_t master_private_fo_extint;
 					extended_public_key_t target_public_key;
 
+
 					for (uint8_t accNo = dev_accntMinMax[0]; accNo <= dev_accntMinMax[1]; accNo++) {
 						hardened_private_child_from_private(master_private, &target_key, 44);
 						hardened_private_child_from_private(&target_key, &target_key, 0);
@@ -236,6 +241,7 @@ __global__ void gl_DictionaryScanner()
 							calc_public(&target_key_fo_pub, &target_public_key);
 							calc_hash160(&target_public_key, hash);
 
+							atomicAdd(&nThisBlockAddrs, 1);
 
 							if (device_hashcmp(hash, dev_uniqueTargetAddressBytes) <= 0) {
 								printf("\r\n --- Hash found by Instance:%llu, (Itertion:%llu, Block:%u, Thread:%u, W10=%u, W11=%u) --- \r\n"
@@ -244,8 +250,10 @@ __global__ void gl_DictionaryScanner()
 								dev_retEntropy[1] = curEntropy[1];
 								dev_retAccntPath[0] = accNo;
 								dev_retAccntPath[1] = x;
-								bContinueRunning = 0;
+								atomicExch(&bContinueRunning, 0);
 								atomicExch(&b_globalContinueRunning, 0);
+								atomicAdd(&dev_nComboEachThread[blockIdx.x][threadIdx.x], 1);
+								printf("\r\n --- returning ---\r\n");
 								return;
 							}
 							if (bContinueRunning <= 0)
@@ -263,12 +271,15 @@ __global__ void gl_DictionaryScanner()
 			if (bContinueRunning <= 0)
 				break;
 		}//word 10
-		__syncthreads(); // Synchronize to ensure all data is loaded
-		if (threadIdx.x == 0) {
-//			atomicAdd(nProcessedInstances, ourBlockProcNormal);
-			atomicAdd(&nManagedIterationsPerBlock[blockIdx.x], 1);
-		}
 		if (bContinueRunning <= 0)
 			break;
 	}//managed iteration
+	__syncthreads(); // Synchronize to ensure all data is loaded
+	if (threadIdx.x == 0) {
+		//			atomicAdd(nProcessedInstances, ourBlockProcNormal);
+		//atomicAdd(&nManagedIterationsPerBlock[blockIdx.x], 1);
+		atomicAdd(dev_universalCount, nThisBlockAddrs);
+
+	}
+
 }//DICTIONARY ATTACK

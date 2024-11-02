@@ -197,8 +197,9 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 	host_nManagedIterationsMaxCurrent[0] = nIterationsNeeded;
 	host_nManagedIterationsMaxCurrent[1] = 0ui64;
 
-	for (int i = 0; i < MAX_BLOCKS; i++) {
-		nManagedIterationsPerBlock[i] = 0;
+	for (int b = 0; b < MAX_BLOCKS; b++) {
+		for (int t = 0 ; t< MAX_THREADS_PER_BLOCK; t++)
+			host_nComboEachThread[b][t] = 0;
 	}
 
 	printf("Starting Dictionary Scan...\r\n");
@@ -246,6 +247,16 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 	if (cudaSuccess != cudaMemcpyToSymbol(dev_retAccntPath, host_retAccntPath, 2)) {
 		std::cout << "Error-Line--" << __LINE__ << std::endl;
 	}
+
+	host_universalCount[0] = 0;
+	if (cudaSuccess != cudaMemcpyToSymbol(dev_universalCount, host_universalCount, sizeof(host_universalCount))) {
+		std::cout << "Error-Line--" << __LINE__ << std::endl;
+	}
+
+	if (cudaSuccess != cudaMemcpyToSymbol(dev_nComboEachThread, host_nComboEachThread, sizeof(host_nComboEachThread))) {
+		std::cout << "Error-Line--" << __LINE__ << std::endl;
+	}
+
 
 #endif
 	//host_accntMinMax[0] = 0;
@@ -361,11 +372,21 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 
 #endif
 
+		cudaError_t cudRet = cudaMemcpyFromSymbol(host_universalCount, dev_universalCount, sizeof(host_universalCount));
+		if (cudaSuccess != cudRet) {
+			std::cout << "Error-Line--" << __LINE__ <<" RET= "<<cudRet<<std::endl;
+		}
 
+		cudRet = cudaMemcpyFromSymbol(host_nComboEachThread, dev_nComboEachThread, sizeof(host_nComboEachThread));
+		if (cudaSuccess != cudRet) {
+			std::cout << "Error-Line--" << __LINE__ << " RET= " << cudRet << std::endl;
+		}
 
-		* Data->host.nProcessedInstances = nIterationPower;
-		std::cout << "Iteration " << *Data->host.nProcessingIteration + 1
-			<< " completed we have processed  " << *Data->host.nProcessedInstances << " COMBOs  at " << tools::formatPrefix((double)*Data->host.nProcessedInstances / delay) << " COMBO/Sec" 
+		//* Data->host.nProcessedInstances = nIterationPower;
+		std::cout 
+			//<< "Iteration " << *Data->host.nProcessingIteration + 1
+			<< " completed we have processed  " << host_universalCount[0] << " ADDRs  at " 
+			<< tools::formatPrefix((double)host_universalCount[0] / delay) << " ADDR/Sec"
 			//<<" (Unused:"<<nSkippedLast<<") "
 			<< std::endl;
 			
@@ -407,6 +428,24 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 		break;
 	} while (*Data->host.nProcessingIteration < nIterationsNeeded);//trunk
 
+	uint64_t nMaxProc = 0;
+	uint64_t nMinProc = ULLONG_MAX;
+	uint64_t nWinnerThread;
+	uint64_t nLoserThread;
+	uint64_t nTotalProcesses=0;
+	for (int b = 0; b < MAX_BLOCKS; b++) {
+		int nThisBlockProc = 0;
+		for (int t = 0; t < MAX_THREADS_PER_BLOCK; t++) {
+			int nThisThreadProc = host_nComboEachThread[b][t];
+			nTotalProcesses += nThisThreadProc;
+			uint64_t plainId =  b* MAX_THREADS_PER_BLOCK + t;
+			if (nThisThreadProc > nMaxProc) {
+				nMaxProc = nThisThreadProc;
+				nWinnerThread = plainId;
+			}			
+		}
+	}
+	printf("\r\nHardworker thread was: %llu with %llu processes out of %llu\r\n", nWinnerThread, nMaxProc, nTotalProcesses);
 	return true;
 }
 

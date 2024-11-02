@@ -8,6 +8,9 @@
 
 extern __device__ int32_t b_globalContinueRunning;
 
+extern __device__ uint64_t dev_universalCount[1];
+extern uint64_t host_universalCount[1];
+
 
 extern __device__ uint64_t dev_retEntropy[2];
 extern uint64_t host_retEntropy[2];
@@ -24,7 +27,8 @@ extern uint8_t host_childrenMinMax[2];
 extern __device__  uint64_t dev_nManagedIterationsMaxCurrent[2];
 extern uint64_t host_nManagedIterationsMaxCurrent[2];
 
-extern __device__  uint64_t nManagedIterationsPerBlock[MAX_BLOCKS];
+extern __device__  uint64_t dev_nComboEachThread[MAX_BLOCKS][MAX_THREADS_PER_BLOCK];
+extern uint64_t host_nComboEachThread[MAX_BLOCKS][MAX_THREADS_PER_BLOCK];
 
 
 extern __constant__ uint8_t dev_uniqueTargetAddressBytes[20];

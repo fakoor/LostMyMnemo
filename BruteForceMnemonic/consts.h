@@ -15,5 +15,7 @@
 #define MAX_ADAPTIVE_BASE_VARIANTS_PER_POSITION 262
 
 
-#define MAX_BLOCKS		1024
+#define MAX_BLOCKS					1024
+#define MAX_THREADS_PER_BLOCK		256
+
 #endif /* __CONSTS_H__ */
