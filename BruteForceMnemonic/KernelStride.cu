@@ -23,7 +23,7 @@
 #include "BuildConfig.cuh"
 
 int stride_class::DictionaryAttack(uint64_t grid, uint64_t block) {
-	gl_DictionaryScanner << <(uint32_t)grid, (uint32_t)block, 0, dt->stream1 >> > (dt->dev.nProcessingIteration, dt->dev.nProcessedInstances);
+	gl_DictionaryScanner << <(uint32_t)grid, (uint32_t)block, 0, dt->stream1 >> > ();
 	cudaError_t err = cudaGetLastError();
 	if (err != cudaSuccess) {
 		std::cerr << "Kernel launch failed: " << cudaGetErrorString(err) << std::endl;

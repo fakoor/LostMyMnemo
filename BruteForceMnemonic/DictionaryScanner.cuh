@@ -6,10 +6,7 @@
 #include "GPU.h"
 #include "EntropyTools.cuh"
 
-__global__ void gl_DictionaryScanner(
-	const uint64_t* __restrict__ nProcessedIterations,
-	uint64_t* nProcessedInstances
-);
+__global__ void gl_DictionaryScanner();
 
 
 __device__

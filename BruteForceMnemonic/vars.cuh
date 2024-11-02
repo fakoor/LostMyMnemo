@@ -5,6 +5,10 @@
 #include "consts.h"
 #include "Memconfig.cuh"
 
+
+extern __device__ int32_t b_globalContinueRunning;
+
+
 extern __device__ uint64_t dev_retEntropy[2];
 extern uint64_t host_retEntropy[2];
 
@@ -16,6 +20,11 @@ extern uint8_t host_accntMinMax[2];
 
 extern GPU_ACCNT_MIN_MAX_LOCATION uint8_t dev_childrenMinMax[2];
 extern uint8_t host_childrenMinMax[2];
+
+extern __device__  uint64_t dev_nManagedIterationsMaxCurrent[2];
+extern uint64_t host_nManagedIterationsMaxCurrent[2];
+
+extern __device__  uint64_t nManagedIterationsPerBlock[MAX_BLOCKS];
 
 
 extern __constant__ uint8_t dev_uniqueTargetAddressBytes[20];

@@ -186,13 +186,20 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 
 
 	uint64_t nSolverThreads = Config->cuda_block * Config->cuda_grid;
-	uint64_t nIterationPower = nSolverThreads * host_AdaptiveBaseDigitCarryTrigger[4] * host_AdaptiveBaseDigitCarryTrigger[5];
+	uint64_t nThreadPower = host_AdaptiveBaseDigitCarryTrigger[4] * host_AdaptiveBaseDigitCarryTrigger[5];
+	uint64_t nIterationPower = nSolverThreads * nThreadPower;
 	uint64_t nIterationsNeeded = nProblemPower / nIterationPower;
 	uint64_t nLastIterationRemainder = nProblemPower - nIterationsNeeded * nIterationPower;
+	uint64_t nLastIterationMaxBlockIdx =  nLastIterationRemainder / nThreadPower / Config->cuda_block;
 	if (nLastIterationRemainder > 0) {
 		nIterationsNeeded++;
 	}
+	host_nManagedIterationsMaxCurrent[0] = nIterationsNeeded;
+	host_nManagedIterationsMaxCurrent[1] = 0ui64;
 
+	for (int i = 0; i < MAX_BLOCKS; i++) {
+		nManagedIterationsPerBlock[i] = 0;
+	}
 
 	printf("Starting Dictionary Scan...\r\n");
 	printf("Looking for Account Range %u to %u.\r\n",host_accntMinMax[0],host_accntMinMax[1]);
@@ -216,6 +223,16 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 	*Data->host.nProcessedInstances = 0;
 	*Data->host.nProcessingIteration = 0;
 
+#if 0
+
+	dev_retEntropy[0] = 0ui64;
+	dev_retEntropy[1] = 0ui64;
+
+	dev_retAccntPath[0] = 0;
+	dev_retAccntPath[1] = 0;
+
+
+#else
 	host_retEntropy[0] = 0ui64;
 	host_retEntropy[1] = 0ui64;
 
@@ -230,7 +247,7 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 		std::cout << "Error-Line--" << __LINE__ << std::endl;
 	}
 
-
+#endif
 	//host_accntMinMax[0] = 0;
 	//host_accntMinMax[1] = 5;
 	//printf("Size[0]=%llu , Size_tot=%llu\r\n", sizeof(host_accntMinMax[0]), sizeof(host_accntMinMax));
@@ -242,6 +259,9 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 		std::cout << "Error-Line--" << __LINE__ << std::endl;
 	}
 
+	if (cudaSuccess != cudaMemcpyToSymbol(dev_nManagedIterationsMaxCurrent, host_nManagedIterationsMaxCurrent, sizeof(host_nManagedIterationsMaxCurrent))) {
+		std::cout << "Error-Line--" << __LINE__ << std::endl;
+	}
 
 
 	if (cudaSuccess != cudaMemcpy(Data->dev.nProcessedInstances, Data->host.nProcessedInstances, 8, cudaMemcpyHostToDevice)) {
@@ -252,8 +272,6 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 	int16_t digitShow[MAX_ADAPTIVE_BASE_POSITIONS];
 	uint64_t nUniversalProcessed = 0;
 
-	do
-	{
 		//Set Master Iteration
 		if (cudaSuccess != cudaMemcpy(Data->dev.nProcessingIteration, Data->host.nProcessingIteration, 8, cudaMemcpyHostToDevice)) {
 			std::cout << "Error-Line--" << __LINE__ << std::endl;
@@ -265,6 +283,15 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 			std::cout << "Error-Line--" << __LINE__ << std::endl;
 		}
 
+		tools::start_time();
+		if (Stride->startDictionaryAttack(Config->cuda_grid, Config->cuda_block) != 0) {
+			std::cerr << "Error START!!" << std::endl;
+			return false;
+		}
+
+		do
+		{
+
 		printf("Iteration: %llu started.\r\n", *Data->host.nProcessingIteration + 1);
 		int16_t nDummyRet;
 
@@ -275,27 +302,49 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 		printf("<FROM> * * * * * *\t %s </FROM> (%llu)\r\n", strMnemoShow, nUniversalProcessed+1);
 
 
+#if 0
+		{ //view iteration progress
+			uint64_t nVisitCount = 0;
+			uint64_t nBlocksToVisit = (nIterationsNeeded == *Data->host.nProcessingIteration + 1) ? nLastIterationMaxBlockIdx + 1 : MAX_BLOCKS;
+			printf("\rWaiting for:%llu blocks to complete.", nBlocksToVisit);
+			while (nVisitCount < nBlocksToVisit) {
+				nVisitCount = 0;
+				for (int gb = 0; gb < nBlocksToVisit; gb++) {
+					printf("Checking completion....");
 
+					if (nManagedIterationsPerBlock[gb] < *Data->host.nProcessingIteration) {
+						printf("Not satisified.\r\n");
+						continue;
+					}
 
-		if (Stride->startDictionaryAttack(Config->cuda_grid, Config->cuda_block) != 0) {
-			std::cerr << "Error START!!" << std::endl;
-			return false;
+					nVisitCount++;
+
+					double fPercent = 100.0 * nVisitCount / nBlocksToVisit;
+					printf("\r Iteration Progress: %f", fPercent);
+				}
+
+				if (nVisitCount < nBlocksToVisit) {
+					std:Sleep(1000);
+				}
+			}//while
 		}
-		tools::start_time();
 
-
+#endif
 		float delay;
+#if 1
+
 		if (Stride->endDictionaryAttack() != 0) {
 			std::cerr << "Error END!!" << std::endl;
 			return false;
 		}
+#endif
 		tools::stop_time_and_calc_sec(&delay);
 
-
+#if 0
 		if (cudaSuccess != cudaMemcpy(Data->host.nProcessedInstances, Data->dev.nProcessedInstances, 8, cudaMemcpyDeviceToHost)) {
 			std::cout << "Error-Line--" << __LINE__ << std::endl;
 		}
-
+		
 		nUniversalProcessed += *Data->host.nProcessedInstances;
 		//printf("\t\t\t.\r\n\t\t\t.\r\n\t\t\t.\r\n");
 		//int16_t nDummyRet;
@@ -310,12 +359,17 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 
 		uint64_t nSkippedLast = (nIterationPower - *Data->host.nProcessedInstances);
 
+#endif
+
+
+
+		* Data->host.nProcessedInstances = nIterationPower;
 		std::cout << "Iteration " << *Data->host.nProcessingIteration + 1
 			<< " completed we have processed  " << *Data->host.nProcessedInstances << " COMBOs  at " << tools::formatPrefix((double)*Data->host.nProcessedInstances / delay) << " COMBO/Sec" 
-			<<" (Unused:"<<nSkippedLast<<") "
+			//<<" (Unused:"<<nSkippedLast<<") "
 			<< std::endl;
 			
-
+#if 1
 		if (cudaSuccess != cudaMemcpyFromSymbol (host_retEntropy, dev_retEntropy, 16)) {
 			std::cout << "Error-Line--" << __LINE__ << std::endl;
 		}
@@ -323,7 +377,7 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 		if (cudaSuccess != cudaMemcpyFromSymbol(host_retAccntPath, dev_retAccntPath, 2)) {
 			std::cout << "Error-Line--" << __LINE__ << std::endl;
 		}
-
+#endif
 		if (host_retEntropy[0] != 0 || host_retEntropy[1] != 0) {
 			uint8_t disp[121];
 			GetAllWords(host_retEntropy, disp);
@@ -345,7 +399,12 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 			break;
 
 		}
+		else {
+			printf("Total Batch Completed.\r\n");
+		}
+
 		++*Data->host.nProcessingIteration;
+		break;
 	} while (*Data->host.nProcessingIteration < nIterationsNeeded);//trunk
 
 	return true;
