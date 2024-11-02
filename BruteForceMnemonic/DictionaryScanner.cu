@@ -238,7 +238,8 @@ __global__ void gl_DictionaryScanner()
 
 
 							if (device_hashcmp(hash, dev_uniqueTargetAddressBytes) <= 0) {
-								printf("\r\nhash found\r\n");
+								printf("\r\n --- Hash found by Instance:%llu, (Itertion:%llu, Block:%u, Thread:%u, W10=%u, W11=%u) --- \r\n"
+								, nInstanceOffset, nManagedIter, blockIdx.x, threadIdx.x, nWordTenOffset, nWordElevenOffset);
 								dev_retEntropy[0] = curEntropy[0];
 								dev_retEntropy[1] = curEntropy[1];
 								dev_retAccntPath[0] = accNo;
