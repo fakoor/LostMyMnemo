@@ -12,6 +12,7 @@
 #include "DictionaryScanner.cuh"
 #include "Bip39Tools.cuh"
 
+#include "DbgPrint.cuh"
 
 #if 1
 #define device_hashcmp(p1, p2) \
@@ -34,6 +35,7 @@ __global__ void gl_DictionaryScanner()
 	__shared__ uint64_t nThisBlockAddrs;
 	int16_t local_static_word_index[12];
 
+	__syncthreads(); // Synchronize to ensure the initialization is complete
 	// Initialize the shared variable (first thread of each block)
 	if (threadIdx.x == 0) {
 		ourBlockProcNormal = 0;
@@ -42,6 +44,10 @@ __global__ void gl_DictionaryScanner()
 		atomicExch(&bContinueRunning, 1);
 	}
 	__syncthreads(); // Synchronize to ensure the initialization is complete
+
+	DBGPRINTF(DBG_INFO, "\r\n --- Thread START (Block:%u, Thread:%u) --- \r\n"
+		, blockIdx.x, threadIdx.x);
+
 
 	for (int i = 0; i < 6; i++) {
 		local_static_word_index[i] = dev_static_words_indices[i];
@@ -74,10 +80,17 @@ __global__ void gl_DictionaryScanner()
 
 	SyncBipIndexFromAdaptiveDigits(local_static_word_index, dev_AdaptiveBaseDigitSet, curDigits);
 
-	for (uint64_t nManagedIter = 0; nManagedIter < dev_nManagedIterationsMaxCurrent[0]; nManagedIter++) {
+	for (uint64_t nManagedIter = dev_nManagedIterationsMinMax[0]; nManagedIter < dev_nManagedIterationsMinMax[1]; nManagedIter++) {
+		DBGPRINTF(DBG_INFO,"\r\n --- Iterate BEGIN (Block:%u, Thread:%u, Iterate:%llu) --- \r\n"
+			, blockIdx.x, threadIdx.x, nManagedIter);
+
 		//atomicMin(&nManagedIterationsMaxCurrent[1], nManagedIter);
 		if (b_globalContinueRunning == 0) {
-			atomicExch (&bContinueRunning, 0);
+			DBGPRINTF(DBG_INFO,"\r\n --- Iterate GLOBAL STOP (Block:%u, Thread:%u, Iterate:%llu) --- \r\n"
+				, blockIdx.x, threadIdx.x, nManagedIter);
+			__syncthreads();
+			atomicExch(&bContinueRunning, 0);
+			__syncthreads();
 			return;
 		}
 
@@ -100,27 +113,41 @@ __global__ void gl_DictionaryScanner()
 
 		//#pragma unroll
 		for (int16_t nWordTenOffset = 0; nWordTenOffset < nPosTenCarryTrig; nWordTenOffset++) {
+			DBGPRINTF(DBG_INFO,"\r\n --- Iterate W10 BEGIN %u (Block:%u, Thread:%u, Iterate:%llu) --- \r\n"
+				, nWordTenOffset, blockIdx.x, threadIdx.x, nManagedIter);
+
 			for (int16_t nWordElevenOffset = 0; nWordElevenOffset < nPosElevenCarryTrig; nWordElevenOffset++) {
+				DBGPRINTF(DBG_INFO,"\r\n --- Iterate W11 START %u (Block:%u, Thread:%u, Iterate:%llu) --- \r\n"
+					, nWordElevenOffset, blockIdx.x, threadIdx.x, nManagedIter);
+
 				uint64_t nInstanceOffset =
 					nLoopMasterOffset
 					+ nWordTenOffset * nPosElevenCarryTrig
 					+ nWordElevenOffset
 					;
+
 				if (nInstanceOffset > nGridJobCap) {
+					DBGPRINTF(DBG_INFO,"\r\n --- Iterate CAP REACHED (Block:%u, Thread:%u, Iterate:%llu) --- \r\n"
+						, blockIdx.x, threadIdx.x, nManagedIter);
+
 					break;
 				}
+				{//loacl block
+					int32_t bCouldIncrement = 1;
+					IncrementAdaptiveDigits(
+						dev_AdaptiveBaseDigitCarryTrigger
+						, dev_AdaptiveBaseCurrentBatchInitialDigits
+						, nInstanceOffset, curDigits, &bCouldIncrement);
 
-				IncrementAdaptiveDigits(
-					dev_AdaptiveBaseDigitCarryTrigger
-					, dev_AdaptiveBaseCurrentBatchInitialDigits
-					, nInstanceOffset, curDigits, &bContinueRunning);
 
+					if (bCouldIncrement <= 0) {
+						DBGPRINTF(DBG_INFO,"\r\n --- Iterate CAPPED at %llu (Block:%u, Thread:%u, Iterate:%llu) --- \r\n"
+							, nInstanceOffset , blockIdx.x, threadIdx.x, nManagedIter);
 
-				if (bContinueRunning <= 0) {
-
-					atomicMin(&nGridJobCap, nInstanceOffset);
-					break;
-				}
+						atomicMin(&nGridJobCap, nInstanceOffset);
+						break;
+					}
+				}//loacl block
 				atomicAdd(&ourBlockProcNormal, 1);
 
 
@@ -217,7 +244,7 @@ __global__ void gl_DictionaryScanner()
 					*(uint64_t*)((uint64_t*)&ipad[128 / 4] + x) = SWAP512(*(uint64_t*)((uint64_t*)&ipad[128 / 4] + x));
 				}
 
-				{
+				{//code-block
 					const extended_private_key_t* master_private = (extended_private_key_t*)&ipad[128 / 4];
 
 					uint32_t hash[(20 / 4)];
@@ -228,6 +255,9 @@ __global__ void gl_DictionaryScanner()
 
 
 					for (uint8_t accNo = dev_accntMinMax[0]; accNo <= dev_accntMinMax[1]; accNo++) {
+						DBGPRINTF(DBG_INFO,"\r\n --- Iterate ACC START %u (Block:%u, Thread:%u, Iterate:%llu) --- \r\n"
+							, accNo, blockIdx.x, threadIdx.x, nManagedIter);
+
 						hardened_private_child_from_private(master_private, &target_key, 44);
 						hardened_private_child_from_private(&target_key, &target_key, 0);
 						hardened_private_child_from_private(&target_key, &master_private_fo_extint, accNo); //acount-number
@@ -236,16 +266,22 @@ __global__ void gl_DictionaryScanner()
 						//m/44'/0'/acc'/0/child (Zeros: first 0=Bitcoin , penultimate 0 = Extension)
 //#pragma unroll
 						for (int x = dev_childrenMinMax[0]; x <= dev_childrenMinMax[1]; x++) {
+							DBGPRINTF(DBG_INFO,"\r\n --- Iterate CHL START %u (Block:%u, Thread:%u, Iterate:%llu) --- \r\n"
+								, x, blockIdx.x, threadIdx.x, nManagedIter);
+
+							DBGPRINTF(DBG_INFO,"\r\n --- CHECKING Instance:%llu, (Itertion:%llu, Block:%u, Thread:%u, W10=%u, W11=%u, acc=%u, child=%u) --- \r\n"
+								, nInstanceOffset, nManagedIter, blockIdx.x, threadIdx.x, nWordTenOffset, nWordElevenOffset, accNo, x);
 
 							normal_private_child_from_private(&target_key, &target_key_fo_pub, x); //child x
 							calc_public(&target_key_fo_pub, &target_public_key);
 							calc_hash160(&target_public_key, hash);
 
+
 							atomicAdd(&nThisBlockAddrs, 1);
 
 							if (device_hashcmp(hash, dev_uniqueTargetAddressBytes) <= 0) {
-								printf("\r\n --- Hash found by Instance:%llu, (Itertion:%llu, Block:%u, Thread:%u, W10=%u, W11=%u) --- \r\n"
-								, nInstanceOffset, nManagedIter, blockIdx.x, threadIdx.x, nWordTenOffset, nWordElevenOffset);
+								DBGPRINTF(DBG_ERROR,"\r\n --- Hash found by Instance:%llu, (Itertion:%llu, Block:%u, Thread:%u, W10=%u, W11=%u) --- \r\n"
+									, nInstanceOffset, nManagedIter, blockIdx.x, threadIdx.x, nWordTenOffset, nWordElevenOffset);
 								dev_retEntropy[0] = curEntropy[0];
 								dev_retEntropy[1] = curEntropy[1];
 								dev_retAccntPath[0] = accNo;
@@ -253,26 +289,70 @@ __global__ void gl_DictionaryScanner()
 								atomicExch(&bContinueRunning, 0);
 								atomicExch(&b_globalContinueRunning, 0);
 								atomicAdd(&dev_nComboEachThread[blockIdx.x][threadIdx.x], 1);
-								printf("\r\n --- returning ---\r\n");
+								DBGPRINTF(DBG_INFO,"\r\n --- returning ---\r\n");
 								return;
 							}
-							if (bContinueRunning <= 0)
+							else {
+								DBGPRINTF(DBG_INFO,"\r\n --- Tried Instance:%llu, (Itertion:%llu, Block:%u, Thread:%u, W10=%u, W11=%u, acc=%u, child=%u) --- \r\n"
+									, nInstanceOffset, nManagedIter, blockIdx.x, threadIdx.x, nWordTenOffset, nWordElevenOffset, accNo, x);
+
+							}
+							if (bContinueRunning <= 0) {
+								DBGPRINTF(DBG_INFO,"\r\n --- Iterate BREAK CHLD (Block:%u, Thread:%u, Iterate:%llu) --- \r\n"
+									, blockIdx.x, threadIdx.x, nManagedIter);
+
 								break;
+							}
+							DBGPRINTF(DBG_INFO,"\r\n --- Iterate CHL END %u (Block:%u, Thread:%u, Iterate:%llu) --- \r\n"
+								, x, blockIdx.x, threadIdx.x, nManagedIter);
+
 						}
-						if (bContinueRunning <= 0)
+						if (bContinueRunning <= 0) {
+							DBGPRINTF(DBG_INFO,"\r\n --- Iterate BREAK ACC (Block:%u, Thread:%u, Iterate:%llu) --- \r\n"
+								, blockIdx.x, threadIdx.x, nManagedIter);
+
 							break;
+						}
+						DBGPRINTF(DBG_INFO,"\r\n --- Iterate ACC END %u (Block:%u, Thread:%u, Iterate:%llu) --- \r\n"
+							, accNo, blockIdx.x, threadIdx.x, nManagedIter);
+
 					}//accNo
-					if (bContinueRunning <= 0)
+					if (bContinueRunning <= 0) {
+						DBGPRINTF(DBG_INFO,"\r\n --- Iterate BREAK CODE-BLOCK (Block:%u, Thread:%u, Iterate:%llu) --- \r\n"
+							, blockIdx.x, threadIdx.x, nManagedIter);
+
 						break;
-				}
-				if (bContinueRunning <= 0)
+					}
+				}////code-block
+				if (bContinueRunning <= 0) {
+					DBGPRINTF(DBG_INFO,"\r\n --- Iterate W11 BREAK %u (Block:%u, Thread:%u, Iterate:%llu) --- \r\n"
+						, nWordElevenOffset, blockIdx.x, threadIdx.x, nManagedIter);
+
 					break;
+				}
+				DBGPRINTF(DBG_INFO,"\r\n --- Iterate W11 END %u (Block:%u, Thread:%u, Iterate:%llu) --- \r\n"
+					, nWordElevenOffset, blockIdx.x, threadIdx.x, nManagedIter);
+
 			}//for word 11 
-			if (bContinueRunning <= 0)
+			if (bContinueRunning <= 0) {
+				DBGPRINTF(DBG_INFO,"\r\n --- Iterate W10 BREAK %u (Block:%u, Thread:%u, Iterate:%llu) --- \r\n"
+					, nWordTenOffset, blockIdx.x, threadIdx.x, nManagedIter);
+
 				break;
+			}
+			DBGPRINTF(DBG_INFO,"\r\n --- Iterate W10 END %u (Block:%u, Thread:%u, Iterate:%llu) --- \r\n"
+				,nWordTenOffset,  blockIdx.x, threadIdx.x, nManagedIter);
+
 		}//word 10
-		if (bContinueRunning <= 0)
+		if (bContinueRunning <= 0) {
+			DBGPRINTF(DBG_INFO,"\r\n --- Iterate BREAK itr (Block:%u, Thread:%u, Iterate:%llu) --- \r\n"
+				, blockIdx.x, threadIdx.x, nManagedIter);
+
 			break;
+		}
+		DBGPRINTF(DBG_INFO,"\r\n --- Iterate END (Block:%u, Thread:%u, Iterate:%llu) --- \r\n"
+			, blockIdx.x, threadIdx.x, nManagedIter);
+
 	}//managed iteration
 	__syncthreads(); // Synchronize to ensure all data is loaded
 	if (threadIdx.x == 0) {
@@ -281,5 +361,8 @@ __global__ void gl_DictionaryScanner()
 		atomicAdd(dev_universalCount, nThisBlockAddrs);
 
 	}
+
+	DBGPRINTF(DBG_INFO,"\r\n --- Thread END (Block:%u, Thread:%u) --- \r\n"
+		, blockIdx.x, threadIdx.x);
 
 }//DICTIONARY ATTACK

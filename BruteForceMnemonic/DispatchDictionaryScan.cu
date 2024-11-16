@@ -3,6 +3,8 @@
 #include <iostream>
 #include <thread>
 
+#include <conio.h>
+
 #include "cuda_runtime.h"
 
 #include "DispatchDictionaryScan.cuh"
@@ -194,8 +196,9 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 	if (nLastIterationRemainder > 0) {
 		nIterationsNeeded++;
 	}
-	host_nManagedIterationsMaxCurrent[0] = nIterationsNeeded;
-	host_nManagedIterationsMaxCurrent[1] = 0ui64;
+
+	host_nManagedIterationsMinMax[0] = 0ui64;
+	host_nManagedIterationsMinMax[1] = nIterationsNeeded;
 
 	for (int b = 0; b < MAX_BLOCKS; b++) {
 		for (int t = 0 ; t< MAX_THREADS_PER_BLOCK; t++)
@@ -203,19 +206,19 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 	}
 
 	printf("Starting Dictionary Scan...\r\n");
-	printf("Looking for Account Range %u to %u.\r\n",host_accntMinMax[0],host_accntMinMax[1]);
-	printf("Looking for Children Address from %u to %u.\r\n ", host_childrenMinMax[0], host_childrenMinMax[1]);
-
-	std::cout << " Going to dispatch " << nProblemPower << " total COMBOs" <<std::endl
-		<< " {via " << nIterationsNeeded
-		<<((nLastIterationRemainder > 0) ? "" : "Perfet")<< " iterations}" << " [Last one with:" <<
-		nLastIterationRemainder<<" COMBOs]" <<std::endl
-		<<" (each able to process " << nIterationPower << " instances)="<< Config->cuda_grid <<"x" << Config->cuda_block<< "x" << host_AdaptiveBaseDigitCarryTrigger[5] << std::endl;
-
-
-
-
-
+	printf("\tLooking for Account Range %u to %u.\r\n",host_accntMinMax[0],host_accntMinMax[1]);
+	printf("\tLooking for Children Address from %u to %u.\r\n ", host_childrenMinMax[0], host_childrenMinMax[1]);
+	printf("\tPerforming iteration cluster %llu to %llu.\r\n", host_nManagedIterationsMinMax[0], host_nManagedIterationsMinMax[1]);
+	printf("\tFull iterations will process %llu COMBOs.\r\n", nIterationPower);
+	printf("\tLast iteration will need to process only %llu COMBOs.\r\n", nLastIterationRemainder);
+	printf("\tTotal COMBOs: %llu", nProblemPower);
+	printf("\tAny single CUDA thread will loop over %llu", nThreadPower);
+	//std::cout 
+		//<< "\tTo check " << nProblemPower << " total COMBOs." <<std::endl
+		//<< " {via " << nIterationsNeeded
+		//<<((nLastIterationRemainder > 0) ? "" : "Perfet")<< " iterations}" << " [Last one with:" <<
+		//nLastIterationRemainder<<" COMBOs]" <<std::endl
+		//<<" (each able to process " << nIterationPower << " instances)="<< Config->cuda_grid <<"x" << Config->cuda_block<< "x" << host_AdaptiveBaseDigitCarryTrigger[5] << std::endl;
 
 	
 	size_t copySize;
@@ -224,16 +227,6 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 	*Data->host.nProcessedInstances = 0;
 	*Data->host.nProcessingIteration = 0;
 
-#if 0
-
-	dev_retEntropy[0] = 0ui64;
-	dev_retEntropy[1] = 0ui64;
-
-	dev_retAccntPath[0] = 0;
-	dev_retAccntPath[1] = 0;
-
-
-#else
 	host_retEntropy[0] = 0ui64;
 	host_retEntropy[1] = 0ui64;
 
@@ -258,10 +251,6 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 	}
 
 
-#endif
-	//host_accntMinMax[0] = 0;
-	//host_accntMinMax[1] = 5;
-	//printf("Size[0]=%llu , Size_tot=%llu\r\n", sizeof(host_accntMinMax[0]), sizeof(host_accntMinMax));
 	if (cudaSuccess != cudaMemcpyToSymbol(dev_accntMinMax, host_accntMinMax, sizeof (host_accntMinMax))) {
 		std::cout << "Error-Line--" << __LINE__ << std::endl;
 	}
@@ -270,7 +259,7 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 		std::cout << "Error-Line--" << __LINE__ << std::endl;
 	}
 
-	if (cudaSuccess != cudaMemcpyToSymbol(dev_nManagedIterationsMaxCurrent, host_nManagedIterationsMaxCurrent, sizeof(host_nManagedIterationsMaxCurrent))) {
+	if (cudaSuccess != cudaMemcpyToSymbol(dev_nManagedIterationsMinMax, host_nManagedIterationsMinMax, sizeof(host_nManagedIterationsMinMax))) {
 		std::cout << "Error-Line--" << __LINE__ << std::endl;
 	}
 
@@ -313,42 +302,23 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 		printf("<FROM> * * * * * *\t %s </FROM> (%llu)\r\n", strMnemoShow, nUniversalProcessed+1);
 
 
-#if 0
-		{ //view iteration progress
-			uint64_t nVisitCount = 0;
-			uint64_t nBlocksToVisit = (nIterationsNeeded == *Data->host.nProcessingIteration + 1) ? nLastIterationMaxBlockIdx + 1 : MAX_BLOCKS;
-			printf("\rWaiting for:%llu blocks to complete.", nBlocksToVisit);
-			while (nVisitCount < nBlocksToVisit) {
-				nVisitCount = 0;
-				for (int gb = 0; gb < nBlocksToVisit; gb++) {
-					printf("Checking completion....");
-
-					if (nManagedIterationsPerBlock[gb] < *Data->host.nProcessingIteration) {
-						printf("Not satisified.\r\n");
-						continue;
-					}
-
-					nVisitCount++;
-
-					double fPercent = 100.0 * nVisitCount / nBlocksToVisit;
-					printf("\r Iteration Progress: %f", fPercent);
-				}
-
-				if (nVisitCount < nBlocksToVisit) {
-					std:Sleep(1000);
-				}
-			}//while
-		}
-
-#endif
 		float delay;
 #if 1
+
+		if (_kbhit()) { // Check if a key has been pressed
+			char ch = _getch(); // Get the pressed key
+			if (ch == 'P' || ch == 'p') {
+				std::cout << "Printing statistcis!\n";
+				return 0; // Exit if 'P' or 'p' is pressed
+			}
+
+		}
+#endif
 
 		if (Stride->endDictionaryAttack() != 0) {
 			std::cerr << "Error END!!" << std::endl;
 			return false;
 		}
-#endif
 		tools::stop_time_and_calc_sec(&delay);
 
 #if 0

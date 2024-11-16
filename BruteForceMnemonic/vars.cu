@@ -24,8 +24,8 @@ GPU_ACCNT_MIN_MAX_LOCATION uint8_t dev_childrenMinMax[2];
 uint8_t host_childrenMinMax[2];
 
 
-__device__  uint64_t dev_nManagedIterationsMaxCurrent[2];
-uint64_t host_nManagedIterationsMaxCurrent[2];
+__device__  uint64_t dev_nManagedIterationsMinMax[2];
+uint64_t host_nManagedIterationsMinMax[2];
 
 __device__  uint64_t dev_nComboEachThread[MAX_BLOCKS][MAX_THREADS_PER_BLOCK];
  uint64_t host_nComboEachThread[MAX_BLOCKS][MAX_THREADS_PER_BLOCK];

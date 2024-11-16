@@ -31,6 +31,7 @@
     <ClInclude Include="Bip39Tools.cuh" />
     <ClInclude Include="sha256usage.cuh" />
     <ClInclude Include="vars.cuh" />
+    <ClInclude Include="DbgPrint.cuh" />
   </ItemGroup>
   <ItemGroup>
     <None Include="config.cfg" />

@@ -53,7 +53,7 @@ void PrintNextMnemo(uint64_t entrop[2], uint64_t nHowMuch, int16_t carry[MAX_ADA
 		} \
 	}/* for */ \
 	if (nYetToAdd != 0 || nCarryValue != 0) \
-		*bCanContinue = 0; \
+		*bCanContinue=0; \
 \
 		outDigits[0] = (*bCanContinue<=0)? local_AdaptiveBaseDigitCarryTrigger[0]-1 : tmpResult[0]; \
 		outDigits[1] = (*bCanContinue<=0)? local_AdaptiveBaseDigitCarryTrigger[1]-1 : tmpResult[1]; \

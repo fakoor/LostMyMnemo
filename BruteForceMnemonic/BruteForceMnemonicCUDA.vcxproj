@@ -150,6 +150,7 @@ If exist "config.cfg" copy "config.cfg" "$(OutDir)\"</Command>
     <ClInclude Include="Bip39Tools.cuh" />
     <ClInclude Include="BuildConfig.cuh" />
     <ClInclude Include="consts.h" />
+    <ClInclude Include="DbgPrint.cuh" />
     <ClInclude Include="DictionaryScanner.cuh" />
     <ClInclude Include="DispatchDictionaryScan.cuh" />
     <ClInclude Include="EntropyTools.cuh" />

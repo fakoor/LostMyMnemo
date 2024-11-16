@@ -24,8 +24,8 @@ extern uint8_t host_accntMinMax[2];
 extern GPU_ACCNT_MIN_MAX_LOCATION uint8_t dev_childrenMinMax[2];
 extern uint8_t host_childrenMinMax[2];
 
-extern __device__  uint64_t dev_nManagedIterationsMaxCurrent[2];
-extern uint64_t host_nManagedIterationsMaxCurrent[2];
+extern __device__  uint64_t dev_nManagedIterationsMinMax[2];
+extern uint64_t host_nManagedIterationsMinMax[2];
 
 extern __device__  uint64_t dev_nComboEachThread[MAX_BLOCKS][MAX_THREADS_PER_BLOCK];
 extern uint64_t host_nComboEachThread[MAX_BLOCKS][MAX_THREADS_PER_BLOCK];
