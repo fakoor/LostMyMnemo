@@ -253,76 +253,94 @@ __global__ void gl_DictionaryScanner()
 					extended_private_key_t master_private_fo_extint;
 					extended_public_key_t target_public_key;
 
+					for (uint8_t nBlockchainInfoLegacyAddrGen = 0; nBlockchainInfoLegacyAddrGen <= 1; nBlockchainInfoLegacyAddrGen++) {
+						/*
+						* NOTE: for blockchain.info aka blockchain.com, this is the bip-32 path for purpose 44
+						* m/44'/0'/2'/0
+						* So we have similar begining of three hardened keys that their last one is account number
+						* and the final part of path starts from zero and is child address so here we do not have
+						* the notion of extension and its place is used by the child in this context. Note that we
+						* derive one item less than the standard since the child place is the last
+						*/
 
-					for (uint8_t accNo = dev_accntMinMax[0]; accNo <= dev_accntMinMax[1]; accNo++) {
-						DBGPRINTF(DBG_INFO,"\r\n --- Iterate ACC START %u (Block:%u, Thread:%u, Iterate:%llu) --- \r\n"
-							, accNo, blockIdx.x, threadIdx.x, nManagedIter);
+						for (uint8_t accNo = dev_accntMinMax[0]; accNo <= dev_accntMinMax[1]; accNo++) {
+							DBGPRINTF(DBG_INFO, "\r\n --- Iterate ACC START %u (Block:%u, Thread:%u, Iterate:%llu) --- \r\n"
+								, accNo, blockIdx.x, threadIdx.x, nManagedIter);
 
-						hardened_private_child_from_private(master_private, &target_key, 44);
-						hardened_private_child_from_private(&target_key, &target_key, 0);
-						hardened_private_child_from_private(&target_key, &master_private_fo_extint, accNo); //acount-number
-						normal_private_child_from_private(&master_private_fo_extint, &target_key, 0); //extension-0-internal-external
-
-						//m/44'/0'/acc'/0/child (Zeros: first 0=Bitcoin , penultimate 0 = Extension)
-//#pragma unroll
-						for (int x = dev_childrenMinMax[0]; x <= dev_childrenMinMax[1]; x++) {
-							DBGPRINTF(DBG_INFO,"\r\n --- Iterate CHL START %u (Block:%u, Thread:%u, Iterate:%llu) --- \r\n"
-								, x, blockIdx.x, threadIdx.x, nManagedIter);
-
-							DBGPRINTF(DBG_INFO,"\r\n --- CHECKING Instance:%llu, (Itertion:%llu, Block:%u, Thread:%u, W10=%u, W11=%u, acc=%u, child=%u) --- \r\n"
-								, nInstanceOffset, nManagedIter, blockIdx.x, threadIdx.x, nWordTenOffset, nWordElevenOffset, accNo, x);
-
-							normal_private_child_from_private(&target_key, &target_key_fo_pub, x); //child x
-							calc_public(&target_key_fo_pub, &target_public_key);
-							calc_hash160(&target_public_key, hash);
-
-
-							atomicAdd(&nThisBlockAddrs, 1);
-
-							if (device_hashcmp(hash, dev_uniqueTargetAddressBytes) <= 0) {
-								DBGPRINTF(DBG_ERROR,"\r\n --- Hash found by Instance:%llu, (Itertion:%llu, Block:%u, Thread:%u, W10=%u, W11=%u) --- \r\n"
-									, nInstanceOffset, nManagedIter, blockIdx.x, threadIdx.x, nWordTenOffset, nWordElevenOffset);
-								dev_retEntropy[0] = curEntropy[0];
-								dev_retEntropy[1] = curEntropy[1];
-								dev_retAccntPath[0] = accNo;
-								dev_retAccntPath[1] = x;
-								atomicExch(&bContinueRunning, 0);
-								atomicExch(&b_globalContinueRunning, 0);
-								atomicAdd(&dev_nComboEachThread[blockIdx.x][threadIdx.x], 1);
-								DBGPRINTF(DBG_INFO,"\r\n --- returning ---\r\n");
-								return;
+							hardened_private_child_from_private(master_private, &target_key, 44);
+							hardened_private_child_from_private(&target_key, &target_key, 0);
+							hardened_private_child_from_private(&target_key, &master_private_fo_extint, accNo); //acount-number
+							if (nBlockchainInfoLegacyAddrGen == 0) {
+								//only perform when we are not generating blockchain.info custom path
+								normal_private_child_from_private(&master_private_fo_extint, &target_key, 0); //extension-0-internal-external
 							}
-							else {
-								DBGPRINTF(DBG_INFO,"\r\n --- Tried Instance:%llu, (Itertion:%llu, Block:%u, Thread:%u, W10=%u, W11=%u, acc=%u, child=%u) --- \r\n"
+							//m/44'/0'/acc'/0/child (Zeros: first 0=Bitcoin , penultimate 0 = Extension)
+	//#pragma unroll
+							for (int x = dev_childrenMinMax[0]; x <= dev_childrenMinMax[1]; x++) {
+								DBGPRINTF(DBG_INFO, "\r\n --- Iterate CHL START %u (Block:%u, Thread:%u, Iterate:%llu) --- \r\n"
+									, x, blockIdx.x, threadIdx.x, nManagedIter);
+
+								DBGPRINTF(DBG_INFO, "\r\n --- CHECKING Instance:%llu, (Itertion:%llu, Block:%u, Thread:%u, W10=%u, W11=%u, acc=%u, child=%u) --- \r\n"
 									, nInstanceOffset, nManagedIter, blockIdx.x, threadIdx.x, nWordTenOffset, nWordElevenOffset, accNo, x);
+								if (nBlockchainInfoLegacyAddrGen == 0) {
+									//when we are not on blockchain.info format, the previous output has been chained to target key
+									normal_private_child_from_private(&target_key, &target_key_fo_pub, x); //child x
+								}
+								else {
+									//but when we are on blockchain.info format we directly derive from private key
+									normal_private_child_from_private(&master_private_fo_extint, &target_key_fo_pub, x); //child x
+								}
+								calc_public(&target_key_fo_pub, &target_public_key);
+								calc_hash160(&target_public_key, hash);
+
+
+								atomicAdd(&nThisBlockAddrs, 1);
+
+								if (device_hashcmp(hash, dev_uniqueTargetAddressBytes) <= 0) {
+									DBGPRINTF(DBG_ERROR, "\r\n --- Hash found by Instance:%llu, (Itertion:%llu, Block:%u, Thread:%u, W10=%u, W11=%u) --- \r\n"
+										, nInstanceOffset, nManagedIter, blockIdx.x, threadIdx.x, nWordTenOffset, nWordElevenOffset);
+									dev_retEntropy[0] = curEntropy[0];
+									dev_retEntropy[1] = curEntropy[1];
+									dev_retAccntPath[0] = accNo;
+									dev_retAccntPath[1] = x;
+									atomicExch(&bContinueRunning, 0);
+									atomicExch(&b_globalContinueRunning, 0);
+									atomicAdd(&dev_nComboEachThread[blockIdx.x][threadIdx.x], 1);
+									DBGPRINTF(DBG_INFO, "\r\n --- returning ---\r\n");
+									return;
+								}
+								else {
+									DBGPRINTF(DBG_INFO, "\r\n --- Tried Instance:%llu, (Itertion:%llu, Block:%u, Thread:%u, W10=%u, W11=%u, acc=%u, child=%u) --- \r\n"
+										, nInstanceOffset, nManagedIter, blockIdx.x, threadIdx.x, nWordTenOffset, nWordElevenOffset, accNo, x);
+
+								}
+								if (bContinueRunning <= 0) {
+									DBGPRINTF(DBG_INFO, "\r\n --- Iterate BREAK CHLD (Block:%u, Thread:%u, Iterate:%llu) --- \r\n"
+										, blockIdx.x, threadIdx.x, nManagedIter);
+
+									break;
+								}
+								DBGPRINTF(DBG_INFO, "\r\n --- Iterate CHL END %u (Block:%u, Thread:%u, Iterate:%llu) --- \r\n"
+									, x, blockIdx.x, threadIdx.x, nManagedIter);
 
 							}
 							if (bContinueRunning <= 0) {
-								DBGPRINTF(DBG_INFO,"\r\n --- Iterate BREAK CHLD (Block:%u, Thread:%u, Iterate:%llu) --- \r\n"
+								DBGPRINTF(DBG_INFO, "\r\n --- Iterate BREAK ACC (Block:%u, Thread:%u, Iterate:%llu) --- \r\n"
 									, blockIdx.x, threadIdx.x, nManagedIter);
 
 								break;
 							}
-							DBGPRINTF(DBG_INFO,"\r\n --- Iterate CHL END %u (Block:%u, Thread:%u, Iterate:%llu) --- \r\n"
-								, x, blockIdx.x, threadIdx.x, nManagedIter);
+							DBGPRINTF(DBG_INFO, "\r\n --- Iterate ACC END %u (Block:%u, Thread:%u, Iterate:%llu) --- \r\n"
+								, accNo, blockIdx.x, threadIdx.x, nManagedIter);
 
-						}
+						}//accNo
 						if (bContinueRunning <= 0) {
-							DBGPRINTF(DBG_INFO,"\r\n --- Iterate BREAK ACC (Block:%u, Thread:%u, Iterate:%llu) --- \r\n"
+							DBGPRINTF(DBG_INFO, "\r\n --- Iterate BREAK CODE-BLOCK (Block:%u, Thread:%u, Iterate:%llu) --- \r\n"
 								, blockIdx.x, threadIdx.x, nManagedIter);
 
 							break;
 						}
-						DBGPRINTF(DBG_INFO,"\r\n --- Iterate ACC END %u (Block:%u, Thread:%u, Iterate:%llu) --- \r\n"
-							, accNo, blockIdx.x, threadIdx.x, nManagedIter);
-
-					}//accNo
-					if (bContinueRunning <= 0) {
-						DBGPRINTF(DBG_INFO,"\r\n --- Iterate BREAK CODE-BLOCK (Block:%u, Thread:%u, Iterate:%llu) --- \r\n"
-							, blockIdx.x, threadIdx.x, nManagedIter);
-
-						break;
-					}
+					}//legacy format iterator
 				}////code-block
 				if (bContinueRunning <= 0) {
 					DBGPRINTF(DBG_INFO,"\r\n --- Iterate W11 BREAK %u (Block:%u, Thread:%u, Iterate:%llu) --- \r\n"

@@ -211,8 +211,8 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 	printf("\tPerforming iteration cluster %llu to %llu.\r\n", host_nManagedIterationsMinMax[0], host_nManagedIterationsMinMax[1]);
 	printf("\tFull iterations will process %llu COMBOs.\r\n", nIterationPower);
 	printf("\tLast iteration will need to process only %llu COMBOs.\r\n", nLastIterationRemainder);
-	printf("\tTotal COMBOs: %llu", nProblemPower);
-	printf("\tAny single CUDA thread will loop over %llu", nThreadPower);
+	printf("\tTotal COMBOs: %llu\r\n", nProblemPower);
+	printf("\tAny single CUDA thread will loop over %llu\r\n", nThreadPower);
 	//std::cout 
 		//<< "\tTo check " << nProblemPower << " total COMBOs." <<std::endl
 		//<< " {via " << nIterationsNeeded
@@ -397,7 +397,7 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 		++*Data->host.nProcessingIteration;
 		break;
 	} while (*Data->host.nProcessingIteration < nIterationsNeeded);//trunk
-
+#if 0
 	uint64_t nMaxProc = 0;
 	uint64_t nMinProc = ULLONG_MAX;
 	uint64_t nWinnerThread;
@@ -416,6 +416,7 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 		}
 	}
 	printf("\r\nHardworker thread was: %llu with %llu processes out of %llu\r\n", nWinnerThread, nMaxProc, nTotalProcesses);
+#endif
 	return true;
 }
 
