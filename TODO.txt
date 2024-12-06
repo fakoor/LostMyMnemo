@@ -1,17 +1,19 @@
-Configure Build get skipped for old code
-configure ranges for account and child
-report found path
-
-If found one, show all alternatives as well
-
-Print Batch mnemo
-Beep
-Read Addresss
-winmm.lib
-
-Move words to device memory
-
-Overlapping with the next 24-bit batch
+CONF range for derivation path version (standard, blockchain.info)
+WARN about last two words should always start from zero
+WARN if the starting words are not present in the list of each pos
+WARN if the words are unsorted
+FORMAT with commas (COMBO counts)
+LOG total execution time
+LOG the result (Answer, Speed, Block/Grid counts, derivation type)
+ASJUST arrays holding variable words
+ADJUST memory location for variables
+OPTIMIZE Mnemonic iteration and contacetanion according to inner loops
+REMOVE old config items and code
+IMPROVE memory encapsulation
+SEPARATE main logic in a parametrized Host&Dev function
+TRY data production / consumption model in two phases
+IMPROVE implementation of color console printing
+IMPROVE readme!
 
 SM: 68 (=68 simultaneoius blocks)
 CUDA-Core/SM: 128

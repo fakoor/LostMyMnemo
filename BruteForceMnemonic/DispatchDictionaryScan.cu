@@ -209,16 +209,10 @@ bool  DispatchDictionaryScan(ConfigClass* Config, data_class* Data, stride_class
 	printf("\tLooking for Account Range %u to %u.\r\n",host_accntMinMax[0],host_accntMinMax[1]);
 	printf("\tLooking for Children Address from %u to %u.\r\n ", host_childrenMinMax[0], host_childrenMinMax[1]);
 	printf("\tPerforming iteration cluster %llu to %llu.\r\n", host_nManagedIterationsMinMax[0], host_nManagedIterationsMinMax[1]);
-	printf("\tFull iterations will process %llu COMBOs.\r\n", nIterationPower);
-	printf("\tLast iteration will need to process only %llu COMBOs.\r\n", nLastIterationRemainder);
+	printf("\tEach iterations will process %llu COMBOs, but\r\n", nIterationPower);
+	printf("\tThe last iteration will need to process only %llu COMBOs.\r\n", nLastIterationRemainder);
+	printf("\tEach CUDA thread will loop over %llu combinations in each iteration\r\n", nThreadPower);
 	printf("\tTotal COMBOs: %llu\r\n", nProblemPower);
-	printf("\tAny single CUDA thread will loop over %llu\r\n", nThreadPower);
-	//std::cout 
-		//<< "\tTo check " << nProblemPower << " total COMBOs." <<std::endl
-		//<< " {via " << nIterationsNeeded
-		//<<((nLastIterationRemainder > 0) ? "" : "Perfet")<< " iterations}" << " [Last one with:" <<
-		//nLastIterationRemainder<<" COMBOs]" <<std::endl
-		//<<" (each able to process " << nIterationPower << " instances)="<< Config->cuda_grid <<"x" << Config->cuda_block<< "x" << host_AdaptiveBaseDigitCarryTrigger[5] << std::endl;
 
 	
 	size_t copySize;
