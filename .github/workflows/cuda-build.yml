@@ -3,10 +3,10 @@ name: CUDA Build
 on:
   push:
     branches:
-      - V3.0  # Change to your default branch name
+      - v3.0  # Change to your default branch name
   pull_request:
     branches:
-      - V3.0  # Change to your default branch name
+      - v3.0  # Change to your default branch name
   release:
     types: [created]  # Trigger on release creation
 
