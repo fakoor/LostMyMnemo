@@ -1,3 +1,10 @@
+# Builds and Versions
+## v3
+[![CUDA Build](https://github.com/fakoor/LostMyMnemo/actions/workflows/cuda-build.yml/badge.svg?branch=v3.0)](https://github.com/fakoor/LostMyMnemo/actions/workflows/cuda-build.yml)
+
+## v2
+[![CUDA Build](https://github.com/fakoor/LostMyMnemo/actions/workflows/cuda-build.yml/badge.svg?branch=V2.0)](https://github.com/fakoor/LostMyMnemo/actions/workflows/cuda-build.yml)
+
 # Introduction
 Lost some words of your 12-word mnemonic but remember some? dont panic, this tool is here to help!
 
